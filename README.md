@@ -4,6 +4,18 @@ Overview
 **sanescan** is a scanning and OCR application that supports a variety of scanners via the SANE
 scanner driver project.
 
+Building
+========
+
+sanescan uses CMake and ninja. To build, use the following instructions:
+
+    mkdir build
+    cd build
+    cmake -G Ninja ..
+    ninja -C .
+    
+Ninja is not mandatory, but other build systems such as make are not tested.
+
 License
 =======
 
