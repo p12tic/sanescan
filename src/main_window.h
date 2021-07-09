@@ -4,6 +4,8 @@
 #include <QtWidgets/QMainWindow>
 #include <memory>
 
+namespace sanescan {
+
 namespace Ui {
     class MainWindow;
 }
@@ -19,5 +21,7 @@ public:
 private:
     std::unique_ptr<Ui::MainWindow> ui_;
 };
+
+} // namespace sanescan
 
 #endif
