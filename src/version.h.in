@@ -1,0 +1,11 @@
+
+#ifndef SANESCAN_VERSION_H
+#define SANESCAN_VERSION_H
+
+namespace sanescan {
+
+#define SANESCAN_VERSION "${SANESCAN_VERSION}"
+
+} // namespace sanescan
+
+#endif // SANESCAN_VERSION_H
