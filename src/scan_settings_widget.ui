@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>sanescan::ScanSettingsWidget</class>
+ <widget class="QWidget" name="sanescan::ScanSettingsWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QGridLayout" name="grid_layout">
+     <item row="0" column="1">
+      <widget class="QComboBox" name="cb_scan_source"/>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="l_scan_source">
+       <property name="text">
+        <string>Scan source</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="l_scan_mode">
+       <property name="text">
+        <string>Scan mode</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="l_bit_depth">
+       <property name="text">
+        <string>Bit depth</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="l_resolution">
+       <property name="text">
+        <string>Resolution</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="cb_scan_mode"/>
+     </item>
+     <item row="2" column="1">
+      <widget class="QComboBox" name="cb_bit_depth"/>
+     </item>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="cb_resolution"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

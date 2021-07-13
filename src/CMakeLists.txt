@@ -26,6 +26,8 @@ set(SOURCES
     main.cc
     main_window.cc
     main_window.ui
+    scan_settings_widget.cc
+    scan_settings_widget.ui
 )
 
 add_executable(sanescan ${SOURCES})
