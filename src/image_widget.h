@@ -1,6 +1,6 @@
 /*  SPDX-License-Identifier: GPL-3.0-or-later
 
-    Copyright (C) 2021  Povilas Kanapickas <povilas@radix.lt>
+    Copyright (C) 2021  Monika Kairaityte <monika@kibit.lt>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,32 +16,32 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "main_window.h"
-#include "about_dialog.h"
-#include "image_widget.h"
-#include "ui_main_window.h"
+#ifndef SANESCAN_IMAGE_WIDGET_H
+#define SANESCAN_IMAGE_WIDGET_H
+
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QScrollArea>
 
 namespace sanescan {
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui_{std::make_unique<Ui::MainWindow>()}
+class ImageWidget : public QScrollArea
 {
-    ui_->setupUi(this);
+    Q_OBJECT
 
-    connect(ui_->action_about, &QAction::triggered, [this](){ present_about_dialog(); });
+public:
+    explicit ImageWidget(QWidget *parent = nullptr);
+    ~ImageWidget() override;
 
-    auto* image_widget = new ImageWidget();
-    setCentralWidget(image_widget);
-    image_widget->set_image(QImage("test.jpeg"));
-}
+    void wheelEvent(QWheelEvent* event) override;
 
-MainWindow::~MainWindow() = default;
+    void set_image(const QImage& image);
+    void rescale_by(float scale_mult);
 
-void MainWindow::present_about_dialog()
-{
-    AboutDialog dialog(this);
-    dialog.exec();
-}
+private:
+    QLabel* image_ = nullptr;
+    float scale_ = 1.0f;
+};
 
 } // namespace sanescan
+
+#endif // SANESCAN_IMAGE_WIDGET_H

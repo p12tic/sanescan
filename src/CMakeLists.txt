@@ -22,6 +22,7 @@ find_package(Qt5 COMPONENTS Core Widgets)
 set(SOURCES
     about_dialog.cc
     about_dialog.ui
+    image_widget.cc
     main.cc
     main_window.cc
     main_window.ui
