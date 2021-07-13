@@ -33,6 +33,7 @@ add_executable(sanescan ${SOURCES})
 configure_file(version.h.in version.h)
 
 target_include_directories(sanescan PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(sanescan PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(sanescan
     Qt5::Core
     Qt5::Widgets

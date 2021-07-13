@@ -31,9 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui_->action_about, &QAction::triggered, [this](){ present_about_dialog(); });
 
-    auto* image_widget = new ImageWidget();
-    setCentralWidget(image_widget);
-    image_widget->set_image(QImage("test.jpeg"));
+    ui_->image_area->set_image(QImage("test.jpeg"));
 }
 
 MainWindow::~MainWindow() = default;
