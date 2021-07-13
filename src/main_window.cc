@@ -17,6 +17,7 @@
 */
 
 #include "main_window.h"
+#include "about_dialog.h"
 #include "ui_main_window.h"
 
 namespace sanescan {
@@ -26,8 +27,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui_{std::make_unique<Ui::MainWindow>()}
 {
     ui_->setupUi(this);
+
+    connect(ui_->action_about, &QAction::triggered, [this](){ present_about_dialog(); });
 }
 
 MainWindow::~MainWindow() = default;
+
+void MainWindow::present_about_dialog()
+{
+    AboutDialog dialog(this);
+    dialog.exec();
+}
 
 } // namespace sanescan

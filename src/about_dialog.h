@@ -1,6 +1,6 @@
 /*  SPDX-License-Identifier: GPL-3.0-or-later
 
-    Copyright (C) 2021  Povilas Kanapickas <povilas@radix.lt>
+    Copyright (C) 2021  Monika Kairaityte <monika@kibit.lt>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,32 +16,30 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_MAIN_WINDOW_H
-#define SANESCAN_MAIN_WINDOW_H
+#ifndef SANESCAN_VERSION_DIALOG_H
+#define SANESCAN_VERSION_DIALOG_H
 
-#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QDialog>
 #include <memory>
 
 namespace sanescan {
 
 namespace Ui {
-    class MainWindow;
+    class AboutDialog;
 }
 
-class MainWindow : public QMainWindow
+class AboutDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow() override;
-
-    void present_about_dialog();
+    explicit AboutDialog(QWidget *parent = nullptr);
+    ~AboutDialog() override;
 
 private:
-    std::unique_ptr<Ui::MainWindow> ui_;
+    std::unique_ptr<Ui::AboutDialog> ui_;
 };
 
-} // namespace sanescan
 
-#endif
+} // namespace sanescan
+#endif // SANESCAN_VERSION_DIALOG_H
