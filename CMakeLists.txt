@@ -7,3 +7,4 @@ set(SANESCAN_VERSION 0.0.1)
 project(sanescan VERSION ${SANESCAN_VERSION})
 
 add_subdirectory(src)
+add_subdirectory(test)
