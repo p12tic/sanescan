@@ -18,6 +18,7 @@
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 find_package(Qt5 COMPONENTS Core Widgets)
+find_package(Threads)
 
 set(SOURCES
     about_dialog.cc
@@ -29,6 +30,7 @@ set(SOURCES
     scan_settings_widget.cc
     scan_settings_widget.ui
     lib/sane_types.cc
+    lib/task_executor.cc
 )
 
 add_executable(sanescan ${SOURCES})
@@ -40,4 +42,5 @@ target_include_directories(sanescan PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(sanescan
     Qt5::Core
     Qt5::Widgets
+    Threads::Threads
 )
