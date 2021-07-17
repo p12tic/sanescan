@@ -131,6 +131,16 @@ std::optional<BufferReadRef> BufferManager::get_read()
                          buffer_ptr->line_byte_count};
 }
 
+void BufferManager::reset()
+{
+    impl_->next_write_index = 0;
+    impl_->next_read_index = 0;
+    impl_->has_data = false;
+    for (auto& buf_ptr : impl_->buffers) {
+        buf_ptr->in_progress = false;
+    }
+}
+
 void BufferManager::finish_read(std::size_t index)
 {
     std::lock_guard lock{impl_->mutex};

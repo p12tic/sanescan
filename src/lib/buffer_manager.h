@@ -104,6 +104,8 @@ public:
 
     std::optional<BufferReadRef> get_read();
 
+    void reset();
+
 private:
     friend class BufferReadRef;
     friend class BufferWriteRef;

@@ -136,3 +136,15 @@ TEST(BufferManager, UnavailableWriteWhenFinished)
     buf->finish(40);
     ASSERT_FALSE(manager.get_write(7, 9, 20).has_value());
 }
+
+TEST(BufferManager, ResetClearsUnfinishedWrites)
+{
+    auto manager = sanescan::BufferManager(120);
+    ASSERT_TRUE(manager.get_write(1, 3, 20).has_value());
+    ASSERT_TRUE(manager.get_write(3, 5, 20).has_value());
+    manager.reset();
+    ASSERT_TRUE(manager.get_write(5, 7, 20).has_value());
+    ASSERT_TRUE(manager.get_write(7, 9, 20).has_value());
+    ASSERT_TRUE(manager.get_write(9, 11, 20).has_value());
+    ASSERT_FALSE(manager.get_write(11, 13, 20).has_value());
+}
