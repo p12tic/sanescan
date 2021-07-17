@@ -29,12 +29,20 @@ class BufferManager;
 
 class BufferReadRef {
 public:
+    BufferReadRef(BufferReadRef&& other);
+    BufferReadRef& operator=(BufferReadRef&& other);
+
+    ~BufferReadRef(); // calls finish()
+
     const char* data() const { return data_; }
     std::size_t size() const { return (last_line_ - first_line_) * line_bytes_; }
     std::size_t first_line() const { return first_line_; }
     std::size_t last_line() const { return last_line_; }
     std::size_t line_bytes() const { return line_bytes_; }
 
+    /** Finishes the read. This can be called multiple times, only the first has any effect.
+        After the first call, the data pointed to by data() must not be accessed.
+    */
     void finish();
 
 private:
@@ -50,12 +58,17 @@ private:
         line_bytes_{line_bytes}
     {}
 
-    BufferManager* manager_;
+    // non-copyable because we need to accurately track finished status
+    BufferReadRef(const BufferReadRef& other) = delete;
+    BufferReadRef& operator=(const BufferReadRef&) = delete;
+
+    BufferManager* manager_ = nullptr;
     std::size_t index_ = 0;
     const char* data_ = nullptr;
     std::size_t first_line_ = 0;
     std::size_t last_line_ = 0;
     std::size_t line_bytes_ = 0;
+    bool finished_ = false;
 };
 
 class BufferWriteRef {
@@ -63,8 +76,18 @@ public:
     char* data() { return data_; }
     std::size_t size() { return size_; }
 
-    /// Finish the write noting the actually read number of bytes. If the written size is less than
-    /// the size of the buffer, any partially written lines are discarded.
+    BufferWriteRef(BufferWriteRef&& other);
+    BufferWriteRef& operator=(BufferWriteRef&& other);
+
+    // calls finish(0) if it wasn't called before
+    ~BufferWriteRef();
+
+    /** Finish the write noting the actually read number of bytes. If the written size is less than
+        the size of the buffer, any partially written lines are discarded. This can be called
+        multiple times, only the first has any effect.
+
+        After the first call, the data pointed to by data() must not be accessed.
+    */
     void finish(std::size_t size);
 
 private:
@@ -76,11 +99,15 @@ private:
         data_{data},
         size_{size}
     {}
+    // non-copyable because we need to accurately track finished status
+    BufferWriteRef(const BufferWriteRef&) = delete;
+    BufferWriteRef& operator=(const BufferWriteRef&) = delete;
 
     BufferManager* manager_ = nullptr;
     std::size_t index_ = 0;
     char* data_ = nullptr;
     std::size_t size_ = 0;
+    bool finished_ = false;
 };
 
 /** A simple buffer manager to buffer data during scanning for communication between UI and

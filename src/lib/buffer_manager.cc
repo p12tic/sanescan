@@ -23,13 +23,65 @@
 
 namespace sanescan {
 
+BufferReadRef::BufferReadRef(BufferReadRef&& other)
+{
+    *this = std::move(other);
+}
+
+BufferReadRef& BufferReadRef::operator=(BufferReadRef&& other)
+{
+    manager_ = other.manager_;
+    index_ = other.index_;
+    data_ = other.data_;
+    first_line_ = other.first_line_;
+    last_line_ = other.last_line_;
+    line_bytes_ = other.line_bytes_;
+    finished_ = other.finished_;
+    other.finished_ = true;
+    return *this;
+}
+
+BufferReadRef::~BufferReadRef()
+{
+    finish();
+}
+
 void BufferReadRef::finish()
 {
+    if (finished_) {
+        return;
+    }
+    finished_ = true;
     manager_->finish_read(index_);
+}
+
+BufferWriteRef::BufferWriteRef(BufferWriteRef&& other)
+{
+    *this = std::move(other);
+}
+
+BufferWriteRef& BufferWriteRef::operator=(BufferWriteRef&& other)
+{
+    manager_ = other.manager_;
+    index_ = other.index_;
+    data_ = other.data_;
+    size_ = other.size_;
+    finished_ = other.finished_;
+    other.finished_ = true;
+    return *this;
+}
+
+BufferWriteRef::~BufferWriteRef()
+{
+    finish(0);
 }
 
 void BufferWriteRef::finish(std::size_t size)
 {
+    if (finished_) {
+        return;
+    }
+    finished_ = true;
     manager_->finish_write(index_, size);
 }
 
