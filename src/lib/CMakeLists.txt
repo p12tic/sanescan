@@ -16,6 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 set(SOURCES
+    buffer_manager.cc
     sane_types.cc
     task_executor.cc
 )

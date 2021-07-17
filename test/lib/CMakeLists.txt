@@ -17,6 +17,7 @@
 
 set(SOURCES
     main.cc
+    buffer_manager.cc
 )
 
 include(FindPkgConfig)
@@ -28,6 +29,9 @@ include_directories(
 )
 
 add_executable(libtest ${SOURCES})
+target_include_directories(libtest PRIVATE
+    "${CMAKE_SOURCE_DIR}/src"
+)
 
 target_link_libraries(libtest
     ${GTEST_LIBRARIES} ${GMOCK_LIBRARIES}
