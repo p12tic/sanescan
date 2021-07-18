@@ -17,12 +17,16 @@
 
 set(SOURCES
     buffer_manager.cc
+    sane_device_wrapper.cc
     sane_types.cc
+    sane_utils.cc
+    sane_wrapper.cc
     task_executor.cc
 )
 
 add_library(sanescanlib OBJECT ${SOURCES})
 
-target_link_libraries(sanescanlib
+target_link_libraries(sanescanlib PUBLIC
     Threads::Threads
+    sane
 )
