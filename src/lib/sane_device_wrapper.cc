@@ -237,7 +237,7 @@ std::future<std::vector<SaneOptionIndexedValue>>
 }
 
 std::future<SaneOptionSetInfo>
-    SaneDeviceWrapper::set_option_value(std::size_t index, SaneOptionValue value)
+    SaneDeviceWrapper::set_option_value(std::size_t index, const SaneOptionValue& value)
 {
     return impl_->executor->schedule_task<SaneOptionSetInfo>([&, index, value]()
     {
