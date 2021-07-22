@@ -127,6 +127,15 @@ using SaneOptionValue = std::variant<
     std::string
 >;
 
+struct SaneOptionIndexedValue {
+    SaneOptionIndexedValue(std::size_t index, const SaneOptionValue& value) :
+        index{index}, value{value}
+    {}
+
+    std::size_t index = 0;
+    SaneOptionValue value;
+};
+
 /// Corresponds to SANE_Frame
 enum class SaneFrameType {
     GRAY = 0,

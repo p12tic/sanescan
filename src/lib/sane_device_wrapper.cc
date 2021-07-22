@@ -170,12 +170,12 @@ std::future<std::vector<SaneOptionGroupDestriptor>>
     });
 }
 
-std::future<std::vector<SaneOptionValue>>
+std::future<std::vector<SaneOptionIndexedValue>>
     SaneDeviceWrapper::get_all_option_values()
 {
-    return impl_->executor->schedule_task<std::vector<SaneOptionValue>>([this]()
+    return impl_->executor->schedule_task<std::vector<SaneOptionIndexedValue>>([this]()
     {
-        std::vector<SaneOptionValue> result;
+        std::vector<SaneOptionIndexedValue> result;
         for (const auto& group_desc : impl_->task_option_descriptors) {
             for (const auto& desc : group_desc.options) {
                 switch (desc.type) {
@@ -187,7 +187,7 @@ std::future<std::vector<SaneOptionValue>>
                                                                           SANE_ACTION_GET_VALUE,
                                                                           temp.data(), nullptr));
                         std::vector<bool> values(temp.begin(), temp.end());
-                        result.push_back(std::move(values));
+                        result.emplace_back(desc.index, std::move(values));
                         break;
                     }
                     case SaneValueType::INT: {
@@ -197,7 +197,7 @@ std::future<std::vector<SaneOptionValue>>
                         throw_if_sane_status_not_good(sane_control_option(impl_->handle, desc.index,
                                                                           SANE_ACTION_GET_VALUE,
                                                                           values.data(), nullptr));
-                        result.push_back(std::move(values));
+                        result.emplace_back(desc.index, std::move(values));
                         break;
                     }
                     case SaneValueType::FLOAT: {
@@ -212,7 +212,7 @@ std::future<std::vector<SaneOptionValue>>
                         for (std::size_t i = 0; i < desc.size; ++i) {
                             values[i] = SANE_UNFIX(temp[i]);
                         }
-                        result.push_back(std::move(values));
+                        result.emplace_back(desc.index, std::move(values));
                         break;
                     }
                     case SaneValueType::STRING: {
@@ -222,7 +222,7 @@ std::future<std::vector<SaneOptionValue>>
                                                                           SANE_ACTION_GET_VALUE,
                                                                           value.data(), nullptr));
                         value.resize(std::strlen(value.c_str()));
-                        result.push_back(std::move(value));
+                        result.emplace_back(desc.index, std::move(value));
                         break;
                     }
                     case SaneValueType::GROUP: {

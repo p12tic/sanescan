@@ -47,7 +47,7 @@ public:
     std::future<std::vector<SaneOptionGroupDestriptor>> get_option_groups();
 
     /// The option that contains the total option count is not returned
-    std::future<std::vector<SaneOptionValue>> get_all_option_values();
+    std::future<std::vector<SaneOptionIndexedValue>> get_all_option_values();
     std::future<SaneOptionSetInfo> set_option_value(std::size_t index, SaneOptionValue value);
     std::future<SaneOptionSetInfo> set_option_value_auto(std::size_t index);
 
