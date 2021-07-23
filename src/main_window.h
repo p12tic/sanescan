@@ -19,7 +19,9 @@
 #ifndef SANESCAN_MAIN_WINDOW_H
 #define SANESCAN_MAIN_WINDOW_H
 
+#include "scan_engine.h"
 #include <QtWidgets/QMainWindow>
+#include <QtCore/QTimer>
 #include <memory>
 
 namespace sanescan {
@@ -33,13 +35,20 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    static constexpr int STACK_LOADING = 0;
+    static constexpr int STACK_SETTINGS = 1;
+
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
     void present_about_dialog();
 
 private:
+    void devices_refreshed();
+
     std::unique_ptr<Ui::MainWindow> ui_;
+    ScanEngine engine_;
+    QTimer engine_timer_;
 };
 
 } // namespace sanescan
