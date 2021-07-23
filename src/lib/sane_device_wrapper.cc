@@ -378,7 +378,7 @@ void SaneDeviceWrapper::task_schedule_read()
                                     write_buf->size(), &bytes_written);
             write_buf->finish(bytes_written);
 
-            if (status == SANE_STATUS_EOF) {
+            if (status == SANE_STATUS_EOF || status == SANE_STATUS_CANCELLED) {
                 impl_->finished = true;
                 return;
             }
