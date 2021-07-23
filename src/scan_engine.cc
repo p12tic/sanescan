@@ -138,6 +138,9 @@ void ScanEngine::perform_step()
     for (std::size_t i = 0; i < impl_->pollers.size();) {
         if (impl_->pollers[i]->poll()) {
             impl_->pollers.erase(impl_->pollers.begin() + i);
+            if (impl_->pollers.empty()) {
+                Q_EMIT stop_polling();
+            }
         } else {
             ++i;
         }
@@ -146,7 +149,7 @@ void ScanEngine::perform_step()
 
 void ScanEngine::refresh_devices()
 {
-    impl_->pollers.push_back(std::make_unique<Poller<std::vector<SaneDeviceInfo>>>(
+    push_poller(std::make_unique<Poller<std::vector<SaneDeviceInfo>>>(
                 impl_->wrapper.get_device_info(),
                 [this](auto devices)
     {
@@ -166,7 +169,7 @@ void ScanEngine::open_device(const std::string& name)
         throw std::runtime_error("Can't open multiple devices concurrently");
     }
 
-    impl_->pollers.push_back(std::make_unique<Poller<std::unique_ptr<SaneDeviceWrapper>>>(
+    push_poller(std::make_unique<Poller<std::unique_ptr<SaneDeviceWrapper>>>(
                 impl_->wrapper.open_device(name),
                 [this](auto device_wrapper)
     {
@@ -215,7 +218,7 @@ void ScanEngine::set_option_value(const std::string& name, const SaneOptionValue
         throw std::runtime_error("Can't access options when device is closed");
     }
 
-    impl_->pollers.push_back(std::make_unique<Poller<SaneOptionSetInfo>>(
+    push_poller(std::make_unique<Poller<SaneOptionSetInfo>>(
                 impl_->device_wrapper->set_option_value(get_option_index(name), value),
                 [this](SaneOptionSetInfo set_info)
     {
@@ -229,7 +232,7 @@ void ScanEngine::set_option_value_auto(const std::string& name)
         throw std::runtime_error("Can't access options when device is closed");
     }
 
-    impl_->pollers.push_back(std::make_unique<Poller<SaneOptionSetInfo>>(
+    push_poller(std::make_unique<Poller<SaneOptionSetInfo>>(
                 impl_->device_wrapper->set_option_value_auto(get_option_index(name)),
                 [this](SaneOptionSetInfo set_info)
     {
@@ -242,20 +245,20 @@ void ScanEngine::start_scan()
     if (!impl_->device_open) {
         throw std::runtime_error("Can't control scan when device is closed");
     }
-    impl_->pollers.push_back(std::make_unique<Poller<SaneParameters>>(
+    push_poller(std::make_unique<Poller<SaneParameters>>(
                 impl_->device_wrapper->get_parameters(),
                 [this](SaneParameters params)
     {
         impl_->params = params;
     }));
 
-    impl_->pollers.push_back(std::make_unique<Poller<void>>(
+    push_poller(std::make_unique<Poller<void>>(
                 impl_->device_wrapper->start(),
                 [this]()
     {
         impl_->image_converter.start_frame(impl_->params);
-        impl_->pollers.push_back(std::make_unique<ScanDataPoller>(this, impl_->device_wrapper.get(),
-                                                                  &impl_->image_converter));
+        push_poller(std::make_unique<ScanDataPoller>(this, impl_->device_wrapper.get(),
+                                                     &impl_->image_converter));
     }));
 }
 
@@ -273,7 +276,7 @@ const QImage& ScanEngine::scan_image() const
 
 void ScanEngine::request_options()
 {
-    impl_->pollers.push_back(std::make_unique<Poller<std::vector<SaneOptionGroupDestriptor>>>(
+    push_poller(std::make_unique<Poller<std::vector<SaneOptionGroupDestriptor>>>(
                 impl_->device_wrapper->get_option_groups(),
                 [this](auto option_groups)
     {
@@ -295,7 +298,7 @@ void ScanEngine::request_option_values()
     // NOTE: the caller must ensure that request_options is called before this function whenever
     // the parameter list becomes out of date. We don't need to do any additional synchronization
     // here because all requests are processed in order.
-    impl_->pollers.push_back(std::make_unique<Poller<std::vector<SaneOptionIndexedValue>>>(
+    push_poller(std::make_unique<Poller<std::vector<SaneOptionIndexedValue>>>(
                 impl_->device_wrapper->get_all_option_values(),
                 [this](auto option_values)
     {
@@ -327,6 +330,15 @@ std::size_t ScanEngine::get_option_index(const std::string& name) const
         throw std::runtime_error("Unknown option: " + name);
     }
     return index_it->second;
+}
+
+void ScanEngine::push_poller(std::unique_ptr<IPoller>&& poller)
+{
+    bool empty = impl_->pollers.empty();
+    impl_->pollers.push_back(std::move(poller));
+    if (empty) {
+        Q_EMIT start_polling();
+    }
 }
 
 } // namespace sanescan

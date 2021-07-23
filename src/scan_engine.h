@@ -25,11 +25,17 @@
 
 namespace sanescan {
 
+struct IPoller;
+
 /** This class is the main point where the Qt GUI and asynchronous SANE wrapper meet. It hooks into
     the GUI via the `perform_step()` function which is supposed to be called repeatedly and
     then fires signals whenever an important event has occurred.
 
     Currently only single scan is supported concurrently.
+
+    `start_polling()` and `end_polling()` signals are emitted when the engine starts and ends
+    polling respectively. They can be used to control how often `perform_step()` is called, if at
+    all.
 */
 class ScanEngine : public QObject {
     Q_OBJECT
@@ -92,11 +98,15 @@ Q_SIGNALS:
     void image_updated();
     void on_error(const std::string& error_message);
 
+    void start_polling();
+    void stop_polling();
+
 private:
     void request_options();
     void request_option_values();
     void refresh_after_set_if_needed(SaneOptionSetInfo set_info);
     std::size_t get_option_index(const std::string& name) const;
+    void push_poller(std::unique_ptr<IPoller>&& poller);
 
     struct Impl;
     std::unique_ptr<Impl> impl_;
