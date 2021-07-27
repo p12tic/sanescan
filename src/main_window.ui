@@ -53,7 +53,7 @@
       <widget class="QWidget" name="page_settings">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="sanescan::ScanSettingsWidget" name="widget" native="true"/>
+         <widget class="sanescan::ScanSettingsWidget" name="settings_widget" native="true"/>
         </item>
        </layout>
       </widget>
