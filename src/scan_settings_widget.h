@@ -19,6 +19,7 @@
 #ifndef SANESCAN_SCAN_SETTINGS_H
 #define SANESCAN_SCAN_SETTINGS_H
 
+#include "lib/sane_types.h"
 #include <QtWidgets/QFrame>
 #include <memory>
 
@@ -36,7 +37,13 @@ public:
     explicit ScanSettingsWidget(QWidget *parent = nullptr);
     ~ScanSettingsWidget() override;
 
+    void set_current_devices(const std::vector<SaneDeviceInfo>& devices);
+
+Q_SIGNALS:
+    void refresh_devices_clicked();
+
 private:
+    std::vector<SaneDeviceInfo> devices_;
     std::unique_ptr<Ui::ScanSettingsWidget> ui_;
 };
 

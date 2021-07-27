@@ -19,6 +19,7 @@
 #include "main_window.h"
 #include "about_dialog.h"
 #include "image_widget.h"
+#include "scan_settings_widget.h"
 #include "ui_main_window.h"
 
 namespace sanescan {
@@ -37,8 +38,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&engine_, &ScanEngine::devices_refreshed, [this]() { devices_refreshed(); });
     connect(&engine_, &ScanEngine::start_polling, [this]() { engine_timer_.start(1); });
     connect(&engine_, &ScanEngine::stop_polling, [this]() { engine_timer_.stop(); });
+    connect(ui_->settings_widget, &ScanSettingsWidget::refresh_devices_clicked,
+            [this]() { refresh_devices(); });
 
-    engine_.refresh_devices();
+    refresh_devices();
 }
 
 MainWindow::~MainWindow() = default;
@@ -49,9 +52,16 @@ void MainWindow::present_about_dialog()
     dialog.exec();
 }
 
+void MainWindow::refresh_devices()
+{
+    ui_->stack_settings->setCurrentIndex(STACK_LOADING);
+    engine_.refresh_devices();
+}
+
 void MainWindow::devices_refreshed()
 {
     ui_->stack_settings->setCurrentIndex(STACK_SETTINGS);
+    ui_->settings_widget->set_current_devices(engine_.current_devices());
 }
 
 } // namespace sanescan

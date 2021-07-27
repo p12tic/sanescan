@@ -27,8 +27,21 @@ ScanSettingsWidget::ScanSettingsWidget(QWidget *parent) :
     ui_{std::make_unique<Ui::ScanSettingsWidget>()}
 {
     ui_->setupUi(this);
+
+    connect(ui_->b_refresh_devices, &QPushButton::clicked,
+            [this]() { Q_EMIT refresh_devices_clicked(); });
 }
 
 ScanSettingsWidget::~ScanSettingsWidget() = default;
+
+void ScanSettingsWidget::set_current_devices(const std::vector<SaneDeviceInfo>& devices)
+{
+    devices_ = devices;
+    ui_->cb_scanners->clear();
+    for (const auto& dev : devices_) {
+        ui_->cb_scanners->addItem(QString::fromStdString(dev.vendor + " " + dev.model +
+                                                         " (" + dev.name + ")"));
+    }
+}
 
 } // namespace sanescan

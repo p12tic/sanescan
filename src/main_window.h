@@ -44,6 +44,7 @@ public:
     void present_about_dialog();
 
 private:
+    void refresh_devices();
     void devices_refreshed();
 
     std::unique_ptr<Ui::MainWindow> ui_;
