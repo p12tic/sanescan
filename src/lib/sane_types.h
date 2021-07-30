@@ -77,14 +77,20 @@ inline SaneCap operator&(SaneCap lhs, SaneCap rhs)
     return static_cast<SaneCap>(static_cast<int>(lhs) & static_cast<int>(rhs));
 }
 
-struct SaneConstraintNone {};
+struct SaneConstraintNone {
+    bool operator==(const SaneConstraintNone& other) const { return true; }
+};
 
 struct SaneConstraintStringList {
     std::vector<std::string> strings;
+
+    bool operator==(const SaneConstraintStringList& other) const;
 };
 
 struct SaneConstraintNumberList {
     std::vector<int> numbers;
+
+    bool operator==(const SaneConstraintNumberList& other) const;
 };
 
 /// corresponds to SANE_Range type
@@ -92,6 +98,8 @@ struct SaneConstraintRange {
     int min = 0;
     int max = 0;
     int quantization = 0;
+
+    bool operator==(const SaneConstraintRange& other) const;
 };
 
 /// corresponds to SANE_Option_Descriptor
@@ -111,6 +119,8 @@ struct SaneOptionDescriptor {
         SaneConstraintNumberList,
         SaneConstraintRange
     > constraint;
+
+    bool operator==(const SaneOptionDescriptor& other) const;
 };
 
 struct SaneOptionGroupDestriptor {
@@ -118,6 +128,8 @@ struct SaneOptionGroupDestriptor {
     std::string title;
     std::string description;
     std::vector<SaneOptionDescriptor> options;
+
+    bool operator==(const SaneOptionGroupDestriptor& other) const;
 };
 
 using SaneOptionValue = std::variant<

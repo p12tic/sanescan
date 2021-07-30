@@ -95,5 +95,41 @@ std::string_view sane_unit_to_string_upper(SaneUnit unit)
     return desc ? desc->uppercase_desc : "Unknown";
 }
 
+bool SaneConstraintStringList::operator==(const SaneConstraintStringList& other) const
+{
+    return strings == other.strings;
+}
+
+bool SaneConstraintNumberList::operator==(const SaneConstraintNumberList& other) const
+{
+    return numbers == other.numbers;
+}
+
+bool SaneConstraintRange::operator==(const SaneConstraintRange& other) const
+{
+    return min == other.min && max == other.max && quantization == other.quantization;
+}
+
+bool SaneOptionDescriptor::operator==(const SaneOptionDescriptor& other) const
+{
+    return index == other.index &&
+            name == other.name &&
+            title == other.title &&
+            description == other.description &&
+            unit == other.unit &&
+            type == other.type &&
+            size == other.size &&
+            cap == other.cap &&
+            constraint == other.constraint;
+}
+
+bool SaneOptionGroupDestriptor::operator==(const SaneOptionGroupDestriptor& other) const
+{
+    return name == other.name &&
+            title == other.title &&
+            description == other.description &&
+            options == other.options;
+}
+
 } // namespace sanescan
 
