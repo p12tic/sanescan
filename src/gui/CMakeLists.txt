@@ -15,6 +15,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-add_subdirectory(lib)
-add_subdirectory(gui)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+find_package(Qt5 COMPONENTS Core Widgets)
+find_package(Threads)
 
+set(SOURCES
+    about_dialog.cc
+    about_dialog.ui
+    image_widget.cc
+    main.cc
+    main_window.cc
+    main_window.ui
+    qimage_converter.cc
+    scan_engine.cc
+    scan_settings_widget.cc
+    scan_settings_widget.ui
+)
+
+configure_file(version.h.in version.h)
+
+add_executable(sanescan ${SOURCES})
+
+target_include_directories(sanescan PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(sanescan PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(sanescan
+    Qt5::Core
+    Qt5::Widgets
+    Threads::Threads
+    sanescanlib
+)

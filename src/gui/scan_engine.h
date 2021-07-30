@@ -16,10 +16,10 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_SCAN_ENGINE_H
-#define SANESCAN_SCAN_ENGINE_H
+#ifndef SANESCAN_GUI_SCAN_ENGINE_H
+#define SANESCAN_GUI_SCAN_ENGINE_H
 
-#include "lib/sane_types.h"
+#include "../lib/sane_types.h"
 #include <QtCore/QObject>
 #include <memory>
 
@@ -114,4 +114,4 @@ private:
 
 } // namespace sanescan
 
-#endif
+#endif // SANESCAN_GUI_SCAN_ENGINE_H

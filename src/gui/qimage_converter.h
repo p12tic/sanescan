@@ -16,10 +16,10 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_IMAGE_CONVERTER_H
-#define SANESCAN_IMAGE_CONVERTER_H
+#ifndef SANESCAN_GUI_IMAGE_CONVERTER_H
+#define SANESCAN_GUI_IMAGE_CONVERTER_H
 
-#include "lib/sane_types.h"
+#include "../lib/sane_types.h"
 #include <memory>
 
 class QImage;
@@ -50,4 +50,4 @@ private:
 
 } // namespace sanescan
 
-#endif // SANESCAN_IMAGE_CONVERTER_H
+#endif // SANESCAN_GUI_IMAGE_CONVERTER_H

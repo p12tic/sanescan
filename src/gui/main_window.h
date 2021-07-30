@@ -1,6 +1,6 @@
 /*  SPDX-License-Identifier: GPL-3.0-or-later
 
-    Copyright (C) 2021  Monika Kairaityte <monika@kibit.lt>
+    Copyright (C) 2021  Povilas Kanapickas <povilas@radix.lt>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,32 +16,42 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_IMAGE_WIDGET_H
-#define SANESCAN_IMAGE_WIDGET_H
+#ifndef SANESCAN_GUI_MAIN_WINDOW_H
+#define SANESCAN_GUI_MAIN_WINDOW_H
 
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QScrollArea>
+#include "scan_engine.h"
+#include <QtWidgets/QMainWindow>
+#include <QtCore/QTimer>
+#include <memory>
 
 namespace sanescan {
 
-class ImageWidget : public QScrollArea
+namespace Ui {
+    class MainWindow;
+}
+
+class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit ImageWidget(QWidget *parent = nullptr);
-    ~ImageWidget() override;
+    static constexpr int STACK_LOADING = 0;
+    static constexpr int STACK_SETTINGS = 1;
 
-    void wheelEvent(QWheelEvent* event) override;
+    explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow() override;
 
-    void set_image(const QImage& image);
-    void rescale_by(float scale_mult);
+    void present_about_dialog();
 
 private:
-    QLabel* image_ = nullptr;
-    float scale_ = 1.0f;
+    void refresh_devices();
+    void devices_refreshed();
+
+    std::unique_ptr<Ui::MainWindow> ui_;
+    ScanEngine engine_;
+    QTimer engine_timer_;
 };
 
 } // namespace sanescan
 
-#endif // SANESCAN_IMAGE_WIDGET_H
+#endif // SANESCAN_GUI_MAIN_WINDOW_H

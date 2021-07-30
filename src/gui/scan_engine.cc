@@ -17,7 +17,7 @@
 */
 
 #include "scan_engine.h"
-#include "lib/sane_wrapper.h"
+#include "../lib/sane_wrapper.h"
 #include "qimage_converter.h"
 #include <deque>
 #include <functional>

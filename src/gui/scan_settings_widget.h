@@ -16,30 +16,37 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_VERSION_DIALOG_H
-#define SANESCAN_VERSION_DIALOG_H
+#ifndef SANESCAN_GUI_SCAN_SETTINGS_H
+#define SANESCAN_GUI_SCAN_SETTINGS_H
 
-#include <QtWidgets/QDialog>
+#include "../lib/sane_types.h"
+#include <QtWidgets/QFrame>
 #include <memory>
 
 namespace sanescan {
 
 namespace Ui {
-    class AboutDialog;
+    class ScanSettingsWidget;
 }
 
-class AboutDialog : public QDialog
+class ScanSettingsWidget : public QFrame
 {
     Q_OBJECT
 
 public:
-    explicit AboutDialog(QWidget *parent = nullptr);
-    ~AboutDialog() override;
+    explicit ScanSettingsWidget(QWidget *parent = nullptr);
+    ~ScanSettingsWidget() override;
+
+    void set_current_devices(const std::vector<SaneDeviceInfo>& devices);
+
+Q_SIGNALS:
+    void refresh_devices_clicked();
 
 private:
-    std::unique_ptr<Ui::AboutDialog> ui_;
+    std::vector<SaneDeviceInfo> devices_;
+    std::unique_ptr<Ui::ScanSettingsWidget> ui_;
 };
 
-
 } // namespace sanescan
-#endif // SANESCAN_VERSION_DIALOG_H
+
+#endif // SANESCAN_GUI_SCAN_SETTINGS_H

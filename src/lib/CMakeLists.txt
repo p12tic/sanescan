@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+find_package(Threads)
+
 set(SOURCES
     buffer_manager.cc
     sane_device_wrapper.cc

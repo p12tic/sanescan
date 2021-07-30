@@ -16,37 +16,32 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_SCAN_SETTINGS_H
-#define SANESCAN_SCAN_SETTINGS_H
+#ifndef SANESCAN_GUI_IMAGE_WIDGET_H
+#define SANESCAN_GUI_IMAGE_WIDGET_H
 
-#include "lib/sane_types.h"
-#include <QtWidgets/QFrame>
-#include <memory>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QScrollArea>
 
 namespace sanescan {
 
-namespace Ui {
-    class ScanSettingsWidget;
-}
-
-class ScanSettingsWidget : public QFrame
+class ImageWidget : public QScrollArea
 {
     Q_OBJECT
 
 public:
-    explicit ScanSettingsWidget(QWidget *parent = nullptr);
-    ~ScanSettingsWidget() override;
+    explicit ImageWidget(QWidget *parent = nullptr);
+    ~ImageWidget() override;
 
-    void set_current_devices(const std::vector<SaneDeviceInfo>& devices);
+    void wheelEvent(QWheelEvent* event) override;
 
-Q_SIGNALS:
-    void refresh_devices_clicked();
+    void set_image(const QImage& image);
+    void rescale_by(float scale_mult);
 
 private:
-    std::vector<SaneDeviceInfo> devices_;
-    std::unique_ptr<Ui::ScanSettingsWidget> ui_;
+    QLabel* image_ = nullptr;
+    float scale_ = 1.0f;
 };
 
 } // namespace sanescan
 
-#endif // SANESCAN_SCAN_SETTINGS_H
+#endif // SANESCAN_GUI_IMAGE_WIDGET_H
