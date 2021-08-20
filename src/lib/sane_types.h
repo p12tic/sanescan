@@ -93,6 +93,12 @@ struct SaneConstraintIntList {
     bool operator==(const SaneConstraintIntList& other) const;
 };
 
+struct SaneConstraintFloatList {
+    std::vector<double> numbers;
+
+    bool operator==(const SaneConstraintFloatList& other) const;
+};
+
 /// corresponds to SANE_Range type
 struct SaneConstraintRange {
     int min = 0;
@@ -115,8 +121,9 @@ struct SaneOptionDescriptor {
 
     std::variant<
         SaneConstraintNone,
-        SaneConstraintStringList,
-        SaneConstraintIntList,
+        SaneConstraintStringList, // only if type == SaneValueType::STRING
+        SaneConstraintIntList, // only if type == SaneValueType::INT
+        SaneConstraintFloatList, // only if type == SaneValueType::FLOAT
         SaneConstraintRange
     > constraint;
 

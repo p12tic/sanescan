@@ -75,10 +75,28 @@ SaneOptionDescriptor convert_sane_option_descriptor(int index, const SANE_Option
         }
         case SANE_CONSTRAINT_WORD_LIST: {
             const SANE_Word* ptr = desc->constraint.word_list;
-            SaneConstraintIntList constraint;
-            int length = *ptr++;
-            constraint.numbers.assign(ptr, ptr + length);
-            option.constraint = std::move(constraint);
+            switch (option.type) {
+                case SaneValueType::INT: {
+                    SaneConstraintIntList constraint;
+                    int length = *ptr++;
+                    constraint.numbers.assign(ptr, ptr + length);
+                    option.constraint = std::move(constraint);
+                    break;
+                }
+                case SaneValueType::FLOAT: {
+                    SaneConstraintFloatList constraint;
+                    int length = *ptr++;
+                    constraint.numbers.reserve(length);
+                    for (int i = 0; i < length; ++i) {
+                        constraint.numbers.push_back(SANE_UNFIX(*ptr++));
+                    }
+                    option.constraint = std::move(constraint);
+                    break;
+                }
+                default:
+                    throw SaneException("word list constraint used on wrong option type " +
+                                        std::to_string(desc->type));
+            }
             break;
         }
     }

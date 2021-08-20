@@ -105,6 +105,11 @@ bool SaneConstraintIntList::operator==(const SaneConstraintIntList& other) const
     return numbers == other.numbers;
 }
 
+bool SaneConstraintFloatList::operator==(const SaneConstraintFloatList& other) const
+{
+    return numbers == other.numbers;
+}
+
 bool SaneConstraintRange::operator==(const SaneConstraintRange& other) const
 {
     return min == other.min && max == other.max && quantization == other.quantization;
