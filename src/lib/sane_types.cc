@@ -100,7 +100,7 @@ bool SaneConstraintStringList::operator==(const SaneConstraintStringList& other)
     return strings == other.strings;
 }
 
-bool SaneConstraintNumberList::operator==(const SaneConstraintNumberList& other) const
+bool SaneConstraintIntList::operator==(const SaneConstraintIntList& other) const
 {
     return numbers == other.numbers;
 }

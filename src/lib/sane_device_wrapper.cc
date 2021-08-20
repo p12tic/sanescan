@@ -75,7 +75,7 @@ SaneOptionDescriptor convert_sane_option_descriptor(int index, const SANE_Option
         }
         case SANE_CONSTRAINT_WORD_LIST: {
             const SANE_Word* ptr = desc->constraint.word_list;
-            SaneConstraintNumberList constraint;
+            SaneConstraintIntList constraint;
             int length = *ptr++;
             constraint.numbers.assign(ptr, ptr + length);
             option.constraint = std::move(constraint);

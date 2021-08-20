@@ -87,10 +87,10 @@ struct SaneConstraintStringList {
     bool operator==(const SaneConstraintStringList& other) const;
 };
 
-struct SaneConstraintNumberList {
+struct SaneConstraintIntList {
     std::vector<int> numbers;
 
-    bool operator==(const SaneConstraintNumberList& other) const;
+    bool operator==(const SaneConstraintIntList& other) const;
 };
 
 /// corresponds to SANE_Range type
@@ -116,7 +116,7 @@ struct SaneOptionDescriptor {
     std::variant<
         SaneConstraintNone,
         SaneConstraintStringList,
-        SaneConstraintNumberList,
+        SaneConstraintIntList,
         SaneConstraintRange
     > constraint;
 
