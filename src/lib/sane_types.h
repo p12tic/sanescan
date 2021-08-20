@@ -99,13 +99,22 @@ struct SaneConstraintFloatList {
     bool operator==(const SaneConstraintFloatList& other) const;
 };
 
-/// corresponds to SANE_Range type
+/// corresponds to SANE_Range type when option is INT
 struct SaneConstraintIntRange {
     int min = 0;
     int max = 0;
     int quantization = 0;
 
     bool operator==(const SaneConstraintIntRange& other) const;
+};
+
+/// corresponds to SANE_Range type when option is FLOAT
+struct SaneConstraintFloatRange {
+    double min = 0;
+    double max = 0;
+    double quantization = 0;
+
+    bool operator==(const SaneConstraintFloatRange& other) const;
 };
 
 /// corresponds to SANE_Option_Descriptor
@@ -124,7 +133,8 @@ struct SaneOptionDescriptor {
         SaneConstraintStringList, // only if type == SaneValueType::STRING
         SaneConstraintIntList, // only if type == SaneValueType::INT
         SaneConstraintFloatList, // only if type == SaneValueType::FLOAT
-        SaneConstraintIntRange
+        SaneConstraintIntRange, // only if type == SaneValueType::INT
+        SaneConstraintFloatRange // only if type == SaneValueType::FLOAT
     > constraint;
 
     bool operator==(const SaneOptionDescriptor& other) const;

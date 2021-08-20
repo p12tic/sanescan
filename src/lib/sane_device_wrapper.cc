@@ -61,7 +61,21 @@ SaneOptionDescriptor convert_sane_option_descriptor(int index, const SANE_Option
         }
         case SANE_CONSTRAINT_RANGE: {
             const auto* range = desc->constraint.range;
-            option.constraint = SaneConstraintIntRange{range->min, range->max, range->quant};
+            switch (option.type) {
+                case SaneValueType::INT: {
+                    option.constraint = SaneConstraintIntRange{range->min, range->max, range->quant};
+                    break;
+                }
+                case SaneValueType::FLOAT: {
+                    option.constraint = SaneConstraintFloatRange{SANE_UNFIX(range->min),
+                                                                 SANE_UNFIX(range->max),
+                                                                 SANE_UNFIX(range->quant)};
+                    break;
+                }
+                default:
+                    throw SaneException("word list constraint used on wrong option type " +
+                                        std::to_string(desc->type));
+            }
             break;
         }
         case SANE_CONSTRAINT_STRING_LIST: {

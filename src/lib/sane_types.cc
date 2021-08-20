@@ -115,6 +115,11 @@ bool SaneConstraintIntRange::operator==(const SaneConstraintIntRange& other) con
     return min == other.min && max == other.max && quantization == other.quantization;
 }
 
+bool SaneConstraintFloatRange::operator==(const SaneConstraintFloatRange& other) const
+{
+    return min == other.min && max == other.max && quantization == other.quantization;
+}
+
 bool SaneOptionDescriptor::operator==(const SaneOptionDescriptor& other) const
 {
     return index == other.index &&
