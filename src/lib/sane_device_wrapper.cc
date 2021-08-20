@@ -61,7 +61,7 @@ SaneOptionDescriptor convert_sane_option_descriptor(int index, const SANE_Option
         }
         case SANE_CONSTRAINT_RANGE: {
             const auto* range = desc->constraint.range;
-            option.constraint = SaneConstraintRange{range->min, range->max, range->quant};
+            option.constraint = SaneConstraintIntRange{range->min, range->max, range->quant};
             break;
         }
         case SANE_CONSTRAINT_STRING_LIST: {

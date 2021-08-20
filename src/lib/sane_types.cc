@@ -110,7 +110,7 @@ bool SaneConstraintFloatList::operator==(const SaneConstraintFloatList& other) c
     return numbers == other.numbers;
 }
 
-bool SaneConstraintRange::operator==(const SaneConstraintRange& other) const
+bool SaneConstraintIntRange::operator==(const SaneConstraintIntRange& other) const
 {
     return min == other.min && max == other.max && quantization == other.quantization;
 }
