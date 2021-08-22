@@ -33,6 +33,8 @@ set(SOURCES
     scan_settings_widget.ui
     settings/setting_combo.cc
     settings/setting_combo.ui
+    settings/setting_spin.cc
+    settings/setting_spin.ui
 )
 
 configure_file(version.h.in version.h)
