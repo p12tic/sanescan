@@ -31,6 +31,8 @@ set(SOURCES
     scan_engine.cc
     scan_settings_widget.cc
     scan_settings_widget.ui
+    settings/setting_combo.cc
+    settings/setting_combo.ui
 )
 
 configure_file(version.h.in version.h)
