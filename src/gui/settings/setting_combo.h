@@ -19,7 +19,7 @@
 #ifndef SANESCAN_GUI_SETTING_SETTING_COMBO_H
 #define SANESCAN_GUI_SETTING_SETTING_COMBO_H
 
-#include "../../lib/sane_types.h"
+#include "setting_widget.h"
 #include <QtWidgets/QWidget>
 #include <memory>
 
@@ -29,7 +29,7 @@ namespace Ui {
     class SettingCombo;
 }
 
-class SettingCombo : public QWidget
+class SettingCombo : public SettingWidget
 {
     Q_OBJECT
 
@@ -37,12 +37,9 @@ public:
     explicit SettingCombo(QWidget* parent = nullptr);
     ~SettingCombo() override;
 
-    void set_option_descriptor(const SaneOptionDescriptor& descriptor);
-    void set_value(const SaneOptionValue& value);
-    void set_enabled(bool enabled);
-
-Q_SIGNALS:
-    void value_changed(const SaneOptionValue& value);
+    void set_option_descriptor(const SaneOptionDescriptor& descriptor) override;
+    void set_value(const SaneOptionValue& value) override;
+    void set_enabled(bool enabled) override;
 
 private:
     void value_index_changed(int index);

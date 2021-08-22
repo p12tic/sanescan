@@ -37,6 +37,7 @@ set(SOURCES
     settings/setting_spin.ui
     settings/setting_spin_float.cc
     settings/setting_spin_float.ui
+    settings/setting_widget.cc
 )
 
 configure_file(version.h.in version.h)

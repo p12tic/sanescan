@@ -19,8 +19,7 @@
 #ifndef SANESCAN_GUI_SETTING_SETTING_SPIN_FLOAT_H
 #define SANESCAN_GUI_SETTING_SETTING_SPIN_FLOAT_H
 
-#include "../../lib/sane_types.h"
-#include <QtWidgets/QWidget>
+#include "setting_widget.h"
 #include <memory>
 
 namespace sanescan {
@@ -29,19 +28,16 @@ namespace Ui {
     class SettingSpinFloat;
 }
 
-class SettingSpinFloat : public QWidget
+class SettingSpinFloat : public SettingWidget
 {
     Q_OBJECT
 public:
     explicit SettingSpinFloat(QWidget* parent = nullptr);
     ~SettingSpinFloat() override;
 
-    void set_option_descriptor(const SaneOptionDescriptor& descriptor);
-    void set_value(const SaneOptionValue& value);
-    void set_enabled(bool enabled);
-
-Q_SIGNALS:
-    void value_changed(const SaneOptionValue& value);
+    void set_option_descriptor(const SaneOptionDescriptor& descriptor) override;
+    void set_value(const SaneOptionValue& value) override;
+    void set_enabled(bool enabled) override;
 
 private:
     void verify_supported_type(SaneValueType type);

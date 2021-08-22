@@ -65,7 +65,7 @@ int find_option_index_impl(const std::vector<T>& values, const std::vector<T>& g
 } // namespace
 
 SettingCombo::SettingCombo(QWidget *parent) :
-    QWidget(parent),
+    SettingWidget(parent),
     ui_{std::make_unique<Ui::SettingCombo>()}
 {
     ui_->setupUi(this);

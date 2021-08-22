@@ -16,39 +16,10 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_GUI_SETTING_SETTING_SPIN_H
-#define SANESCAN_GUI_SETTING_SETTING_SPIN_H
-
 #include "setting_widget.h"
-#include <QtWidgets/QWidget>
-#include <memory>
 
 namespace sanescan {
 
-namespace Ui {
-    class SettingSpin;
-}
-
-class SettingSpin : public SettingWidget
-{
-    Q_OBJECT
-public:
-    explicit SettingSpin(QWidget* parent = nullptr);
-    ~SettingSpin() override;
-
-    void set_option_descriptor(const SaneOptionDescriptor& descriptor) override;
-    void set_value(const SaneOptionValue& value) override;
-    void set_enabled(bool enabled) override;
-
-private:
-    void verify_supported_type(SaneValueType type);
-
-    std::optional<SaneConstraintIntRange> constraint_;
-
-    SaneOptionDescriptor descriptor_;
-    std::unique_ptr<Ui::SettingSpin> ui_;
-};
-
+SettingWidget::SettingWidget(QWidget* parent) : QWidget(parent) {}
 
 } // namespace sanescan
-#endif // SANESCAN_SETTING_SPIN_H

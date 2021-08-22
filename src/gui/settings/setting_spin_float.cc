@@ -22,7 +22,7 @@
 namespace sanescan {
 
 SettingSpinFloat::SettingSpinFloat(QWidget *parent) :
-    QWidget(parent),
+    SettingWidget(parent),
     ui_{std::make_unique<Ui::SettingSpinFloat>()}
 {
     ui_->setupUi(this);

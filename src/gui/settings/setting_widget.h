@@ -16,39 +16,29 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_GUI_SETTING_SETTING_SPIN_H
-#define SANESCAN_GUI_SETTING_SETTING_SPIN_H
+#ifndef SANESCAN_GUI_SETTING_SETTING_WIDGET_H
+#define SANESCAN_GUI_SETTING_SETTING_WIDGET_H
 
-#include "setting_widget.h"
+#include "../../lib/sane_types.h"
 #include <QtWidgets/QWidget>
 #include <memory>
 
 namespace sanescan {
 
-namespace Ui {
-    class SettingSpin;
-}
-
-class SettingSpin : public SettingWidget
+class SettingWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit SettingSpin(QWidget* parent = nullptr);
-    ~SettingSpin() override;
+    explicit SettingWidget(QWidget* parent = nullptr);
 
-    void set_option_descriptor(const SaneOptionDescriptor& descriptor) override;
-    void set_value(const SaneOptionValue& value) override;
-    void set_enabled(bool enabled) override;
+    virtual void set_option_descriptor(const SaneOptionDescriptor& descriptor) = 0;
+    virtual void set_value(const SaneOptionValue& value) = 0;
+    virtual void set_enabled(bool enabled) = 0;
 
-private:
-    void verify_supported_type(SaneValueType type);
-
-    std::optional<SaneConstraintIntRange> constraint_;
-
-    SaneOptionDescriptor descriptor_;
-    std::unique_ptr<Ui::SettingSpin> ui_;
+Q_SIGNALS:
+    void value_changed(const SaneOptionValue& value);
 };
 
-
 } // namespace sanescan
-#endif // SANESCAN_SETTING_SPIN_H
+
+#endif // SANESCAN_GUI_SETTING_SETTING_COMBO_H
