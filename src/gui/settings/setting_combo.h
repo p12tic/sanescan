@@ -41,10 +41,11 @@ public:
     void set_value(const SaneOptionValue& value) override;
     void set_enabled(bool enabled) override;
 
+    static bool is_descriptor_supported(const SaneOptionDescriptor& descriptor);
+
 private:
     void value_index_changed(int index);
     int find_option_index(const SaneOptionValue& value);
-    void verify_supported_type(SaneValueType type);
 
     // either of the following is active
     std::vector<std::string> curr_strings_;

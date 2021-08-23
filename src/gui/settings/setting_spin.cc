@@ -41,7 +41,10 @@ SettingSpin::~SettingSpin() = default;
 void SettingSpin::set_option_descriptor(const SaneOptionDescriptor& descriptor)
 {
     if (!(descriptor == descriptor_)) {
-        verify_supported_type(descriptor.type);
+        if (!is_descriptor_supported(descriptor)) {
+            throw std::invalid_argument("SettingSpin: Unsupported option descriptor");
+        }
+
         descriptor_ = descriptor;
         ui_->label->setText(QString::fromStdString(descriptor.title));
         // FIXME: description
@@ -74,12 +77,13 @@ void SettingSpin::set_enabled(bool enabled)
     ui_->spinbox->setEnabled(enabled);
 }
 
-void SettingSpin::verify_supported_type(SaneValueType type)
+bool SettingSpin::is_descriptor_supported(const SaneOptionDescriptor& descriptor)
 {
-    if (type != SaneValueType::INT) {
-        throw std::invalid_argument("Unsupported value type " +
-                                    std::to_string(static_cast<int>(type)));
-    }
+    if (descriptor.type != SaneValueType::INT)
+        return false;
+
+    return std::get_if<SaneConstraintIntRange>(&descriptor.constraint) != nullptr ||
+            std::get_if<SaneConstraintNone>(&descriptor.constraint) != nullptr;
 }
 
 } // namespace sanescan

@@ -79,7 +79,9 @@ SettingCombo::~SettingCombo() = default;
 void SettingCombo::set_option_descriptor(const SaneOptionDescriptor& descriptor)
 {
     if (!(descriptor == descriptor_)) {
-        verify_supported_type(descriptor.type);
+        if (!is_descriptor_supported(descriptor)) {
+            throw std::invalid_argument("SettingCombo: Unsupported option descriptor");
+        }
 
         descriptor_ = descriptor;
         ui_->label->setText(QString::fromStdString(descriptor.title));
@@ -128,6 +130,20 @@ void SettingCombo::set_enabled(bool enabled)
     ui_->combobox->setEditable(enabled);
 }
 
+bool SettingCombo::is_descriptor_supported(const SaneOptionDescriptor& descriptor)
+{
+    switch (descriptor.type) {
+        case SaneValueType::FLOAT:
+            return std::get_if<SaneConstraintFloatList>(&descriptor.constraint) != nullptr;
+        case SaneValueType::INT:
+            return std::get_if<SaneConstraintIntList>(&descriptor.constraint) != nullptr;
+        case SaneValueType::STRING:
+            return std::get_if<SaneConstraintStringList>(&descriptor.constraint) != nullptr;
+        default:
+            return false;
+    }
+}
+
 void SettingCombo::value_index_changed(int index)
 {
     switch (descriptor_.type) {
@@ -170,19 +186,6 @@ int SettingCombo::find_option_index(const SaneOptionValue& value)
                                       descriptor_.type, SaneValueType::FLOAT);
     }
     throw std::invalid_argument("Unsupported value type " + std::to_string(value.index()));
-}
-
-void SettingCombo::verify_supported_type(SaneValueType type)
-{
-    switch (type) {
-        case SaneValueType::FLOAT:
-        case SaneValueType::INT:
-        case SaneValueType::STRING:
-            return;
-        default:
-            throw std::invalid_argument("Unsupported value type " +
-                                        std::to_string(static_cast<int>(type)));
-    }
 }
 
 } // namespace sanescan

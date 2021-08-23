@@ -41,7 +41,10 @@ SettingSpinFloat::~SettingSpinFloat() = default;
 void SettingSpinFloat::set_option_descriptor(const SaneOptionDescriptor& descriptor)
 {
     if (!(descriptor == descriptor_)) {
-        verify_supported_type(descriptor.type);
+        if (!is_descriptor_supported(descriptor)) {
+            throw std::invalid_argument("SettingSpinFloat: Unsupported option descriptor");
+        }
+
         descriptor_ = descriptor;
         ui_->label->setText(QString::fromStdString(descriptor.title));
         // FIXME: description
@@ -74,12 +77,14 @@ void SettingSpinFloat::set_enabled(bool enabled)
     ui_->spinbox->setEnabled(enabled);
 }
 
-void SettingSpinFloat::verify_supported_type(SaneValueType type)
+bool SettingSpinFloat::is_descriptor_supported(const SaneOptionDescriptor& descriptor)
 {
-    if (type != SaneValueType::FLOAT) {
-        throw std::invalid_argument("Unsupported value type " +
-                                    std::to_string(static_cast<double>(type)));
-    }
+    if (descriptor.type != SaneValueType::FLOAT)
+        return false;
+
+    return std::get_if<SaneConstraintFloatRange>(&descriptor.constraint) != nullptr ||
+            std::get_if<SaneConstraintNone>(&descriptor.constraint) != nullptr;
 }
+
 
 } // namespace sanescan

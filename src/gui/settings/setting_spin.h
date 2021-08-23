@@ -40,9 +40,9 @@ public:
     void set_value(const SaneOptionValue& value) override;
     void set_enabled(bool enabled) override;
 
-private:
-    void verify_supported_type(SaneValueType type);
+    static bool is_descriptor_supported(const SaneOptionDescriptor& descriptor);
 
+private:
     std::optional<SaneConstraintIntRange> constraint_;
 
     SaneOptionDescriptor descriptor_;
