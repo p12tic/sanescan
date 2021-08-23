@@ -17,9 +17,41 @@
 */
 
 #include "setting_widget.h"
+#include "setting_combo.h"
+#include "setting_spin.h"
+#include "setting_spin_float.h"
 
 namespace sanescan {
 
+namespace {
+
+struct SettingWidgetFactory {
+    std::function<bool(const SaneOptionDescriptor&)> is_supported;
+    std::function<std::unique_ptr<SettingWidget>()> create;
+};
+
+SettingWidgetFactory g_widget_factories[] = {
+    { &SettingCombo::is_descriptor_supported,
+      [](){ return std::make_unique<SettingCombo>(); } },
+    { &SettingSpin::is_descriptor_supported,
+      [](){ return std::make_unique<SettingSpin>(); } },
+    { &SettingSpinFloat::is_descriptor_supported,
+      [](){ return std::make_unique<SettingSpinFloat>(); } },
+};
+
+} // namespace
+
 SettingWidget::SettingWidget(QWidget* parent) : QWidget(parent) {}
+
+std::unique_ptr<SettingWidget>
+    SettingWidget::create_widget_for_descriptor(const SaneOptionDescriptor& descriptor)
+{
+    for (const auto& factory : g_widget_factories) {
+        if (factory.is_supported(descriptor)) {
+            return factory.create();
+        }
+    }
+    return nullptr;
+}
 
 } // namespace sanescan

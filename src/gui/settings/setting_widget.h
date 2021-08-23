@@ -35,6 +35,9 @@ public:
     virtual void set_value(const SaneOptionValue& value) = 0;
     virtual void set_enabled(bool enabled) = 0;
 
+    static std::unique_ptr<SettingWidget>
+        create_widget_for_descriptor(const SaneOptionDescriptor& descriptor);
+
 Q_SIGNALS:
     void value_changed(const SaneOptionValue& value);
 };
