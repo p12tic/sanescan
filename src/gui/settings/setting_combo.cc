@@ -70,7 +70,10 @@ SettingCombo::SettingCombo(QWidget *parent) :
 {
     ui_->setupUi(this);
 
-    connect(ui_->combobox, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+    // Note that only activated() signal will react to user action, but not programmatically
+    // setting the value. This is important because we may reset the values after each
+    // value change.
+    connect(ui_->combobox, static_cast<void(QComboBox::*)(int)>(&QComboBox::activated),
             [this](int index) { value_index_changed(index); });
 }
 
