@@ -46,6 +46,7 @@ private:
     std::optional<SaneConstraintIntRange> constraint_;
 
     SaneOptionDescriptor descriptor_;
+    bool suppress_value_changed_ = false;
     std::unique_ptr<Ui::SettingSpin> ui_;
 };
 

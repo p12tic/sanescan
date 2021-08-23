@@ -30,6 +30,9 @@ SettingSpinFloat::SettingSpinFloat(QWidget *parent) :
     connect(ui_->spinbox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
             [this](double float_value)
     {
+        if (suppress_value_changed_) {
+            return;
+        }
         std::vector<double> value;
         value.push_back(float_value);
         Q_EMIT value_changed(value);
@@ -68,7 +71,10 @@ void SettingSpinFloat::set_value(const SaneOptionValue& value)
         throw std::invalid_argument("Expected float value");
     }
 
+    suppress_value_changed_ = true;
     ui_->spinbox->setValue(int_values->front());
+    suppress_value_changed_ = false;
+
     ui_->spinbox->setEnabled(true);
 }
 

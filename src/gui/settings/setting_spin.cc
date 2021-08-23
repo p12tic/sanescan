@@ -30,6 +30,9 @@ SettingSpin::SettingSpin(QWidget *parent) :
     connect(ui_->spinbox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             [this](int int_value)
     {
+        if (suppress_value_changed_) {
+            return;
+        }
         std::vector<int> value;
         value.push_back(int_value);
         Q_EMIT value_changed(value);
@@ -68,7 +71,10 @@ void SettingSpin::set_value(const SaneOptionValue& value)
         throw std::invalid_argument("Expected integer value");
     }
 
+    suppress_value_changed_ = true;
     ui_->spinbox->setValue(int_values->front());
+    suppress_value_changed_ = false;
+
     ui_->spinbox->setEnabled(true);
 }
 
