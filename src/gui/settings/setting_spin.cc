@@ -33,10 +33,7 @@ SettingSpin::SettingSpin(QWidget *parent) :
         if (suppress_value_changed_) {
             return;
         }
-        auto value_opt = get_value();
-        if (value_opt.has_value()) {
-            Q_EMIT value_changed(*value_opt);
-        }
+        Q_EMIT value_changed(get_value());
     });
 }
 

@@ -74,13 +74,7 @@ SettingCombo::SettingCombo(QWidget *parent) :
     // setting the value. This is important because we may reset the values after each
     // value change.
     connect(ui_->combobox, static_cast<void(QComboBox::*)(int)>(&QComboBox::activated),
-            [this](int)
-    {
-        auto value_opt = get_value();
-        if (value_opt.has_value()) {
-            Q_EMIT value_changed(value_opt.value());
-        }
-    });
+            [this](int) { Q_EMIT value_changed(get_value()); });
 }
 
 SettingCombo::~SettingCombo() = default;

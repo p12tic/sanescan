@@ -44,7 +44,9 @@ public:
         create_widget_for_descriptor(const SaneOptionDescriptor& descriptor);
 
 Q_SIGNALS:
-    void value_changed(const SaneOptionValue& value);
+    /// Emitted with the current value returned by get_value() when that one changes as a result of
+    /// user action.
+    void value_changed(const std::optional<SaneOptionValue>& value);
 };
 
 } // namespace sanescan
