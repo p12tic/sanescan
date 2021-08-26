@@ -33,6 +33,11 @@ public:
 
     virtual void set_option_descriptor(const SaneOptionDescriptor& descriptor) = 0;
     virtual void set_value(const SaneOptionValue& value) = 0;
+
+    /// Returns the current value. If the current value has not yet been set by the user or in case
+    /// of unexpected values being entered, empty optional is returned.
+    virtual std::optional<SaneOptionValue> get_value() const = 0;
+
     virtual void set_enabled(bool enabled) = 0;
 
     static std::unique_ptr<SettingWidget>

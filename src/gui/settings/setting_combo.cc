@@ -74,7 +74,13 @@ SettingCombo::SettingCombo(QWidget *parent) :
     // setting the value. This is important because we may reset the values after each
     // value change.
     connect(ui_->combobox, static_cast<void(QComboBox::*)(int)>(&QComboBox::activated),
-            [this](int index) { value_index_changed(index); });
+            [this](int)
+    {
+        auto value_opt = get_value();
+        if (value_opt.has_value()) {
+            Q_EMIT value_changed(value_opt.value());
+        }
+    });
 }
 
 SettingCombo::~SettingCombo() = default;
@@ -128,6 +134,25 @@ void SettingCombo::set_value(const SaneOptionValue& value)
     ui_->combobox->setEnabled(true);
 }
 
+std::optional<SaneOptionValue> SettingCombo::get_value() const
+{
+    int index = ui_->combobox->currentIndex();
+    if (index < 0) {
+        return {};
+    }
+
+    switch (descriptor_.type) {
+        case SaneValueType::FLOAT:
+            return std::vector<double>{ curr_float_numbers_.at(index) };
+        case SaneValueType::INT:
+            return std::vector<int> { curr_int_numbers_.at(index) };
+        case SaneValueType::STRING:
+            return curr_strings_.at(index);
+        default:
+            return {};
+    }
+}
+
 void SettingCombo::set_enabled(bool enabled)
 {
     ui_->combobox->setEditable(enabled);
@@ -144,30 +169,6 @@ bool SettingCombo::is_descriptor_supported(const SaneOptionDescriptor& descripto
             return std::get_if<SaneConstraintStringList>(&descriptor.constraint) != nullptr;
         default:
             return false;
-    }
-}
-
-void SettingCombo::value_index_changed(int index)
-{
-    switch (descriptor_.type) {
-        case SaneValueType::FLOAT: {
-            std::vector<double> value;
-            value.push_back(curr_float_numbers_.at(index));
-            Q_EMIT value_changed(value);
-            return;
-        }
-        case SaneValueType::INT: {
-            std::vector<int> value;
-            value.push_back(curr_int_numbers_.at(index));
-            Q_EMIT value_changed(value);
-            return;
-        }
-        case SaneValueType::STRING: {
-            Q_EMIT value_changed(curr_strings_.at(index));
-            return;
-        }
-        default:
-            return;
     }
 }
 

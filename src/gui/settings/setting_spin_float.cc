@@ -33,9 +33,10 @@ SettingSpinFloat::SettingSpinFloat(QWidget *parent) :
         if (suppress_value_changed_) {
             return;
         }
-        std::vector<double> value;
-        value.push_back(float_value);
-        Q_EMIT value_changed(value);
+        auto value_opt = get_value();
+        if (value_opt.has_value()) {
+            Q_EMIT value_changed(*value_opt);
+        }
     });
 }
 
@@ -76,6 +77,15 @@ void SettingSpinFloat::set_value(const SaneOptionValue& value)
     suppress_value_changed_ = false;
 
     ui_->spinbox->setEnabled(true);
+}
+
+std::optional<SaneOptionValue> SettingSpinFloat::get_value() const
+{
+    auto value = ui_->spinbox->value();
+    if (constraint_.has_value() && (value < constraint_->min || value > constraint_->max)) {
+        return {};
+    }
+    return std::vector<double>{ value };
 }
 
 void SettingSpinFloat::set_enabled(bool enabled)
