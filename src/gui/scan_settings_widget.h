@@ -20,6 +20,8 @@
 #define SANESCAN_GUI_SCAN_SETTINGS_H
 
 #include "../lib/sane_types.h"
+#include "settings/setting_widget.h"
+#include <QtWidgets/QGridLayout>
 #include <QtWidgets/QFrame>
 #include <memory>
 
@@ -38,12 +40,34 @@ public:
     ~ScanSettingsWidget() override;
 
     void set_current_devices(const std::vector<SaneDeviceInfo>& devices);
+    void device_opened();
+    void set_options(const std::vector<SaneOptionGroupDestriptor>& descriptors);
+    void set_option_values(const std::map<std::string, SaneOptionValue>& values);
 
 Q_SIGNALS:
     void refresh_devices_clicked();
 
+    /// Freezes the device selector until device_opened() is called
+    void device_selected(const std::string& name);
+
 private:
+    void device_selected_impl(int index);
+    void refresh_widgets();
+    void clear_layout();
+
     std::vector<SaneDeviceInfo> devices_;
+
+    bool waiting_for_device_opened_ = false;
+    std::vector<SaneOptionGroupDestriptor> curr_group_descriptors_;
+
+    // Layout widget is not owned, the owner is `this`. Note that we terminate the relationship
+    // by deleting the widget.
+    QGridLayout* layout_ = nullptr;
+
+    // Widgets are not owned, the owner is layout_
+    bool setting_widgets_need_initial_values_ = false;
+    std::map<std::string, SettingWidget*> setting_widgets_;
+
     std::unique_ptr<Ui::ScanSettingsWidget> ui_;
 };
 

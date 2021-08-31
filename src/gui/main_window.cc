@@ -40,6 +40,28 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&engine_, &ScanEngine::stop_polling, [this]() { engine_timer_.stop(); });
     connect(ui_->settings_widget, &ScanSettingsWidget::refresh_devices_clicked,
             [this]() { refresh_devices(); });
+    connect(ui_->settings_widget, &ScanSettingsWidget::device_selected,
+            [this](const std::string& name) { select_device(name); });
+    connect(&engine_, &ScanEngine::options_changed, [this]()
+    {
+        ui_->settings_widget->set_options(engine_.get_option_groups());
+    });
+    connect(&engine_, &ScanEngine::option_values_changed, [this]()
+    {
+        ui_->settings_widget->set_option_values(engine_.get_option_values());
+    });
+    connect(&engine_, &ScanEngine::device_opened, [this]()
+    {
+        ui_->settings_widget->device_opened();
+    });
+    connect(&engine_, &ScanEngine::device_closed, [this]()
+    {
+        if (!open_device_after_close_.empty()) {
+            std::string name;
+            name.swap(open_device_after_close_);
+            engine_.open_device(name);
+        }
+    });
 
     refresh_devices();
 }
@@ -62,6 +84,18 @@ void MainWindow::devices_refreshed()
 {
     ui_->stack_settings->setCurrentIndex(STACK_SETTINGS);
     ui_->settings_widget->set_current_devices(engine_.current_devices());
+}
+
+void MainWindow::select_device(const std::string& name)
+{
+    // we are guaranteed by ui_->settings_widget that device_selected will not be emitted between
+    // a previous emission to select_device and a call to device_opened.
+    if (engine_.is_device_opened()) {
+        engine_.close_device();
+        open_device_after_close_ = name;
+    } else {
+        engine_.open_device(name);
+    }
 }
 
 } // namespace sanescan

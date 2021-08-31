@@ -46,8 +46,10 @@ public:
 private:
     void refresh_devices();
     void devices_refreshed();
+    void select_device(const std::string& name);
 
     std::unique_ptr<Ui::MainWindow> ui_;
+    std::string open_device_after_close_;
     ScanEngine engine_;
     QTimer engine_timer_;
 };

@@ -30,6 +30,8 @@ ScanSettingsWidget::ScanSettingsWidget(QWidget *parent) :
 
     connect(ui_->b_refresh_devices, &QPushButton::clicked,
             [this]() { Q_EMIT refresh_devices_clicked(); });
+    connect(ui_->cb_scanners, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            [this](int index) { device_selected_impl(index); });
 }
 
 ScanSettingsWidget::~ScanSettingsWidget() = default;
@@ -42,6 +44,91 @@ void ScanSettingsWidget::set_current_devices(const std::vector<SaneDeviceInfo>& 
         ui_->cb_scanners->addItem(QString::fromStdString(dev.vendor + " " + dev.model +
                                                          " (" + dev.name + ")"));
     }
+    if (!devices_.empty()) {
+        ui_->cb_scanners->setCurrentIndex(0);
+    }
+}
+
+void ScanSettingsWidget::device_opened()
+{
+    if (waiting_for_device_opened_) {
+        waiting_for_device_opened_ = false;
+        ui_->cb_scanners->setEnabled(true);
+    }
+}
+
+void ScanSettingsWidget::set_options(const std::vector<SaneOptionGroupDestriptor>& descriptors)
+{
+    if (curr_group_descriptors_ == descriptors)
+        return;
+
+    curr_group_descriptors_ = descriptors;
+    refresh_widgets();
+}
+
+void ScanSettingsWidget::set_option_values(const std::map<std::string, SaneOptionValue>& values)
+{
+    for (const auto& [name, value] : values) {
+        auto it = setting_widgets_.find(name);
+        if (it == setting_widgets_.end()) {
+            continue;
+        }
+
+        auto* setting_widget = it->second;
+        auto curr_value = setting_widget->get_value();
+        if (curr_value.has_value() && *curr_value == value &&
+            !setting_widgets_need_initial_values_)
+        {
+            continue;
+        }
+
+        setting_widget->set_value(value);
+    }
+    setting_widgets_need_initial_values_ = false;
+}
+
+void ScanSettingsWidget::device_selected_impl(int index)
+{
+    if (index < 0 || index >= devices_.size())
+        return;
+
+    clear_layout();
+
+    ui_->cb_scanners->setEnabled(false);
+    waiting_for_device_opened_ = true;
+
+    Q_EMIT device_selected(devices_[index].name);
+}
+
+void ScanSettingsWidget::refresh_widgets()
+{
+    clear_layout();
+    setting_widgets_need_initial_values_ = true;
+
+    int curr_row = 0;
+    for (const auto& group : curr_group_descriptors_) {
+        // TODO: don't ignore groups
+        for (const auto& option_descriptor : group.options) {
+            auto widget = SettingWidget::create_widget_for_descriptor(option_descriptor);
+            if (!widget) {
+                continue;
+            }
+            auto* not_owned_widget = widget.release();
+            layout_->addWidget(not_owned_widget, curr_row++, 0); // takes ownership
+            not_owned_widget->set_option_descriptor(option_descriptor);
+            setting_widgets_.emplace(option_descriptor.name, not_owned_widget);
+        }
+    }
+}
+
+void ScanSettingsWidget::clear_layout()
+{
+    if (layout_) {
+        setting_widgets_.clear();
+        delete layout_;
+    }
+    layout_ = new QGridLayout();
+    ui_->layout->insertLayout(3, layout_);
 }
 
 } // namespace sanescan
