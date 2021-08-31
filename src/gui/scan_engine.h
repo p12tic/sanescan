@@ -56,7 +56,8 @@ public:
         and `is_device_opened()` will return true.
 
         The options available to the scanner are refreshed automatically and will cause
-        `options_changed` and `option_values_changed` signals to be emitted.
+        `options_changed` and `option_values_changed` signals to be emitted soon after
+        `device_opened` signal.
     */
     void open_device(const std::string& name);
     bool is_device_opened() const;
