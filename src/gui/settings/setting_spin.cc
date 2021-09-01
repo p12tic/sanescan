@@ -92,8 +92,13 @@ void SettingSpin::set_enabled(bool enabled)
 
 bool SettingSpin::is_descriptor_supported(const SaneOptionDescriptor& descriptor)
 {
-    if (descriptor.type != SaneValueType::INT)
+    if (descriptor.type != SaneValueType::INT) {
         return false;
+    }
+
+    if (descriptor.size != 1) {
+        return false;
+    }
 
     return std::get_if<SaneConstraintIntRange>(&descriptor.constraint) != nullptr ||
             std::get_if<SaneConstraintNone>(&descriptor.constraint) != nullptr;

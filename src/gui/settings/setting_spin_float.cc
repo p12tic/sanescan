@@ -92,8 +92,13 @@ void SettingSpinFloat::set_enabled(bool enabled)
 
 bool SettingSpinFloat::is_descriptor_supported(const SaneOptionDescriptor& descriptor)
 {
-    if (descriptor.type != SaneValueType::FLOAT)
+    if (descriptor.type != SaneValueType::FLOAT) {
         return false;
+    }
+
+    if (descriptor.size != 1) {
+        return false;
+    }
 
     return std::get_if<SaneConstraintFloatRange>(&descriptor.constraint) != nullptr ||
             std::get_if<SaneConstraintNone>(&descriptor.constraint) != nullptr;
