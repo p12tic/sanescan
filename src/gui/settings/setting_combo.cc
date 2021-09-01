@@ -156,9 +156,11 @@ bool SettingCombo::is_descriptor_supported(const SaneOptionDescriptor& descripto
 {
     switch (descriptor.type) {
         case SaneValueType::FLOAT:
-            return std::get_if<SaneConstraintFloatList>(&descriptor.constraint) != nullptr;
+            return std::get_if<SaneConstraintFloatList>(&descriptor.constraint) != nullptr &&
+                    descriptor.size == 1;
         case SaneValueType::INT:
-            return std::get_if<SaneConstraintIntList>(&descriptor.constraint) != nullptr;
+            return std::get_if<SaneConstraintIntList>(&descriptor.constraint) != nullptr &&
+                    descriptor.size == 1;
         case SaneValueType::STRING:
             return std::get_if<SaneConstraintStringList>(&descriptor.constraint) != nullptr;
         default:
