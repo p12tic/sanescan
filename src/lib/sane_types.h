@@ -58,6 +58,7 @@ std::string_view sane_unit_to_string_upper(SaneUnit unit);
 
 
 enum class SaneCap {
+    NONE = 0,
     SOFT_SELECT = 1 << 0,
     HARD_SELECT = 1 << 1,
     SOFT_DETECT = 1 << 2,
@@ -119,14 +120,17 @@ struct SaneConstraintFloatRange {
 
 /// corresponds to SANE_Option_Descriptor
 struct SaneOptionDescriptor {
-    std::size_t index; // index of the option to be sent to set_option or get_option
+    std::size_t index = 0; // index of the option to be sent to set_option or get_option
     std::string name;
     std::string title;
     std::string description;
-    SaneUnit unit;
-    SaneValueType type;
-    int size;
-    SaneCap cap;
+    SaneUnit unit = SaneUnit::NONE;
+    SaneValueType type = SaneValueType::GROUP;
+
+    // differently from SANE_Option_Descriptor, in cases of bool, integer or float values
+    // this member contains the number of values, not the size of the data.
+    int size = 0;
+    SaneCap cap = SaneCap::NONE;
 
     std::variant<
         SaneConstraintNone,
