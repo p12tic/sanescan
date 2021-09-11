@@ -153,7 +153,12 @@ struct SaneOptionGroupDestriptor {
     bool operator==(const SaneOptionGroupDestriptor& other) const;
 };
 
+struct SaneOptionValueNone {
+    bool operator==(const SaneOptionValueNone& other) const { return true; }
+};
+
 using SaneOptionValue = std::variant<
+    SaneOptionValueNone,
     std::vector<bool>, // for both bool and button
     std::vector<int>,
     std::vector<double>,

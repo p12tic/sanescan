@@ -138,6 +138,18 @@ SaneOptionGroupDestriptor convert_sane_option_group_descriptor(const SANE_Option
     return option_group;
 }
 
+bool is_option_status_no_option(SANE_Status status)
+{
+    switch (status) {
+        case SANE_STATUS_UNSUPPORTED:
+        case SANE_STATUS_INVAL:
+        case SANE_STATUS_ACCESS_DENIED:
+            return true;
+        default:
+            return false;
+    }
+}
+
 } // namespace
 
 struct SaneDeviceWrapper::Impl {
@@ -227,9 +239,15 @@ std::future<std::vector<SaneOptionIndexedValue>>
                     case SaneValueType::BUTTON: {
                         std::vector<SANE_Bool> temp;
                         temp.resize(desc.size);
-                        throw_if_sane_status_not_good(sane_control_option(impl_->handle, desc.index,
-                                                                          SANE_ACTION_GET_VALUE,
-                                                                          temp.data(), nullptr));
+                        auto status = sane_control_option(impl_->handle, desc.index,
+                                                          SANE_ACTION_GET_VALUE,
+                                                          temp.data(), nullptr);
+                        if (is_option_status_no_option(status)) {
+                            result.emplace_back(desc.index, SaneOptionValueNone{});
+                            break;
+                        }
+                        throw_if_sane_status_not_good(status);
+
                         std::vector<bool> values(temp.begin(), temp.end());
                         result.emplace_back(desc.index, std::move(values));
                         break;
@@ -238,9 +256,15 @@ std::future<std::vector<SaneOptionIndexedValue>>
                         static_assert(sizeof(SANE_Word) == sizeof(int));
                         std::vector<int> values;
                         values.resize(desc.size);
-                        throw_if_sane_status_not_good(sane_control_option(impl_->handle, desc.index,
-                                                                          SANE_ACTION_GET_VALUE,
-                                                                          values.data(), nullptr));
+                        auto status = sane_control_option(impl_->handle, desc.index,
+                                                          SANE_ACTION_GET_VALUE,
+                                                          values.data(), nullptr);
+                        if (is_option_status_no_option(status)) {
+                            result.emplace_back(desc.index, SaneOptionValueNone{});
+                            break;
+                        }
+                        throw_if_sane_status_not_good(status);
+
                         result.emplace_back(desc.index, std::move(values));
                         break;
                     }
@@ -248,9 +272,16 @@ std::future<std::vector<SaneOptionIndexedValue>>
                         static_assert(sizeof(SANE_Word) == sizeof(int));
                         std::vector<int> temp;
                         temp.resize(desc.size);
-                        throw_if_sane_status_not_good(sane_control_option(impl_->handle, desc.index,
-                                                                          SANE_ACTION_GET_VALUE,
-                                                                          temp.data(), nullptr));
+                        auto status = sane_control_option(impl_->handle, desc.index,
+                                                          SANE_ACTION_GET_VALUE,
+                                                          temp.data(), nullptr);
+
+                        if (is_option_status_no_option(status)) {
+                            result.emplace_back(desc.index, SaneOptionValueNone{});
+                            break;
+                        }
+                        throw_if_sane_status_not_good(status);
+
                         std::vector<double> values;
                         values.resize(desc.size);
                         for (std::size_t i = 0; i < desc.size; ++i) {
@@ -262,9 +293,16 @@ std::future<std::vector<SaneOptionIndexedValue>>
                     case SaneValueType::STRING: {
                         std::string value;
                         value.resize(desc.size);
-                        throw_if_sane_status_not_good(sane_control_option(impl_->handle, desc.index,
-                                                                          SANE_ACTION_GET_VALUE,
-                                                                          value.data(), nullptr));
+                        auto status = sane_control_option(impl_->handle, desc.index,
+                                                          SANE_ACTION_GET_VALUE,
+                                                          value.data(), nullptr);
+
+                        if (is_option_status_no_option(status)) {
+                            result.emplace_back(desc.index, SaneOptionValueNone{});
+                            break;
+                        }
+                        throw_if_sane_status_not_good(status);
+
                         value.resize(std::strlen(value.c_str()));
                         result.emplace_back(desc.index, std::move(value));
                         break;
@@ -286,6 +324,10 @@ std::future<SaneOptionSetInfo>
     return impl_->executor->schedule_task<SaneOptionSetInfo>([&, index, value]()
     {
         SANE_Int info = 0;
+
+        if (std::get_if<SaneOptionValueNone>(&value)) {
+            throw std::invalid_argument("Option None is invalid in set_option_value");
+        }
 
         // note that we expect the caller to send correct data type for the option
         const auto* bool_values = std::get_if<std::vector<bool>>(&value);
