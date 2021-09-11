@@ -41,6 +41,18 @@ int retrieve_option_count(void* handle)
     return num_options;
 }
 
+int convert_sane_option_size(SANE_Value_Type type, int size)
+{
+    switch (type) {
+        case SANE_TYPE_BOOL:
+        case SANE_TYPE_INT:
+        case SANE_TYPE_FIXED:
+            return size / sizeof(SANE_Word);
+        default:
+            return size;
+    }
+}
+
 SaneOptionDescriptor convert_sane_option_descriptor(int index, const SANE_Option_Descriptor* desc)
 {
     SaneOptionDescriptor option;
@@ -50,7 +62,7 @@ SaneOptionDescriptor convert_sane_option_descriptor(int index, const SANE_Option
     option.description = desc->desc;
     option.unit = sane_unit_to_sanescan(desc->unit);
     option.type = sane_value_type_to_sanescan(desc->type);
-    option.size = desc->size;
+    option.size = convert_sane_option_size(desc->type, desc->size);
     option.cap = sane_cap_to_sanescan(desc->cap);
 
     switch (desc->constraint_type) {
