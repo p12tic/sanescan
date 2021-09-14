@@ -66,7 +66,8 @@ private:
     // by deleting the widget.
     QGridLayout* layout_ = nullptr;
 
-    // Widgets are not owned, the owner is layout_
+    // Widgets are not owned, the owner is *this. Note that we still need to delete them when
+    // refreshing view.
     bool setting_widgets_need_initial_values_ = false;
     std::map<std::string, SettingWidget*> setting_widgets_;
 

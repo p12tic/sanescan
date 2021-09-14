@@ -132,6 +132,9 @@ void ScanSettingsWidget::refresh_widgets()
 void ScanSettingsWidget::clear_layout()
 {
     if (layout_) {
+        for (const auto& [_, widget] : setting_widgets_) {
+            delete widget;
+        }
         setting_widgets_.clear();
         delete layout_;
     }
