@@ -48,7 +48,7 @@ void SettingSpin::set_option_descriptor(const SaneOptionDescriptor& descriptor)
 
         descriptor_ = descriptor;
         ui_->label->setText(QString::fromStdString(descriptor.title));
-        // FIXME: description
+        ui_->label->setToolTip(QString::fromStdString(descriptor.description));
 
         const auto* constraint = std::get_if<SaneConstraintIntRange>(&descriptor.constraint);
         if (constraint != nullptr) {

@@ -88,7 +88,7 @@ void SettingCombo::set_option_descriptor(const SaneOptionDescriptor& descriptor)
 
         descriptor_ = descriptor;
         ui_->label->setText(QString::fromStdString(descriptor.title));
-        // FIXME: description
+        ui_->label->setToolTip(QString::fromStdString(descriptor.description));
         ui_->combobox->clear();
 
         const auto* int_numbers = std::get_if<SaneConstraintIntList>(&descriptor.constraint);
