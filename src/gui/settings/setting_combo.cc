@@ -128,11 +128,11 @@ void SettingCombo::set_value(const SaneOptionValue& value)
     ui_->combobox->setEnabled(true);
 }
 
-std::optional<SaneOptionValue> SettingCombo::get_value() const
+SaneOptionValue SettingCombo::get_value() const
 {
     int index = ui_->combobox->currentIndex();
     if (index < 0) {
-        return {};
+        return SaneOptionValueNone{};
     }
 
     switch (descriptor_.type) {
@@ -143,7 +143,7 @@ std::optional<SaneOptionValue> SettingCombo::get_value() const
         case SaneValueType::STRING:
             return curr_strings_.at(index);
         default:
-            return {};
+            return SaneOptionValueNone{};
     }
 }
 

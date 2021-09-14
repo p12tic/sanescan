@@ -76,11 +76,11 @@ void SettingSpin::set_value(const SaneOptionValue& value)
     ui_->spinbox->setEnabled(true);
 }
 
-std::optional<SaneOptionValue> SettingSpin::get_value() const
+SaneOptionValue SettingSpin::get_value() const
 {
     auto value = ui_->spinbox->value();
     if (constraint_.has_value() && (value < constraint_->min || value > constraint_->max)) {
-        return {};
+        return SaneOptionValueNone{};
     }
     return std::vector<int>{ value };
 }

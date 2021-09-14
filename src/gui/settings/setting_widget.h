@@ -36,7 +36,7 @@ public:
 
     /// Returns the current value. If the current value has not yet been set by the user or in case
     /// of unexpected values being entered, empty optional is returned.
-    virtual std::optional<SaneOptionValue> get_value() const = 0;
+    virtual SaneOptionValue get_value() const = 0;
 
     virtual void set_enabled(bool enabled) = 0;
 
@@ -46,7 +46,7 @@ public:
 Q_SIGNALS:
     /// Emitted with the current value returned by get_value() when that one changes as a result of
     /// user action.
-    void value_changed(const std::optional<SaneOptionValue>& value);
+    void value_changed(const SaneOptionValue& value);
 };
 
 } // namespace sanescan

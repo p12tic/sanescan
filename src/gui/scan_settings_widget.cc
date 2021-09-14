@@ -76,10 +76,12 @@ void ScanSettingsWidget::set_option_values(const std::map<std::string, SaneOptio
 
         auto* setting_widget = it->second;
         auto curr_value = setting_widget->get_value();
-        if (curr_value.has_value() && *curr_value == value &&
-            !setting_widgets_need_initial_values_)
-        {
+        if (curr_value == value && !setting_widgets_need_initial_values_) {
             continue;
+        }
+
+        if (std::get_if<SaneOptionValueNone>(&value)) {
+            continue;  // FIXME: we need a way to show currently not set options
         }
 
         setting_widget->set_value(value);
