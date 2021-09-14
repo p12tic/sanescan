@@ -118,6 +118,12 @@ void ScanSettingsWidget::refresh_widgets()
             auto* not_owned_widget = widget.release();
             layout_->addWidget(not_owned_widget, curr_row++, 0); // takes ownership
             not_owned_widget->set_option_descriptor(option_descriptor);
+            connect(not_owned_widget, &SettingWidget::value_changed,
+                    [this, name=option_descriptor.name](const auto& new_value)
+            {
+                Q_EMIT option_value_changed(name, new_value);
+            });
+
             setting_widgets_.emplace(option_descriptor.name, not_owned_widget);
         }
     }

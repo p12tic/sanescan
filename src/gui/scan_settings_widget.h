@@ -50,6 +50,8 @@ Q_SIGNALS:
     /// Freezes the device selector until device_opened() is called
     void device_selected(const std::string& name);
 
+    void option_value_changed(const std::string& name, const SaneOptionValue& value);
+
 private:
     void device_selected_impl(int index);
     void refresh_widgets();

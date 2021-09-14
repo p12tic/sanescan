@@ -38,10 +38,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&engine_, &ScanEngine::devices_refreshed, [this]() { devices_refreshed(); });
     connect(&engine_, &ScanEngine::start_polling, [this]() { engine_timer_.start(1); });
     connect(&engine_, &ScanEngine::stop_polling, [this]() { engine_timer_.stop(); });
-    connect(ui_->settings_widget, &ScanSettingsWidget::refresh_devices_clicked,
-            [this]() { refresh_devices(); });
-    connect(ui_->settings_widget, &ScanSettingsWidget::device_selected,
-            [this](const std::string& name) { select_device(name); });
     connect(&engine_, &ScanEngine::options_changed, [this]()
     {
         ui_->settings_widget->set_options(engine_.get_option_groups());
@@ -61,6 +57,16 @@ MainWindow::MainWindow(QWidget *parent) :
             name.swap(open_device_after_close_);
             engine_.open_device(name);
         }
+    });
+
+    connect(ui_->settings_widget, &ScanSettingsWidget::refresh_devices_clicked,
+            [this]() { refresh_devices(); });
+    connect(ui_->settings_widget, &ScanSettingsWidget::device_selected,
+            [this](const std::string& name) { select_device(name); });
+    connect(ui_->settings_widget, &ScanSettingsWidget::option_value_changed,
+            [this](const auto& name, const auto& value)
+    {
+        engine_.set_option_value(name, value);
     });
 
     refresh_devices();
