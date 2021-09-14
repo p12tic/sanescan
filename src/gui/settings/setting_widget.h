@@ -38,8 +38,6 @@ public:
     /// of unexpected values being entered, empty optional is returned.
     virtual SaneOptionValue get_value() const = 0;
 
-    virtual void set_enabled(bool enabled) = 0;
-
     static std::unique_ptr<SettingWidget>
         create_widget_for_descriptor(const SaneOptionDescriptor& descriptor);
 

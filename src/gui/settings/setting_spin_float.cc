@@ -85,11 +85,6 @@ SaneOptionValue SettingSpinFloat::get_value() const
     return std::vector<double>{ value };
 }
 
-void SettingSpinFloat::set_enabled(bool enabled)
-{
-    ui_->spinbox->setEnabled(enabled);
-}
-
 bool SettingSpinFloat::is_descriptor_supported(const SaneOptionDescriptor& descriptor)
 {
     if (descriptor.type != SaneValueType::FLOAT) {

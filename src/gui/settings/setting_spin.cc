@@ -85,11 +85,6 @@ SaneOptionValue SettingSpin::get_value() const
     return std::vector<int>{ value };
 }
 
-void SettingSpin::set_enabled(bool enabled)
-{
-    ui_->spinbox->setEnabled(enabled);
-}
-
 bool SettingSpin::is_descriptor_supported(const SaneOptionDescriptor& descriptor)
 {
     if (descriptor.type != SaneValueType::INT) {
