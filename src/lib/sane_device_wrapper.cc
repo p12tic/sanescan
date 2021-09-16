@@ -18,6 +18,7 @@
 
 #include "sane_device_wrapper.h"
 #include "buffer_manager.h"
+#include "incomplete_line_manager.h"
 #include "sane_exception.h"
 #include "sane_utils.h"
 #include "task_executor.h"
@@ -176,6 +177,7 @@ struct SaneDeviceWrapper::Impl {
     std::vector<SaneOptionGroupDestriptor> task_option_descriptors;
     SANE_Parameters task_curr_frame_params = {};
     std::size_t task_last_read_line = 0;
+    IncompleteLineManager task_partial_line;
 };
 
 SaneDeviceWrapper::SaneDeviceWrapper(TaskExecutor* executor, void* handle) :
@@ -459,9 +461,19 @@ void SaneDeviceWrapper::task_schedule_read()
                 return;
             }
 
+            // sane_read() may read any number of bytes it wants, including zero. That means it
+            // may read incomplete line. For these cases we store a partial line in a separate
+            // buffer so that write_buf always gets full line.
+            auto [buffer, write_size] = impl_->task_partial_line.before_read(write_buf->data(),
+                                                                             write_buf->size());
+
             SANE_Int bytes_written = 0;
-            auto status = sane_read(impl_->handle, reinterpret_cast<SANE_Byte*>(write_buf->data()),
-                                    write_buf->size(), &bytes_written);
+            auto status = sane_read(impl_->handle, reinterpret_cast<SANE_Byte*>(buffer),
+                                    write_size, &bytes_written);
+
+            bytes_written = impl_->task_partial_line.after_read(buffer, bytes_written,
+                                                                bytes_per_line);
+
             write_buf->finish(bytes_written);
 
             if (status == SANE_STATUS_EOF || status == SANE_STATUS_CANCELLED) {
@@ -470,7 +482,9 @@ void SaneDeviceWrapper::task_schedule_read()
             }
             throw_if_sane_status_not_good(status);
 
-            impl_->task_last_read_line = last_line;
+            // IncompleteLineManager ensures that the number of written bytes is a multiple of
+            // per-line byte count.
+            impl_->task_last_read_line = first_line + bytes_written / bytes_per_line;
             task_schedule_read();
         }  catch (...) {
             impl_->finished = true;

@@ -18,6 +18,7 @@
 set(SOURCES
     main.cc
     buffer_manager.cc
+    incomplete_line_manager.cc
 )
 
 include(FindPkgConfig)
