@@ -16,28 +16,10 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "test_data_utils.h"
 #include "lib/buffer_manager.h"
 #include <boost/container_hash/hash.hpp>
 #include <gtest/gtest.h>
-
-namespace {
-
-std::size_t hash_test_data(const char* data, std::size_t size)
-{
-    return boost::hash_range(data, data + size);
-}
-
-std::size_t fill_test_data(int offset, char* data, std::size_t size)
-{
-    char value = '0' + offset;
-    for (std::size_t i = 0; i < size; ++i) {
-        data[i] = value++;
-    }
-    return boost::hash_range(data, data + size);
-}
-
-
-} // namespace
 
 TEST(BufferManager, SingleWriteSingleReadLoop)
 {
