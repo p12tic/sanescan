@@ -32,8 +32,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui_->action_about, &QAction::triggered, [this](){ present_about_dialog(); });
 
-    ui_->image_area->set_image(QImage("test.jpeg"));
-
     connect(&engine_timer_, &QTimer::timeout, [this]() { engine_.perform_step(); });
     connect(&engine_, &ScanEngine::devices_refreshed, [this]() { devices_refreshed(); });
     connect(&engine_, &ScanEngine::start_polling, [this]() { engine_timer_.start(1); });
