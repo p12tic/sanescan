@@ -37,6 +37,7 @@ class MainWindow : public QMainWindow
 public:
     static constexpr int STACK_LOADING = 0;
     static constexpr int STACK_SETTINGS = 1;
+    static constexpr int STACK_SCANNING = 2;
 
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
@@ -47,6 +48,8 @@ private:
     void refresh_devices();
     void devices_refreshed();
     void select_device(const std::string& name);
+    void start_scanning();
+    void scanning_finished();
 
     std::unique_ptr<Ui::MainWindow> ui_;
     std::string open_device_after_close_;

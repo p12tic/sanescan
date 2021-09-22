@@ -30,6 +30,8 @@ ScanSettingsWidget::ScanSettingsWidget(QWidget *parent) :
 
     connect(ui_->b_refresh_devices, &QPushButton::clicked,
             [this]() { Q_EMIT refresh_devices_clicked(); });
+    connect(ui_->b_scan, &QPushButton::clicked,
+            [this]() { Q_EMIT scan_started(); });
     connect(ui_->cb_scanners, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
             [this](int index) { device_selected_impl(index); });
 }

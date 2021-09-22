@@ -58,6 +58,14 @@ MainWindow::MainWindow(QWidget *parent) :
             engine_.open_device(name);
         }
     });
+    connect(&engine_, &ScanEngine::image_updated, [this]()
+    {
+        ui_->image_area->set_image(engine_.scan_image());
+    });
+    connect(&engine_, &ScanEngine::scan_finished, [this]()
+    {
+        scanning_finished();
+    });
 
     connect(ui_->settings_widget, &ScanSettingsWidget::refresh_devices_clicked,
             [this]() { refresh_devices(); });
@@ -67,6 +75,11 @@ MainWindow::MainWindow(QWidget *parent) :
             [this](const auto& name, const auto& value)
     {
         engine_.set_option_value(name, value);
+    });
+    connect(ui_->settings_widget, &ScanSettingsWidget::scan_started,
+            [this]()
+    {
+        engine_.start_scan();
     });
 
     refresh_devices();
@@ -90,6 +103,17 @@ void MainWindow::devices_refreshed()
 {
     ui_->stack_settings->setCurrentIndex(STACK_SETTINGS);
     ui_->settings_widget->set_current_devices(engine_.current_devices());
+}
+
+void MainWindow::start_scanning()
+{
+    engine_.start_scan();
+    ui_->stack_settings->setCurrentIndex(STACK_SCANNING);
+}
+
+void MainWindow::scanning_finished()
+{
+    ui_->stack_settings->setCurrentIndex(STACK_SETTINGS);
 }
 
 void MainWindow::select_device(const std::string& name)
