@@ -40,6 +40,10 @@ ImageWidget::ImageWidget(QWidget *parent) :
 {
     impl_->scene = new QGraphicsScene(this);
     setScene(impl_->scene);
+
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+
     set_image_ptr(nullptr);
 }
 
@@ -75,7 +79,8 @@ void ImageWidget::wheelEvent(QWheelEvent* event)
 void ImageWidget::drawBackground(QPainter* painter, const QRectF& rect)
 {
     if (impl_->image) {
-        painter->drawImage(rect, *impl_->image);
+        auto image_rect = rect & sceneRect();
+        painter->drawImage(image_rect, *impl_->image, image_rect);
     }
 }
 
