@@ -19,12 +19,12 @@
 #ifndef SANESCAN_GUI_IMAGE_WIDGET_H
 #define SANESCAN_GUI_IMAGE_WIDGET_H
 
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QGraphicsView>
+#include <memory>
 
 namespace sanescan {
 
-class ImageWidget : public QScrollArea
+class ImageWidget : public QGraphicsView
 {
     Q_OBJECT
 
@@ -32,14 +32,16 @@ public:
     explicit ImageWidget(QWidget *parent = nullptr);
     ~ImageWidget() override;
 
-    void wheelEvent(QWheelEvent* event) override;
+    /// does not take ownership of the image. Set to nullptr to remove any referenced images
+    void set_image_ptr(const QImage* image);
 
-    void set_image(const QImage& image);
-    void rescale_by(float scale_mult);
+protected:
+    void wheelEvent(QWheelEvent* event) override;
+    void drawBackground(QPainter* painter, const QRectF& rect) override;
 
 private:
-    QLabel* image_ = nullptr;
-    float scale_ = 1.0f;
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
 };
 
 } // namespace sanescan

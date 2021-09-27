@@ -29,17 +29,32 @@ namespace {
     }
 }
 
+struct ImageWidget::Impl {
+    QGraphicsScene* scene; // parent widget is an owner
+    const QImage* image;
+};
+
 ImageWidget::ImageWidget(QWidget *parent) :
-    QScrollArea(parent)
+    QGraphicsView(parent),
+    impl_{std::make_unique<Impl>()}
 {
-    image_ = new QLabel();
-    image_->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    image_->setScaledContents(true);
-    setWidget(image_);
-    setVisible(false);
+    impl_->scene = new QGraphicsScene(this);
+    setScene(impl_->scene);
+    set_image_ptr(nullptr);
 }
 
 ImageWidget::~ImageWidget() = default;
+
+void ImageWidget::set_image_ptr(const QImage* image)
+{
+    impl_->image = image;
+    if (image) {
+        impl_->scene->setSceneRect(0, 0, image->width(), image->height());
+        fitInView(impl_->image->rect(), Qt::KeepAspectRatio);
+    } else {
+        impl_->scene->setSceneRect(0, 0, 300, 400);
+    }
+}
 
 void ImageWidget::wheelEvent(QWheelEvent* event)
 {
@@ -50,29 +65,18 @@ void ImageWidget::wheelEvent(QWheelEvent* event)
 
         // FIXME: this will work horrible with hi-res scrolling (too frequent updates)
         float scaled_delta = (event->angleDelta().y() / 120.0f) * 0.1f;
-        float scale = scaled_delta >= 0 ? (1 + scaled_delta) : 1 / (1 - scaled_delta);
-        rescale_by(scale);
+        float new_scale = scaled_delta >= 0 ? (1 + scaled_delta) : 1 / (1 - scaled_delta);
+        scale(new_scale, new_scale);
     } else {
-        QScrollArea::wheelEvent(event);
+        QGraphicsView::wheelEvent(event);
     }
 }
 
-void ImageWidget::set_image(const QImage& image)
+void ImageWidget::drawBackground(QPainter* painter, const QRectF& rect)
 {
-    image_->setPixmap(QPixmap::fromImage(image));
-    image_->adjustSize();
-    scale_ = 1.0;
-    setVisible(true);
-}
-
-
-void ImageWidget::rescale_by(float scale_mult)
-{
-    scale_ *= scale_mult;
-    image_->resize(scale_ * image_->pixmap()->size());
-
-    adjust_scroll_bar_value(horizontalScrollBar(), scale_);
-    adjust_scroll_bar_value(verticalScrollBar(), scale_);
+    if (impl_->image) {
+        painter->drawImage(rect, *impl_->image);
+    }
 }
 
 } // namespace sanescan
