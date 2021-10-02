@@ -15,4 +15,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-add_subdirectory(lib)
+set(SOURCES
+    main.cc
+    lib/buffer_manager.cc
+    lib/incomplete_line_manager.cc
+)
+
+include(FindPkgConfig)
+find_package(GTest REQUIRED)
+pkg_check_modules(GMOCK REQUIRED gmock)
+include_directories(
+    ${GTEST_INCLUDE_DIRS}
+    ${GMOCK_INCLUDE_DIRS}
+)
+
+add_executable(unittest ${SOURCES})
+target_include_directories(unittest PRIVATE
+    "${CMAKE_SOURCE_DIR}/src"
+)
+
+target_link_libraries(unittest
+    ${GTEST_LIBRARIES} ${GMOCK_LIBRARIES}
+    Threads::Threads
+    sanescanlib
+)
