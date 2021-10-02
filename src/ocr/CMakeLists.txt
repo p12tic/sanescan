@@ -15,7 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-add_subdirectory(lib)
-add_subdirectory(gui)
-add_subdirectory(ocr)
+set(SOURCES
+    hocr.cc
+)
 
+add_library(sanescanocr OBJECT ${SOURCES})
+
+target_link_libraries(sanescanocr PUBLIC
+    pugixml
+)
