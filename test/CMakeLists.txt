@@ -19,6 +19,7 @@ set(SOURCES
     main.cc
     lib/buffer_manager.cc
     lib/incomplete_line_manager.cc
+    ocr/hocr.cc
 )
 
 include(FindPkgConfig)
@@ -38,4 +39,5 @@ target_link_libraries(unittest
     ${GTEST_LIBRARIES} ${GMOCK_LIBRARIES}
     Threads::Threads
     sanescanlib
+    sanescanocr
 )
