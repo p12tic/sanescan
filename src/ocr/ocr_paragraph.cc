@@ -16,26 +16,20 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_OCR_OCR_BOX_H
-#define SANESCAN_OCR_OCR_BOX_H
-
-#include <compare>
-#include <cstdint>
-#include <iosfwd>
+#include "ocr_paragraph.h"
+#include <iostream>
 
 namespace sanescan {
 
-struct OcrBox {
-    std::int32_t x1 = 0;
-    std::int32_t y1 = 0;
-    std::int32_t x2 = 0;
-    std::int32_t y2 = 0;
-
-    auto operator<=>(const OcrBox&) const = default;
-};
-
-std::ostream& operator<<(std::ostream& stream, const OcrBox& box);
+std::ostream& operator<<(std::ostream& stream, const OcrParagraph& par)
+{
+    stream << "OcrParagraph{\n"
+           << "  lines: \n";
+    for (const auto& line : par.lines) {
+        stream << "    " << line << "\n";
+    }
+    stream << "}";
+    return stream;
+}
 
 } // namespace sanescan
-
-#endif // SANESCAN_OCR_OCR_BOX_H

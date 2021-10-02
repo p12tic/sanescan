@@ -21,6 +21,7 @@
 
 #include "ocr_line.h"
 #include <vector>
+#include <iosfwd>
 
 namespace sanescan {
 
@@ -29,6 +30,8 @@ struct OcrParagraph {
 
     auto operator<=>(const OcrParagraph&) const = default;
 };
+
+std::ostream& operator<<(std::ostream& stream, const OcrParagraph& par);
 
 } // namespace sanescan
 

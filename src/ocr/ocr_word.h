@@ -45,6 +45,8 @@ struct OcrWord {
     auto operator<=>(const OcrWord&) const = default;
 };
 
+std::ostream& operator<<(std::ostream& stream, const OcrWord& word);
+
 } // namespace sanescan
 
 #endif // SANESCAN_OCR_OCR_WORD_H

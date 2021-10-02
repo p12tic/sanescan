@@ -17,6 +17,10 @@
 
 set(SOURCES
     hocr.cc
+    ocr_box.cc
+    ocr_line.cc
+    ocr_paragraph.cc
+    ocr_word.cc
 )
 
 add_library(sanescanocr OBJECT ${SOURCES})
