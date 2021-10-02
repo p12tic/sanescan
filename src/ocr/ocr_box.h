@@ -29,6 +29,8 @@ struct OcrBox {
     std::int32_t y1 = 0;
     std::int32_t x2 = 0;
     std::int32_t y2 = 0;
+
+    auto operator<=>(const OcrBox&) const = default;
 };
 
 } // namespace sanescan

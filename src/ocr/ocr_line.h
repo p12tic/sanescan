@@ -32,6 +32,8 @@ struct OcrLine {
     // Y = Y0 + baseline_y + (X - X0) * baseline_coeff
     double baseline_y = 0;
     double baseline_coeff = 1;
+
+    auto operator<=>(const OcrLine&) const = default;
 };
 
 } // namespace sanescan

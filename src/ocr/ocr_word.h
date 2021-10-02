@@ -41,6 +41,8 @@ struct OcrWord {
     // then each character is placed into one box. Otherwise all characters are placed to the word
     // box.
     std::string content;
+
+    auto operator<=>(const OcrWord&) const = default;
 };
 
 } // namespace sanescan
