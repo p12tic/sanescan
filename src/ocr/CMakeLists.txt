@@ -15,16 +15,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+include(FindPkgConfig)
+find_package(OpenCV REQUIRED)
+
 set(SOURCES
     hocr.cc
     ocr_box.cc
     ocr_line.cc
     ocr_paragraph.cc
     ocr_word.cc
+    pdf.cc
+    pdf_writer.cc
 )
 
 add_library(sanescanocr OBJECT ${SOURCES})
 
 target_link_libraries(sanescanocr PUBLIC
     pugixml
+    podofo
+    ${OpenCV_LIBS}
+)
+
+target_include_directories(sanescanocr PUBLIC
+    ${OpenCV_INCLUDE_DIRS}
 )
