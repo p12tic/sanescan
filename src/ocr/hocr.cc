@@ -24,6 +24,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <cstring>
 #include <string>
+#include <sstream>
 #include <optional>
 #include <unordered_map>
 
@@ -206,6 +207,89 @@ std::vector<OcrParagraph> read_hocr(std::istream& input)
         }
     }
     return result;
+}
+
+std::string box_to_hocr(const OcrBox& box)
+{
+    return std::to_string(box.x1) + " " +
+            std::to_string(box.y1) + " " +
+            std::to_string(box.x2) + " " +
+            std::to_string(box.y2);
+}
+
+void write_hocr(std::ostream& output, const std::vector<OcrParagraph>& paragraphs)
+{
+    pugi::xml_document doc;
+    auto e_html = doc.append_child("html");
+    e_html.append_attribute("xmlns") = "http://www.w3.org/1999/xhtml";
+    e_html.append_attribute("xml:lang") = "en";
+    e_html.append_attribute("lang") = "en";
+
+    auto e_head = e_html.append_child("head");
+    e_head.append_child("title");
+
+    auto e_meta = e_head.append_child("meta");
+    e_meta.append_attribute("http-equiv") = "Content-Type";
+    e_meta.append_attribute("content") = "text/html;charset=utf-8";
+
+    e_meta = e_head.append_child("meta");
+    e_meta.append_attribute("name") = "ocr-system";
+    e_meta.append_attribute("content") = "sanescan";
+
+    e_meta = e_head.append_child("meta");
+    e_meta.append_attribute("name") = "ocr-capabilities";
+    e_meta.append_attribute("content") = "ocr_page ocr_carea ocr_par ocr_line ocrx_word ocrp_wconf";
+
+    auto e_body = e_head.append_child("body");
+    auto e_page = e_body.append_child("div");
+    e_page.append_attribute("class") = "ocr_page";
+
+    auto e_carea = e_page.append_child("div");
+    e_carea.append_attribute("class") = "ocr_carea";
+
+    for (const auto& par : paragraphs) {
+
+        auto e_p = e_carea.append_child("p");
+        e_p.append_attribute("class") = "ocr_par";
+        e_p.append_attribute("lang") = "eng";
+
+        for (const auto& line : par.lines) {
+            if (line.words.empty()) {
+                continue;
+            }
+
+            auto e_line = e_p.append_child("span");
+            e_line.append_attribute("class") = "ocr_line";
+
+            std::ostringstream line_title;
+            line_title << "bbox " << box_to_hocr(line.box) << ";"
+                       << " baseline " << line.baseline_coeff << " " << line.baseline_y << ";"
+                       << " x_size " << line.words.front().font_size;
+            e_line.append_attribute("title") = line_title.str().c_str();
+
+            for (const auto& word : line.words) {
+                auto e_word = e_line.append_child("span");
+                e_word.append_attribute("class") = "ocrx_word";
+
+                std::ostringstream word_title;
+                word_title << "bbox " << box_to_hocr(word.box) << ";"
+                           << " x_wconf " << word.confidence * 100;
+                e_word.append_attribute("title") = word_title.str().c_str();
+
+                for (const auto& ch_box : word.char_boxes) {
+                    // TODO: character strings are not saved
+                    auto e_ch = e_word.append_child("span");
+                    e_ch.append_attribute("class") = "ocrx_cinfo";
+
+                    std::ostringstream ch_title;
+                    ch_title << "x_bboxes " << box_to_hocr(ch_box);
+                    e_ch.append_attribute("title") = ch_title.str().c_str();
+                }
+            }
+        }
+    }
+
+    doc.save(output);
 }
 
 } // namespace sanescan

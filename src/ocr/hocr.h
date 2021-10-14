@@ -31,6 +31,9 @@ class HocrException : std::runtime_error {
 
 std::vector<OcrParagraph> read_hocr(std::istream& input);
 
+// Produces non-compliant output, only used for checking internal state of the library.
+void write_hocr(std::ostream& output, const std::vector<OcrParagraph>& paragraphs);
+
 } // namespace sanescan
 
 #endif
