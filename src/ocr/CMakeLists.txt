@@ -24,6 +24,7 @@ set(SOURCES
     ocr_line.cc
     ocr_paragraph.cc
     ocr_word.cc
+    ocr_utils.cc
     pdf.cc
     pdf_writer.cc
 )
