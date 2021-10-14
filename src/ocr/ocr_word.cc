@@ -32,6 +32,7 @@ std::ostream& operator<<(std::ostream& stream, const OcrWord& word)
            << "  confidence: " << word.confidence << "\n"
            << "  baseline_y: " << word.baseline_y << "\n"
            << "  baseline_coeff: " << word.baseline_coeff << "\n"
+           << "  font_size: " << word.font_size << "\n"
            << "  content: " << word.content << "\n"
            << "}";
     return stream;

@@ -37,6 +37,9 @@ struct OcrWord {
     double baseline_y = 0;
     double baseline_coeff = 1;
 
+    // Font size is in terms of page coordinates, not PPI
+    double font_size = 0;
+
     // UTF-8 encoded content of the word. If the number of characters equals to char_boxes.size()
     // then each character is placed into one box. Otherwise all characters are placed to the word
     // box.

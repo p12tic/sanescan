@@ -96,7 +96,7 @@ OcrBox parse_hocr_box(const HocrProps& props, const char* prop_name)
                   static_cast<std::int32_t>(bottom)};
 }
 
-OcrWord parse_hocr_word(pugi::xml_node e_word, const OcrLine& line)
+OcrWord parse_hocr_word(pugi::xml_node e_word, const OcrLine& line, double font_size)
 {
     OcrWord word;
 
@@ -107,6 +107,7 @@ OcrWord parse_hocr_word(pugi::xml_node e_word, const OcrLine& line)
     word.baseline_y = (word.box.y2 - line.box.y2) +
             line.baseline_y * line.baseline_coeff * (word.box.x1 - line.box.x1);
     word.baseline_coeff = line.baseline_coeff;
+    word.font_size = font_size;
 
     for (auto e_cinfo : e_word.children("span")) {
         if (std::strcmp(e_cinfo.attribute("class").value(), "ocrx_cinfo") != 0) {
@@ -129,12 +130,13 @@ OcrLine parse_hocr_line(pugi::xml_node e_line)
     const auto& baseline_values = get_hocr_values_or_exception(props, "baseline", 2);
     line.baseline_coeff = baseline_values[0];
     line.baseline_y = baseline_values[1];
+    double font_size = get_hocr_values_or_exception(props, "x_size", 1)[0];
 
     for (auto e_word : e_line.children("span")) {
         if (std::strcmp(e_word.attribute("class").value(), "ocrx_word") != 0) {
             continue;
         }
-        auto word = parse_hocr_word(e_word, line);
+        auto word = parse_hocr_word(e_word, line, font_size);
         if (!word.char_boxes.empty()) {
             line.words.push_back(std::move(word));
         }
