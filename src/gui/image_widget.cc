@@ -64,7 +64,7 @@ void ImageWidget::wheelEvent(QWheelEvent* event)
 {
     if (event->modifiers().testFlag(Qt::ControlModifier)) {
         event->accept();
-        if (event->orientation() != Qt::Vertical)
+        if (event->angleDelta().y() == 0)
             return;
 
         // FIXME: this will work horrible with hi-res scrolling (too frequent updates)
