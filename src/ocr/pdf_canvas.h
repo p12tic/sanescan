@@ -35,9 +35,9 @@ struct AffineMatrix
     double d = 0;
 };
 
-inline AffineMatrix compute_affine_matrix_for_line(double line_coeff)
+inline AffineMatrix compute_affine_matrix_for_line(double line_angle)
 {
-    double angle = std::atan(-line_coeff);
+    auto angle = -line_angle;
     return {
         std::cos(angle),
         std::sin(angle),

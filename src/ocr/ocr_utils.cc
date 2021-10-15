@@ -47,12 +47,12 @@ OcrParagraph sort_paragraph_text(const OcrParagraph& source)
         return source;
     }
 
-    auto mean_baseline_coeff =
+    auto mean_baseline_angle =
             compute_mean<double>(source.lines.begin(), source.lines.end(),
-                                 [](const auto& line) { return line.baseline_coeff; });
+                                 [](const auto& line) { return line.baseline_angle; });
 
-    auto is_good_baseline_coeff = [=](double coeff) {
-        return std::abs(coeff - mean_baseline_coeff) < 0.02;
+    auto is_good_baseline_angle = [=](double angle) {
+        return std::abs(angle - mean_baseline_angle) < (2.0 * M_PI / 180.0);
     };
 
     auto mean_font_size = compute_mean<double>(source.lines.begin(), source.lines.end(),
@@ -83,13 +83,13 @@ OcrParagraph sort_paragraph_text(const OcrParagraph& source)
     std::vector<std::pair<double, std::size_t>> baselines_y_at_mid_x;
     for (std::size_t i = 0; i < source.lines.size(); ++i) {
         const auto& line = source.lines[i];
-        if (!is_good_baseline_coeff(line.baseline_coeff)) {
-            rejected_lines.emplace_back(line.box.y2 + line.baseline_coeff, i);
+        if (!is_good_baseline_angle(line.baseline_angle)) {
+            rejected_lines.emplace_back(line.box.y2 + line.baseline_y, i);
             continue;
         }
 
         auto baseline_at_mid_x = line.box.y2 + line.baseline_y +
-                                 line.baseline_coeff * (mid_lines_x - line.box.x1);
+                                 std::tan(line.baseline_angle) * (mid_lines_x - line.box.x1);
 
         baselines_y_at_mid_x.emplace_back(baseline_at_mid_x, i);
     }
