@@ -89,7 +89,7 @@ OcrParagraph sort_paragraph_text(const OcrParagraph& source)
         }
 
         auto baseline_at_mid_x = line.box.y2 + line.baseline_y +
-                                 std::tan(line.baseline_angle) * (mid_lines_x - line.box.x1);
+                                 std::tan(line.baseline_angle) * (mid_lines_x - line.box.x1 - line.baseline_x);
 
         baselines_y_at_mid_x.emplace_back(baseline_at_mid_x, i);
     }

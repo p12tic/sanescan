@@ -225,10 +225,11 @@ std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
             canvas.set_text_mode_outline();
 
             auto matrix = compute_affine_matrix_for_line(line.baseline_angle);
+            auto line_baseline_x = line.box.x1 + line.baseline_x;
             auto line_baseline_y = height - line.box.y2 - line.baseline_y;
             canvas.set_text_matrix(matrix.a, matrix.b, matrix.c, matrix.d,
-                                   line.box.x1, line_baseline_y);
-            double old_x = line.box.x1;
+                                   line_baseline_x, line_baseline_y);
+            double old_x = line_baseline_x;
             double old_y = line_baseline_y;
             double old_fontsize = -1;
 
@@ -239,7 +240,7 @@ std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
                 }
 
                 double word_x = word.box.x1;
-                double word_y = line_baseline_y - (word_x - line.box.x1) * std::tan(line.baseline_angle);
+                double word_y = line_baseline_y - (word_x - line_baseline_x) * std::tan(line.baseline_angle);
                 double dx = word_x - old_x;
                 double dy = word_y - old_y;
                 canvas.translate_text_matrix(dx * matrix.a + dy * matrix.b,

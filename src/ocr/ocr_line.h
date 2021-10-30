@@ -30,7 +30,8 @@ struct OcrLine {
     OcrBox box;
 
     // Baseline is calculated by taking bottom left corner as origin (X0, Y0) and drawing a line
-    // Y = Y0 + baseline_y + (X - X0) * std::tan(baseline_angle)
+    // Y = Y0 + baseline_y + (X - baseline_x - X0) * std::tan(baseline_angle)
+    double baseline_x = 0;
     double baseline_y = 0;
     double baseline_angle = 0;
 
