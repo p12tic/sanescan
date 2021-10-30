@@ -16,26 +16,26 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_OCR_OCR_LINE_H
-#define SANESCAN_OCR_OCR_LINE_H
+#ifndef SANESCAN_OCR_OCR_BASELINE_H
+#define SANESCAN_OCR_OCR_BASELINE_H
 
-#include "ocr_word.h"
-#include "ocr_baseline.h"
-#include <vector>
+#include <compare>
 #include <iosfwd>
 
 namespace sanescan {
 
-struct OcrLine {
-    std::vector<OcrWord> words;
-    OcrBox box;
-    OcrBaseline baseline;
+struct OcrBaseline {
+    // Baseline is calculated by taking bottom left corner of the bounding box as origin (X0, Y0)
+    // and drawing a line Y = Y0 + baseline_y + (X - baseline_x - X0) * std::tan(angle)
+    double x = 0;
+    double y = 0;
+    double angle = 0;
 
-    auto operator<=>(const OcrLine&) const = default;
+    auto operator<=>(const OcrBaseline&) const = default;
 };
 
-std::ostream& operator<<(std::ostream& stream, const OcrLine& line);
+std::ostream& operator<<(std::ostream& stream, const OcrBaseline& baseline);
 
 } // namespace sanescan
 
-#endif // SANESCAN_OCR_OCR_LINE_H
+#endif

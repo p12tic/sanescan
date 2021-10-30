@@ -224,9 +224,9 @@ std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
             canvas.begin_text();
             canvas.set_text_mode_outline();
 
-            auto matrix = compute_affine_matrix_for_line(line.baseline_angle);
-            auto line_baseline_x = line.box.x1 + line.baseline_x;
-            auto line_baseline_y = height - line.box.y2 - line.baseline_y;
+            auto matrix = compute_affine_matrix_for_line(line.baseline.angle);
+            auto line_baseline_x = line.box.x1 + line.baseline.x;
+            auto line_baseline_y = height - line.box.y2 - line.baseline.y;
             canvas.set_text_matrix(matrix.a, matrix.b, matrix.c, matrix.d,
                                    line_baseline_x, line_baseline_y);
             double old_x = line_baseline_x;
@@ -240,7 +240,7 @@ std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
                 }
 
                 double word_x = word.box.x1;
-                double word_y = line_baseline_y - (word_x - line_baseline_x) * std::tan(line.baseline_angle);
+                double word_y = line_baseline_y - (word_x - line_baseline_x) * std::tan(line.baseline.angle);
                 double dx = word_x - old_x;
                 double dy = word_y - old_y;
                 canvas.translate_text_matrix(dx * matrix.a + dy * matrix.b,
@@ -294,7 +294,7 @@ std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
                     // use is exactly equal to how much space we have.
                     auto word_dx = word.box.x2 - word.box.x1;
                     auto word_baseline_length = std::hypot(word_dx,
-                                                           word_dx * std::tan(word.baseline_angle));
+                                                           word_dx * std::tan(word.baseline.angle));
                     auto font_char_width = double(font_size) / CHAR_HEIGHT_DIVIDED_BY_WIDTH;
                     auto curr_char_width = word_baseline_length / text_utf32.size();
                     auto stretch_percent = 100 * curr_char_width / font_char_width;

@@ -20,6 +20,7 @@ find_package(OpenCV REQUIRED)
 
 set(SOURCES
     hocr.cc
+    ocr_baseline.cc
     ocr_box.cc
     ocr_line.cc
     ocr_paragraph.cc

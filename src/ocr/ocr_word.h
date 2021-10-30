@@ -20,6 +20,7 @@
 #define SANESCAN_OCR_OCR_WORD_H
 
 #include "ocr_box.h"
+#include "ocr_baseline.h"
 #include <string>
 #include <vector>
 
@@ -28,15 +29,10 @@ namespace sanescan {
 struct OcrWord {
     std::vector<OcrBox> char_boxes;
     OcrBox box;
+    OcrBaseline baseline;
 
     // Confidence in the interval [0..1]
     double confidence = 1;
-
-    // Baseline is calculated by taking bottom left corner as origin (X0, Y0) and drawing a line
-    // Y = Y0 + baseline_y + (X - baseline_x - X0) * std::tan(baseline_angle)
-    double baseline_x = 0;
-    double baseline_y = 0;
-    double baseline_angle = 0;
 
     // Font size is in terms of page coordinates, not PPI
     double font_size = 0;

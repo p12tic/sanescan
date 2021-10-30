@@ -106,10 +106,10 @@ OcrWord parse_hocr_word(pugi::xml_node e_word, const OcrLine& line, double font_
     word.box = parse_hocr_box(props, "bbox");
     word.confidence = get_hocr_values_or_exception(props, "x_wconf", 1)[0];
 
-    word.baseline_x = 0;
-    word.baseline_y = (word.box.y2 - line.box.y2) +
-            line.baseline_y * std::tan(line.baseline_angle) * (word.box.x1 - line.box.x1);
-    word.baseline_angle = line.baseline_angle;
+    word.baseline.x = 0;
+    word.baseline.y = (word.box.y2 - line.box.y2) +
+            line.baseline.y * std::tan(line.baseline.angle) * (word.box.x1 - line.box.x1);
+    word.baseline.angle = line.baseline.angle;
     word.font_size = font_size;
 
     for (auto e_cinfo : e_word.children("span")) {
@@ -131,9 +131,9 @@ OcrLine parse_hocr_line(pugi::xml_node e_line)
     line.box = parse_hocr_box(props, "bbox");
 
     const auto& baseline_values = get_hocr_values_or_exception(props, "baseline", 2);
-    line.baseline_angle = std::atan(baseline_values[0]);
-    line.baseline_x = 0;
-    line.baseline_y = baseline_values[1];
+    line.baseline.angle = std::atan(baseline_values[0]);
+    line.baseline.x = 0;
+    line.baseline.y = baseline_values[1];
     double font_size = get_hocr_values_or_exception(props, "x_size", 1)[0];
 
     for (auto e_word : e_line.children("span")) {
@@ -271,11 +271,11 @@ void write_hocr(std::ostream& output, const std::vector<OcrParagraph>& paragraph
             e_line.append_attribute("class") = "ocr_line";
 
             // hOCR defines the origin of the baseline as bottom left of the line bounding box.
-            double baseline_y = line.baseline_y - line.baseline_x * std::tan(line.baseline_angle);
+            double baseline_y = line.baseline.y - line.baseline.x * std::tan(line.baseline.angle);
 
             std::ostringstream line_title;
             line_title << "bbox " << box_to_hocr(line.box) << ";"
-                       << " baseline " << baseline_y << " " << line.baseline_y << ";"
+                       << " baseline " << baseline_y << " " << line.baseline.y << ";"
                        << " x_size " << line.words.front().font_size;
             e_line.append_attribute("title") = line_title.str().c_str();
 

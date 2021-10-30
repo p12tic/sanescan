@@ -51,7 +51,7 @@ OcrParagraph sort_paragraph_text(const OcrParagraph& source)
 
     auto mean_baseline_angle =
             compute_mean<double>(source.lines.begin(), source.lines.end(),
-                                 [](const auto& line) { return line.baseline_angle; });
+                                 [](const auto& line) { return line.baseline.angle; });
 
     auto is_good_baseline_angle = [=](double angle) {
         auto diff_limit = 2.0 * boost::math::constants::pi<double>() / 180.0;
@@ -86,13 +86,13 @@ OcrParagraph sort_paragraph_text(const OcrParagraph& source)
     std::vector<std::pair<double, std::size_t>> baselines_y_at_mid_x;
     for (std::size_t i = 0; i < source.lines.size(); ++i) {
         const auto& line = source.lines[i];
-        if (!is_good_baseline_angle(line.baseline_angle)) {
-            rejected_lines.emplace_back(line.box.y2 + line.baseline_y, i);
+        if (!is_good_baseline_angle(line.baseline.angle)) {
+            rejected_lines.emplace_back(line.box.y2 + line.baseline.y, i);
             continue;
         }
 
-        auto baseline_at_mid_x = line.box.y2 + line.baseline_y +
-                                 std::tan(line.baseline_angle) * (mid_lines_x - line.box.x1 - line.baseline_x);
+        auto baseline_at_mid_x = line.box.y2 + line.baseline.y +
+                std::tan(line.baseline.angle) * (mid_lines_x - line.box.x1 - line.baseline.x);
 
         baselines_y_at_mid_x.emplace_back(baseline_at_mid_x, i);
     }

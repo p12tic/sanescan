@@ -29,9 +29,8 @@ std::ostream& operator<<(std::ostream& stream, const OcrWord& word)
         stream << "    " << box << "\n";
     }
     stream << "  box: " << word.box << "\n"
+           << "  baseline: " << word.baseline << "\n"
            << "  confidence: " << word.confidence << "\n"
-           << "  baseline_y: " << word.baseline_y << "\n"
-           << "  baseline_angle: " << word.baseline_angle << "\n"
            << "  font_size: " << word.font_size << "\n"
            << "  content: " << word.content << "\n"
            << "}";

@@ -29,8 +29,7 @@ std::ostream& operator<<(std::ostream& stream, const OcrLine& line)
         stream << "    " << word << "\n";
     }
     stream << "  box: " << line.box << "\n"
-           << "  baseline_y: " << line.baseline_y << "\n"
-           << "  baseline_angle: " << line.baseline_angle << "\n"
+           << "  baseline: " << line.baseline << "\n"
            << "}";
     return stream;
 }
