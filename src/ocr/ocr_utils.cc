@@ -17,6 +17,7 @@
 */
 
 #include "ocr_utils.h"
+#include <algorithm>
 #include <cmath>
 #include <numeric>
 
