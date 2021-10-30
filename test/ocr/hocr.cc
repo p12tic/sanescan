@@ -127,7 +127,8 @@ TEST(Hocr, ParseSimpleFile)
                     OcrBox{22, 4, 634, 28},
                     -5.0, 0.0
                 }
-            }
+            },
+            OcrBox{22, 4, 634, 28}
         }
     };
 

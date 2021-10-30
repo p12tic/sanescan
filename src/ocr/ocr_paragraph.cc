@@ -28,6 +28,7 @@ std::ostream& operator<<(std::ostream& stream, const OcrParagraph& par)
     for (const auto& line : par.lines) {
         stream << "    " << line << "\n";
     }
+    stream << "  box: " << par.box << "\n";
     stream << "}";
     return stream;
 }

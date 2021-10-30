@@ -27,6 +27,7 @@ namespace sanescan {
 
 struct OcrParagraph {
     std::vector<OcrLine> lines;
+    OcrBox box;
 
     auto operator<=>(const OcrParagraph&) const = default;
 };

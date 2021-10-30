@@ -155,6 +155,8 @@ OcrParagraph parse_hocr_paragraph(pugi::xml_node e_par)
         if (std::strcmp(e_line.attribute("class").value(), "ocr_line") != 0) {
             continue;
         }
+        auto props = parse_hocr_props(e_line.attribute("title").value());
+        paragraph.box = parse_hocr_box(props, "bbox");
 
         auto line = parse_hocr_line(e_line);
         if (!line.words.empty()) {
@@ -253,6 +255,10 @@ void write_hocr(std::ostream& output, const std::vector<OcrParagraph>& paragraph
         auto e_p = e_carea.append_child("p");
         e_p.append_attribute("class") = "ocr_par";
         e_p.append_attribute("lang") = "eng";
+
+        std::ostringstream par_title;
+        par_title << "bbox " << box_to_hocr(par.box);
+        e_p.append_attribute("title") = par_title.str().c_str();
 
         for (const auto& line : par.lines) {
             if (line.words.empty()) {
