@@ -17,6 +17,7 @@
 */
 
 #include "ocr_utils.h"
+#include <boost/math/constants/constants.hpp>
 #include <algorithm>
 #include <cmath>
 #include <numeric>
@@ -53,7 +54,8 @@ OcrParagraph sort_paragraph_text(const OcrParagraph& source)
                                  [](const auto& line) { return line.baseline_angle; });
 
     auto is_good_baseline_angle = [=](double angle) {
-        return std::abs(angle - mean_baseline_angle) < (2.0 * M_PI / 180.0);
+        auto diff_limit = 2.0 * boost::math::constants::pi<double>() / 180.0;
+        return std::abs(angle - mean_baseline_angle) < diff_limit;
     };
 
     auto mean_font_size = compute_mean<double>(source.lines.begin(), source.lines.end(),
