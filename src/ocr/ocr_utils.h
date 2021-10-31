@@ -31,6 +31,20 @@ namespace sanescan {
 */
 OcrParagraph sort_paragraph_text(const OcrParagraph& source);
 
+/*  This function calculates the dominant direction of the text.
+
+    It finds the angle for which the range [angle - window_width / 2, angle + window_width / 2]
+    contains the largest density of weighted input angles. Then the weighted average of all angles
+    within the range are computed and returned as the first element of the returned pair. The
+    second element of the returned pair contains the [0, 1] proportion of angles that fall within
+    window.
+
+    The input angles must fall in the range [0 .. 2 * pi]. If the window with best density is
+    across the angle zero (i.e. the search wrapped around), then the average angle may be negative.
+*/
+std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double, double>>& angles,
+                                             double window_width);
+
 } // namespace sanescan
 
 #endif // SANESCAN_OCR_OCR_WORD_H

@@ -20,6 +20,7 @@ set(SOURCES
     lib/buffer_manager.cc
     lib/incomplete_line_manager.cc
     ocr/hocr.cc
+    ocr/ocr_utils.cc
 )
 
 include(FindPkgConfig)

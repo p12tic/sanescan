@@ -227,4 +227,111 @@ OcrParagraph sort_paragraph_text(const OcrParagraph& source)
     return result;
 }
 
+std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double, double>>& angles,
+                                             double window_width)
+{
+    if (angles.empty()) {
+        return {0, 0};
+    }
+
+    auto deg_360 = boost::math::constants::pi<double>() * 2;
+
+    auto sorted_angles = angles;
+    std::sort(sorted_angles.begin(), sorted_angles.end());
+
+    double total_weight = 0;
+    for (const auto& [angle, weight] : sorted_angles) {
+        total_weight += weight;
+    }
+
+    double curr_density = 0;
+    std::size_t i_begin = 0;
+    std::size_t i_end = 0; // exclusive
+
+    // Setup initial window
+    while (i_end < sorted_angles.size() && sorted_angles[i_end].first < window_width) {
+        curr_density += sorted_angles[i_end].second;
+        ++i_end;
+    }
+
+    double max_density = curr_density;
+    auto max_density_i_begin = i_begin;
+    auto max_density_i_end = i_end;
+
+    // Go through all angles looking for the best window
+    while (i_end < sorted_angles.size()) {
+        auto to_add = sorted_angles[i_end++];
+        curr_density += to_add.second;
+
+        while (sorted_angles[i_begin].first <= to_add.first - window_width) {
+            curr_density -= sorted_angles[i_begin].second;
+            i_begin++;
+        }
+
+        if (curr_density > max_density) {
+            max_density = curr_density;
+            max_density_i_begin = i_begin;
+            max_density_i_end = i_end;
+        }
+    }
+
+    // At this point of time we've investigated all possible windows in the range of
+    // [0 .. 2*pi] (assuming sorted_angles contains proper values). We need to also wrap the
+    // range and also investigate the range [2*pi, 2*pi + window_width].
+    i_end = 0;
+    while (i_begin < sorted_angles.size() && i_end < sorted_angles.size()) {
+        auto to_add = sorted_angles[i_end++];
+        curr_density += to_add.second;
+
+        while (i_begin < sorted_angles.size() &&
+               sorted_angles[i_begin].first <= to_add.first + deg_360 - window_width) {
+            curr_density -= sorted_angles[i_begin].second;
+            i_begin++;
+        }
+
+        if (curr_density > max_density) {
+            max_density = curr_density;
+            max_density_i_begin = i_begin;
+            max_density_i_end = i_end;
+        }
+    }
+
+    double value_sum = 0;
+    double weight_sum = 0;
+    if (max_density_i_begin < max_density_i_end) {
+        for (auto i = max_density_i_begin; i < max_density_i_end; ++i) {
+            value_sum += sorted_angles[i].first * sorted_angles[i].second;
+            weight_sum += sorted_angles[i].second;
+        }
+    } else {
+        for (auto i = max_density_i_begin; i < sorted_angles.size(); ++i) {
+            value_sum += (sorted_angles[i].first - deg_360) * sorted_angles[i].second;
+            weight_sum += sorted_angles[i].second;
+        }
+        for (auto i = 0; i < max_density_i_end; ++i) {
+            value_sum += sorted_angles[i].first * sorted_angles[i].second;
+            weight_sum += sorted_angles[i].second;
+        }
+    }
+    double avg = value_sum / weight_sum;
+    return {avg, weight_sum / total_weight};
+}
+
+double get_average_text_angle(const std::vector<OcrParagraph>& paragraphs)
+{
+    double angle_accum = 0;
+    std::uint64_t total_char_count = 0;
+    for (const auto& par : paragraphs) {
+        for (const auto& line : par.lines) {
+            std::uint64_t line_char_count = 0;
+            for (const auto& word : line.words) {
+                line_char_count += word.char_boxes.size();
+            }
+            angle_accum += line_char_count * line.baseline.angle;
+            total_char_count += line_char_count;
+        }
+    }
+    return angle_accum / total_char_count;
+}
+
 } // namespace sanescan
