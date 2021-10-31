@@ -227,6 +227,20 @@ OcrParagraph sort_paragraph_text(const OcrParagraph& source)
     return result;
 }
 
+std::vector<std::pair<double, double>>
+    get_all_text_angles(const std::vector<OcrParagraph>& paragraphs)
+{
+    std::vector<std::pair<double, double>> result;
+    for (const auto& par : paragraphs) {
+        for (const auto& line : par.lines) {
+            for (const auto& word : line.words) {
+                result.push_back({word.baseline.angle, word.char_boxes.size()});
+            }
+        }
+    }
+    return result;
+}
+
 std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double, double>>& angles,
                                              double window_width)
 {

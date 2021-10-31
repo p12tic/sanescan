@@ -31,6 +31,9 @@ namespace sanescan {
 */
 OcrParagraph sort_paragraph_text(const OcrParagraph& source);
 
+// Returns text angles. The first element of the pair is the angle, the second is arbitrary weight.
+std::vector<std::pair<double, double>> get_all_text_angles(const std::vector<OcrParagraph>& paragraphs);
+
 /*  This function calculates the dominant direction of the text.
 
     It finds the angle for which the range [angle - window_width / 2, angle + window_width / 2]
