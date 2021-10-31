@@ -104,7 +104,7 @@ OcrWord parse_hocr_word(pugi::xml_node e_word, const OcrLine& line, double font_
 
     auto props = parse_hocr_props(e_word.attribute("title").value());
     word.box = parse_hocr_box(props, "bbox");
-    word.confidence = get_hocr_values_or_exception(props, "x_wconf", 1)[0];
+    word.confidence = get_hocr_values_or_exception(props, "x_wconf", 1)[0] / 100.0;
 
     word.baseline.x = 0;
     word.baseline.y = (word.box.y2 - line.box.y2) +
