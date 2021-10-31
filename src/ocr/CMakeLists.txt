@@ -17,6 +17,7 @@
 
 include(FindPkgConfig)
 find_package(OpenCV REQUIRED)
+pkg_check_modules(tesseract REQUIRED tesseract)
 
 set(SOURCES
     hocr.cc
@@ -28,11 +29,15 @@ set(SOURCES
     ocr_utils.cc
     pdf.cc
     pdf_writer.cc
+    tesseract.cc
+    tesseract_renderer.cc
 )
 
 add_library(sanescanocr OBJECT ${SOURCES})
 
 target_link_libraries(sanescanocr PUBLIC
+    leptonica
+    ${tesseract_LIBRARIES}
     pugixml
     podofo
     ${OpenCV_LIBS}
