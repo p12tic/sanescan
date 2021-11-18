@@ -16,14 +16,49 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <boost/program_options.hpp>
-#include <string>
-#include <iostream>
+#include "ocr/tesseract.h"
+#include "ocr/ocr_utils.h"
+#include "ocr/pdf.h"
 
-namespace po = boost::program_options;
+#include <opencv2/imgcodecs.hpp>
+#include <boost/program_options.hpp>
+#include <iostream>
+#include <fstream>
+#include <string>
+
+namespace sanescan {
+
+bool read_ocr_write(const std::string& input_path, const std::string& output_path,
+                    bool debug_ocr)
+{
+    auto image = cv::imread(input_path);
+    if (image.data == nullptr) {
+        throw std::runtime_error("Could not load input file");
+    }
+
+    TesseractRecognizer recognizer{"/usr/share/tesseract-ocr/4.00/tessdata/"};
+
+    auto recognized = recognizer.recognize_tesseract(image);
+
+    sanescan::OcrParagraph combined;
+    for (const auto& par : recognized) {
+        for (const auto& line : par.lines) {
+            combined.lines.push_back(line);
+        }
+    }
+
+    std::vector<OcrParagraph> sorted_all = {sort_paragraph_text(combined)};
+    std::ofstream stream_pdf(output_path);
+    write_pdf(stream_pdf, image, sorted_all);
+    return true;
+}
+
+} // namespace sanescan
 
 int main(int argc, char* argv[])
 {
+    namespace po = boost::program_options;
+
     std::string input_path;
     std::string output_path;
 
@@ -63,6 +98,29 @@ Options)");
     if (options.count("help")) {
         std::cout << options_desc << "\n";
         return EXIT_SUCCESS;
+    }
+
+    if (options.count("input-path") != 1) {
+        std::cerr << "Must specify single input path\n";
+        return EXIT_FAILURE;
+    }
+
+    if (options.count("output-path") != 1) {
+        std::cerr << "Must specify single output path\n";
+        return EXIT_FAILURE;
+    }
+
+    try {
+        if (!sanescan::read_ocr_write(input_path, output_path, options.count("debug"))) {
+            std::cerr << "Unknown failure";
+            return EXIT_FAILURE;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to do OCR: " << e.what() << "\n";
+        return EXIT_FAILURE;
+    } catch (...) {
+        std::cerr << "Failed to do OCR uknown failure\n";
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;

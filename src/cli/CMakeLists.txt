@@ -19,7 +19,10 @@ add_executable(sanescancli main.cc)
 
 find_package(Boost COMPONENTS program_options REQUIRED)
 
-target_include_directories(sanescancli PUBLIC ${OpenCV_INCLUDE_DIRS})
+target_include_directories(sanescancli PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${OpenCV_INCLUDE_DIRS}
+)
 
 target_link_libraries(sanescancli
     sanescanocr
