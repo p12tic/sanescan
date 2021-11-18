@@ -15,8 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-add_subdirectory(cli)
-add_subdirectory(lib)
-add_subdirectory(gui)
-add_subdirectory(ocr)
+add_executable(sanescancli main.cc)
 
+find_package(Boost COMPONENTS program_options REQUIRED)
+
+target_include_directories(sanescancli PUBLIC ${OpenCV_INCLUDE_DIRS})
+
+target_link_libraries(sanescancli
+    sanescanocr
+    Boost::program_options
+)
