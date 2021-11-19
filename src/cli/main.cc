@@ -49,7 +49,8 @@ bool read_ocr_write(const std::string& input_path, const std::string& output_pat
 
     std::vector<OcrParagraph> sorted_all = {sort_paragraph_text(combined)};
     std::ofstream stream_pdf(output_path);
-    write_pdf(stream_pdf, image, sorted_all);
+    write_pdf(stream_pdf, image, sorted_all,
+              debug_ocr ? WritePdfFlags::DEBUG_CHAR_BOXES : WritePdfFlags::NONE);
     return true;
 }
 
