@@ -66,7 +66,8 @@ void PdfWriter::write_header()
     setup_font_file(font_file);
 }
 
-void PdfWriter::write_page(const cv::Mat& image, const std::vector<OcrParagraph>& recognized)
+void PdfWriter::write_page(const cv::Mat& image, const std::vector<OcrParagraph>& recognized,
+                           WritePdfFlags flags)
 {
     if (type0_font_ == nullptr) {
         throw std::runtime_error("write_header must be called before calling write_page");
@@ -85,7 +86,7 @@ void PdfWriter::write_page(const cv::Mat& image, const std::vector<OcrParagraph>
 
     auto page_contents_data = get_contents_data_for_image(image_data.GetIdentifier().GetName(),
                                                       width, height);
-    page_contents_data += get_contents_data_for_text(font_ident, width, height, recognized);
+    page_contents_data += get_contents_data_for_text(font_ident, width, height, recognized, flags);
 
     PoDoFo::PdfMemoryInputStream page_contents_stream(page_contents_data.c_str(),
                                                        page_contents_data.size());
@@ -212,9 +213,17 @@ std::string PdfWriter::get_contents_data_for_image(const std::string& image_name
     return canvas.get_string();
 }
 
+std::pair<double, double> PdfWriter::adjust_small_baseline_angle(const OcrLine& line)
+{
+    // Many PDF viewers just can't properly select text when the baseline_angle is anything but
+    // zero because it causes the character heights to be different in different words and
+    // the viewers then
+}
+
 std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
                                                   double width, double height,
-                                                  const std::vector<OcrParagraph>& recognized)
+                                                  const std::vector<OcrParagraph>& recognized,
+                                                  WritePdfFlags flags)
 {
     PdfCanvas canvas;
     std::vector<double> text_adjustments;
@@ -222,7 +231,12 @@ std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
     for (const auto& par : recognized) {
         for (const auto& line : par.lines) {
             canvas.begin_text();
-            canvas.set_text_mode_outline();
+
+            if (has_flag(flags, WritePdfFlags::DEBUG_CHAR_BOXES)) {
+                canvas.set_text_mode_outline();
+            } else {
+                canvas.set_text_mode_invisible();
+            }
 
             auto matrix = compute_affine_matrix_for_line(line.baseline.angle);
             auto line_baseline_x = line.box.x1 + line.baseline.x;

@@ -21,13 +21,22 @@
 #define SANESCAN_OCR_PDF_H
 
 #include "ocr_paragraph.h"
+#include "util/enum_flags.h"
 #include <opencv2/core/mat.hpp>
 #include <iosfwd>
 
 namespace sanescan {
 
+enum class WritePdfFlags {
+    NONE = 0,
+    DEBUG_CHAR_BOXES = 1 << 0,
+};
+
+SANESCAN_DECLARE_OPERATORS_FOR_SCOPED_ENUM_FLAGS(WritePdfFlags)
+
 void write_pdf(std::ostream& stream, const cv::Mat& image,
-               const std::vector<OcrParagraph>& recognized);
+               const std::vector<OcrParagraph>& recognized,
+               WritePdfFlags flags = WritePdfFlags::NONE);
 
 } // namespace sanescan
 

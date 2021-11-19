@@ -40,11 +40,11 @@
 namespace sanescan {
 
 void write_pdf(std::ostream& stream, const cv::Mat& image,
-               const std::vector<OcrParagraph>& recognized)
+               const std::vector<OcrParagraph>& recognized, WritePdfFlags flags)
 {
     PdfWriter writer(stream);
     writer.write_header();
-    writer.write_page(image, recognized);
+    writer.write_page(image, recognized, flags);
 }
 
 } // namespace sanescan

@@ -20,8 +20,10 @@
 #define SANESCAN_OCR_PDF_WRITER_H
 
 #include "ocr_paragraph.h"
+#include "pdf.h"
 #include <opencv2/core/mat.hpp>
 #include <podofo/podofo.h>
+#include <utility>
 
 namespace sanescan {
 
@@ -35,7 +37,8 @@ public:
     ~PdfWriter();
 
     void write_header();
-    void write_page(const cv::Mat& image, const std::vector<OcrParagraph>& recognized);
+    void write_page(const cv::Mat& image, const std::vector<OcrParagraph>& recognized,
+                    WritePdfFlags flags);
 
 private:
     void setup_type0_font(PoDoFo::PdfObject* type0_font, PoDoFo::PdfObject* cid_font_type2,
@@ -54,7 +57,11 @@ private:
                                             double width, double height);
     std::string get_contents_data_for_text(const std::string& font_ident,
                                            double width, double height,
-                                           const std::vector<OcrParagraph>& recognized);
+                                           const std::vector<OcrParagraph>& recognized,
+                                           WritePdfFlags flags);
+
+    std::pair<double, double> adjust_small_baseline_angle(const OcrLine& line);
+
     PoDoFo::PdfOutputDevice output_dev_;
     PoDoFo::PdfStreamedDocument doc_;
     PoDoFo::PdfObject* type0_font_ = nullptr;
