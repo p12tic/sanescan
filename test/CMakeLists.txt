@@ -32,9 +32,6 @@ include_directories(
 )
 
 add_executable(unittest ${SOURCES})
-target_include_directories(unittest PRIVATE
-    "${CMAKE_SOURCE_DIR}/src"
-)
 
 target_link_libraries(unittest
     ${GTEST_LIBRARIES} ${GMOCK_LIBRARIES}
