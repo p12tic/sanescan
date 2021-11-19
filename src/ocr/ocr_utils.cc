@@ -17,7 +17,7 @@
 */
 
 #include "ocr_utils.h"
-#include <boost/math/constants/constants.hpp>
+#include "util/math.h"
 #include <algorithm>
 #include <cmath>
 #include <numeric>
@@ -54,8 +54,7 @@ OcrParagraph sort_paragraph_text(const OcrParagraph& source)
                                  [](const auto& line) { return line.baseline.angle; });
 
     auto is_good_baseline_angle = [=](double angle) {
-        auto diff_limit = 2.0 * boost::math::constants::pi<double>() / 180.0;
-        return std::abs(angle - mean_baseline_angle) < diff_limit;
+        return std::abs(angle - mean_baseline_angle) < deg_to_rad(2);
     };
 
     auto mean_font_size = compute_mean<double>(source.lines.begin(), source.lines.end(),
@@ -248,8 +247,6 @@ std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double,
         return {0, 0};
     }
 
-    auto deg_360 = boost::math::constants::pi<double>() * 2;
-
     auto sorted_angles = angles;
     std::sort(sorted_angles.begin(), sorted_angles.end());
 
@@ -298,7 +295,7 @@ std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double,
         curr_density += to_add.second;
 
         while (i_begin < sorted_angles.size() &&
-               sorted_angles[i_begin].first <= to_add.first + deg_360 - window_width) {
+               sorted_angles[i_begin].first <= to_add.first + deg_to_rad(360) - window_width) {
             curr_density -= sorted_angles[i_begin].second;
             i_begin++;
         }
@@ -319,7 +316,7 @@ std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double,
         }
     } else {
         for (auto i = max_density_i_begin; i < sorted_angles.size(); ++i) {
-            value_sum += (sorted_angles[i].first - deg_360) * sorted_angles[i].second;
+            value_sum += (sorted_angles[i].first - deg_to_rad(360)) * sorted_angles[i].second;
             weight_sum += sorted_angles[i].second;
         }
         for (auto i = 0; i < max_density_i_end; ++i) {

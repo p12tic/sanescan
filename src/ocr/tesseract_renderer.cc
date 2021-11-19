@@ -18,9 +18,9 @@
 
 #include "tesseract_renderer.h"
 #include "ocr_baseline.h"
+#include "util/math.h"
 #include <tesseract/baseapi.h>
 #include <tesseract/resultiterator.h>
-#include <boost/math/constants/constants.hpp>
 #include <memory>
 #include <stdexcept>
 #include <tuple>
@@ -51,9 +51,9 @@ OcrBaseline get_baseline(const std::unique_ptr<tesseract::ResultIterator>& it, c
 
     if (x1d == x2d) {
         if (y1d > y2d) {
-            return OcrBaseline{x1d, y1d, -boost::math::constants::pi<double>() / 2};
+            return OcrBaseline{x1d, y1d, -deg_to_rad(90)};
         } else {
-            return OcrBaseline{x1d, y1d, boost::math::constants::pi<double>() / 2};
+            return OcrBaseline{x1d, y1d, deg_to_rad(90)};
         }
     }
 
@@ -63,14 +63,11 @@ OcrBaseline get_baseline(const std::unique_ptr<tesseract::ResultIterator>& it, c
 OcrBaseline adjust_baseline_for_other_box(const OcrBaseline& src_baseline, const OcrBox& src_box,
                                           const OcrBox& dst_box)
 {
-    auto deg_45 = boost::math::constants::pi<double>() / 4;
-    auto deg_90 = boost::math::constants::pi<double>() / 2;
-
-    if (src_baseline.angle > deg_45 || src_baseline.angle < -deg_45) {
+    if (src_baseline.angle > deg_to_rad(45) || src_baseline.angle < -deg_to_rad(45)) {
         // baseline is more vertical than horizontal, adjust y baseline offset within
         // bounding box to zero
         auto y_diff = dst_box.y2 - (src_box.y2 + src_baseline.y);
-        auto baseline_x_diff = -y_diff * std::tan(src_baseline.angle - deg_90);
+        auto baseline_x_diff = -y_diff * std::tan(src_baseline.angle - deg_to_rad(90));
         auto x = src_box.x1 + src_baseline.x - dst_box.x1 + baseline_x_diff;
         return OcrBaseline{x, 0, src_baseline.angle};
     }
