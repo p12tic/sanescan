@@ -251,14 +251,7 @@ std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double,
 
     double total_weight = 0;
     for (auto& [angle, weight] : sorted_angles) {
-        angle = std::fmod(angle, wrap_around_angle);
-
-        if (angle < 0) {
-            // If fmod returns negative value it will be in the range (-wrap_around_angle, 0). We
-            // want all angles to fall into range [0, wrap_around_angle).
-            angle += wrap_around_angle;
-        }
-
+        angle = positive_fmod(angle, wrap_around_angle);
         total_weight += weight;
     }
 

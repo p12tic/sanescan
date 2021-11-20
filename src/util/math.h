@@ -20,8 +20,18 @@
 #define SANESCAN_UTIL_MATH_H
 
 #include <boost/math/constants/constants.hpp>
+#include <cmath>
 
 namespace sanescan {
+
+inline double positive_fmod(double x, double y)
+{
+    x = std::fmod(x, y);
+    if (x < 0) {
+        x += y;
+    }
+    return x;
+}
 
 constexpr double deg_to_rad(double deg)
 {
