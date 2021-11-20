@@ -24,17 +24,17 @@ namespace sanescan {
 
 TEST(GetDominantAngle, NoValues)
 {
-    ASSERT_EQ(get_dominant_angle({}, 0), std::make_pair(0.0, 0.0));
+    ASSERT_EQ(get_dominant_angle({}, deg_to_rad(360), 0), std::make_pair(0.0, 0.0));
 }
 
 TEST(GetDominantAngle, SingleValue)
 {
-    ASSERT_EQ(get_dominant_angle({{deg_to_rad(10), 1}}, deg_to_rad(1)),
+    ASSERT_EQ(get_dominant_angle({{deg_to_rad(10), 1}}, deg_to_rad(360), deg_to_rad(1)),
               std::make_pair(deg_to_rad(10), 1.0));
-    ASSERT_EQ(get_dominant_angle({{deg_to_rad(350), 1}}, deg_to_rad(1)),
+    ASSERT_EQ(get_dominant_angle({{deg_to_rad(350), 1}}, deg_to_rad(360), deg_to_rad(1)),
               std::make_pair(deg_to_rad(350), 1.0));
-    ASSERT_EQ(get_dominant_angle({{deg_to_rad(360), 1}}, deg_to_rad(1)),
-              std::make_pair(deg_to_rad(360), 1.0));
+    ASSERT_EQ(get_dominant_angle({{deg_to_rad(360), 1}}, deg_to_rad(360), deg_to_rad(1)),
+              std::make_pair(deg_to_rad(0), 1.0));
 }
 
 TEST(GetDominantAngle, ManyValuesInSingleWindow)
@@ -47,7 +47,7 @@ TEST(GetDominantAngle, ManyValuesInSingleWindow)
         {deg_to_rad(13), 3},
         {deg_to_rad(14), 2},
         {deg_to_rad(15), 1},
-    }, deg_to_rad(10));
+    }, deg_to_rad(360), deg_to_rad(10));
 
     EXPECT_NEAR(r.first, deg_to_rad(12.5), 1e-6);
     EXPECT_NEAR(r.second, 1.0, 1e-6);
@@ -63,7 +63,22 @@ TEST(GetDominantAngle, ManyValuesInSingleWindowAcrossZero)
         {deg_to_rad(0), 3},
         {deg_to_rad(1), 2},
         {deg_to_rad(2), 1},
-    }, deg_to_rad(10));
+    }, deg_to_rad(360), deg_to_rad(10));
+    EXPECT_NEAR(r.first, 0.0, 1e-6);
+    EXPECT_NEAR(r.second, 1.0, 1e-6);
+}
+
+TEST(GetDominantAngle, ManyValuesInSingleWindowAcrossZeroCustomWrapAround)
+{
+    auto r = get_dominant_angle(
+    {
+        {deg_to_rad(498), 1},
+        {deg_to_rad(499), 2},
+        {deg_to_rad(500), 3},
+        {deg_to_rad(0), 3},
+        {deg_to_rad(1), 2},
+        {deg_to_rad(2), 1},
+    }, deg_to_rad(100), deg_to_rad(10));
     EXPECT_NEAR(r.first, 0.0, 1e-6);
     EXPECT_NEAR(r.second, 1.0, 1e-6);
 }
@@ -78,7 +93,7 @@ TEST(GetDominantAngle, ManyValuesInSingleWindowAcrossZeroShiftedNeg)
         {deg_to_rad(360), 3},
         {deg_to_rad(0), 2},
         {deg_to_rad(1), 1},
-    }, deg_to_rad(10));
+    }, deg_to_rad(360), deg_to_rad(10));
     EXPECT_NEAR(r.first, deg_to_rad((-3*1 - 2*2 - 1*3 + 1*1) / 12.0), 1e-6);
     EXPECT_NEAR(r.second, 1.0, 1e-6);
 }
@@ -93,7 +108,7 @@ TEST(GetDominantAngle, ManyValuesInSingleWindowAcrossZeroShiftedPos)
         {deg_to_rad(1), 3},
         {deg_to_rad(2), 2},
         {deg_to_rad(3), 1},
-    }, deg_to_rad(10));
+    }, deg_to_rad(360), deg_to_rad(10));
     EXPECT_NEAR(r.first, deg_to_rad((-1*1 + 1*3 + 2*2 + 3*1) / 12.0), 1e-6);
     EXPECT_NEAR(r.second, 1.0, 1e-6);
 }
@@ -114,7 +129,7 @@ TEST(GetDominantAngle, ManyValuesInMultipleWindows)
         {deg_to_rad(33), 3},
         {deg_to_rad(34), 2},
         {deg_to_rad(35), 1},
-    }, deg_to_rad(10));
+    }, deg_to_rad(360), deg_to_rad(10));
     EXPECT_NEAR(r.first, deg_to_rad(32.5), 1e-6);
     EXPECT_NEAR(r.second, 12.0 / 23.0, 1e-6);
 }
@@ -135,7 +150,7 @@ TEST(GetDominantAngle, BetterValueShiftsOffWorseValues)
         {deg_to_rad(19), 1},
         {deg_to_rad(20), 1},
         {deg_to_rad(25), 10},
-    }, deg_to_rad(10));
+    }, deg_to_rad(360), deg_to_rad(10));
     EXPECT_NEAR(r.first, deg_to_rad((16 + 17 + 18 + 19 + 20 + 25*10) / 15.0), 1e-6);
     EXPECT_NEAR(r.second, 15.0 / 21.0, 1e-6);
 }

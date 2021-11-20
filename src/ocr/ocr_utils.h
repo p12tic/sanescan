@@ -42,11 +42,14 @@ std::vector<std::pair<double, double>> get_all_text_angles(const std::vector<Ocr
     second element of the returned pair contains the [0, 1] proportion of angles that fall within
     window.
 
-    The input angles must fall in the range [0 .. 2 * pi]. If the window with best density is
-    across the angle zero (i.e. the search wrapped around), then the average angle may be negative.
+    The input angles are interpreted modulo wrap_araound_angle. This allows to e.g. detect slight
+    rotation of a page that contains both horizontal and vertical text.
+
+    If the window with best density is across the angle zero (i.e. the search wrapped around),
+    then the average angle may be negative.
 */
 std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double, double>>& angles,
-                                             double window_width);
+                                             double wrap_around_angle, double window_width);
 
 } // namespace sanescan
 

@@ -241,19 +241,28 @@ std::vector<std::pair<double, double>>
 }
 
 std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double, double>>& angles,
-                                             double window_width)
+                                             double wrap_around_angle, double window_width)
 {
     if (angles.empty()) {
         return {0, 0};
     }
 
     auto sorted_angles = angles;
-    std::sort(sorted_angles.begin(), sorted_angles.end());
 
     double total_weight = 0;
-    for (const auto& [angle, weight] : sorted_angles) {
+    for (auto& [angle, weight] : sorted_angles) {
+        angle = std::fmod(angle, wrap_around_angle);
+
+        if (angle < 0) {
+            // If fmod returns negative value it will be in the range (-wrap_around_angle, 0). We
+            // want all angles to fall into range [0, wrap_around_angle).
+            angle += wrap_around_angle;
+        }
+
         total_weight += weight;
     }
+
+    std::sort(sorted_angles.begin(), sorted_angles.end());
 
     double curr_density = 0;
     std::size_t i_begin = 0;
@@ -295,7 +304,7 @@ std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double,
         curr_density += to_add.second;
 
         while (i_begin < sorted_angles.size() &&
-               sorted_angles[i_begin].first <= to_add.first + deg_to_rad(360) - window_width) {
+               sorted_angles[i_begin].first <= to_add.first + wrap_around_angle - window_width) {
             curr_density -= sorted_angles[i_begin].second;
             i_begin++;
         }
@@ -316,7 +325,7 @@ std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double,
         }
     } else {
         for (auto i = max_density_i_begin; i < sorted_angles.size(); ++i) {
-            value_sum += (sorted_angles[i].first - deg_to_rad(360)) * sorted_angles[i].second;
+            value_sum += (sorted_angles[i].first - wrap_around_angle) * sorted_angles[i].second;
             weight_sum += sorted_angles[i].second;
         }
         for (auto i = 0; i < max_density_i_end; ++i) {
