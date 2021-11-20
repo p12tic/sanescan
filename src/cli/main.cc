@@ -18,9 +18,11 @@
 
 #include "ocr/tesseract.h"
 #include "ocr/ocr_utils.h"
+#include "util/math.h"
 #include "ocr/pdf.h"
 
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <fstream>
@@ -39,6 +41,34 @@ bool read_ocr_write(const std::string& input_path, const std::string& output_pat
     TesseractRecognizer recognizer{"/usr/share/tesseract-ocr/4.00/tessdata/"};
 
     auto recognized = recognizer.recognize_tesseract(image);
+
+    // Handle the case when all text within the image is rotated slightly due to the input data
+    // scan just being rotated. In such case whole image will be rotated to address the following
+    // issues:
+    //
+    // - Most PDF readers can't select rotated text properly
+    // - The OCR accuracy is compromised for rotated text.
+    //
+    // TODO: Ideally we should detect cases when the text in the source image is legitimately
+    // rotated and the rotation is not just the artifact of rotation. In such case the accuracy of
+    // OCR will still be improved if rotate the source image just for OCR and then rotate the
+    // results back.
+    auto [angle, in_window] = get_dominant_angle(get_all_text_angles(recognized),
+                                                 deg_to_rad(90), deg_to_rad(5));
+
+    if (std::abs(angle) < deg_to_rad(5) && in_window > 0.95) {
+        auto height = image.size.p[0];
+        auto width = image.size.p[1];
+
+        cv::Mat rotation_mat = cv::getRotationMatrix2D(cv::Point2f(width / 2, height / 2),
+                                                       rad_to_deg(angle), 1.0);
+
+        cv::Mat rotated_image;
+        cv::warpAffine(image, rotated_image, rotation_mat, image.size(),
+                       cv::INTER_LINEAR, cv::BORDER_REPLICATE);
+        image = rotated_image;
+        recognized = recognizer.recognize_tesseract(image);
+    }
 
     sanescan::OcrParagraph combined;
     for (const auto& par : recognized) {

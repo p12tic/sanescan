@@ -28,6 +28,11 @@ constexpr double deg_to_rad(double deg)
     return deg * boost::math::double_constants::pi / 180.0;
 }
 
+constexpr double rad_to_deg(double rad)
+{
+    return rad * 180.0 / boost::math::double_constants::pi;
+}
+
 } // namespace sanescan
 
 #endif // SANESCAN_UTIL_MATH_H
