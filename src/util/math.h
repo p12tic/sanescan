@@ -24,6 +24,19 @@
 
 namespace sanescan {
 
+// Like std::fmod, but the remainder falls into range of [-y/2, y/2]
+inline double near_zero_fmod(double x, double y)
+{
+    x = std::fmod(x, y);
+    if (x < - y / 2) {
+        x += y;
+    }
+    if (x > y / 2) {
+        x -= y;
+    }
+    return x;
+}
+
 inline double positive_fmod(double x, double y)
 {
     x = std::fmod(x, y);

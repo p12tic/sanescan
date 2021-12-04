@@ -30,6 +30,81 @@
 
 namespace sanescan {
 
+void rotate_image(cv::Mat& image, double angle_rad)
+{
+    auto height = image.size.p[0];
+    auto width = image.size.p[1];
+
+    cv::Mat rotation_mat = cv::getRotationMatrix2D(cv::Point2f(width / 2, height / 2),
+                                                   rad_to_deg(angle_rad), 1.0);
+
+    cv::Mat rotated_image;
+    cv::warpAffine(image, rotated_image, rotation_mat, image.size(),
+                   cv::INTER_LINEAR, cv::BORDER_REPLICATE);
+    image = rotated_image;
+}
+
+void prepare_image_rotation(TesseractRecognizer& recognizer,
+                            cv::Mat& image, std::vector<OcrParagraph>& recognized)
+{
+    // Handle the case when all text within the image is rotated slightly due to the input data
+    // scan just being rotated. In such case whole image will be rotated to address the following
+    // issues:
+    //
+    // - Most PDF readers can't select rotated text properly
+    // - The OCR accuracy is compromised for rotated text.
+    //
+    // TODO: Ideally we should detect cases when the text in the source image is legitimately
+    // rotated and the rotation is not just the artifact of rotation. In such case the accuracy of
+    // OCR will still be improved if rotate the source image just for OCR and then rotate the
+    // results back.
+    //
+    // While handling the slightly rotated text case we can also detect whether the page is rotated
+    // 90, 180 or 270 degrees. We rotate it back so that the text is horizontal which helps text
+    // selection in PDF readers.
+    auto all_text_angles = get_all_text_angles(recognized);
+
+    {
+        auto [angle, in_window] = get_dominant_angle(all_text_angles,
+                                                     deg_to_rad(360), deg_to_rad(5));
+        double angle_mod90 = near_zero_fmod(angle, deg_to_rad(90));
+        if (std::abs(angle_mod90) < deg_to_rad(5) && in_window > 0.95) {
+
+            // In this case we want to rotate whole page which changes the dimensions of the image.
+            // First we use cv::rotate to rotate 90, 180 or 270 degrees and then rotate_image
+            // for the final adjustment.
+
+            // Use approximate comparison so that computation accuracy does not affect the
+            // comparison results.
+            double eps = 0.1;
+            if (angle - angle_mod90 > deg_to_rad(270 - eps)) {
+                angle -= deg_to_rad(270);
+                cv::rotate(image, image, cv::ROTATE_90_CLOCKWISE);
+            } else if (angle - angle_mod90 > deg_to_rad(180 - eps)) {
+                angle -= deg_to_rad(180);
+                cv::rotate(image, image, cv::ROTATE_180);
+            } else if (angle - angle_mod90 > deg_to_rad(90 - eps)) {
+                angle -= deg_to_rad(90);
+                cv::rotate(image, image, cv::ROTATE_90_COUNTERCLOCKWISE);
+            }
+
+            rotate_image(image, angle);
+            recognized = recognizer.recognize_tesseract(image);
+            return;
+        }
+    }
+
+    {
+        auto [angle, in_window] = get_dominant_angle(all_text_angles,
+                                                     deg_to_rad(90), deg_to_rad(5));
+        if (std::abs(angle) < deg_to_rad(5) && in_window > 0.95) {
+            rotate_image(image, angle);
+            recognized = recognizer.recognize_tesseract(image);
+            return;
+        }
+    }
+}
+
 bool read_ocr_write(const std::string& input_path, const std::string& output_path,
                     bool debug_ocr)
 {
@@ -42,33 +117,7 @@ bool read_ocr_write(const std::string& input_path, const std::string& output_pat
 
     auto recognized = recognizer.recognize_tesseract(image);
 
-    // Handle the case when all text within the image is rotated slightly due to the input data
-    // scan just being rotated. In such case whole image will be rotated to address the following
-    // issues:
-    //
-    // - Most PDF readers can't select rotated text properly
-    // - The OCR accuracy is compromised for rotated text.
-    //
-    // TODO: Ideally we should detect cases when the text in the source image is legitimately
-    // rotated and the rotation is not just the artifact of rotation. In such case the accuracy of
-    // OCR will still be improved if rotate the source image just for OCR and then rotate the
-    // results back.
-    auto [angle, in_window] = get_dominant_angle(get_all_text_angles(recognized),
-                                                 deg_to_rad(90), deg_to_rad(5));
-
-    if (std::abs(angle) < deg_to_rad(5) && in_window > 0.95) {
-        auto height = image.size.p[0];
-        auto width = image.size.p[1];
-
-        cv::Mat rotation_mat = cv::getRotationMatrix2D(cv::Point2f(width / 2, height / 2),
-                                                       rad_to_deg(angle), 1.0);
-
-        cv::Mat rotated_image;
-        cv::warpAffine(image, rotated_image, rotation_mat, image.size(),
-                       cv::INTER_LINEAR, cv::BORDER_REPLICATE);
-        image = rotated_image;
-        recognized = recognizer.recognize_tesseract(image);
-    }
+    prepare_image_rotation(recognizer, image, recognized);
 
     sanescan::OcrParagraph combined;
     for (const auto& par : recognized) {
