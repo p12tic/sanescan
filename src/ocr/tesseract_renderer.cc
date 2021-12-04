@@ -37,6 +37,17 @@ OcrBox get_box_for_level(const std::unique_ptr<tesseract::ResultIterator>& it,
     return OcrBox{left, top, right, bottom};
 }
 
+tesseract::Orientation get_orientation(const std::unique_ptr<tesseract::ResultIterator>& it)
+{
+    tesseract::Orientation orientation;
+    tesseract::WritingDirection writing_direction;
+    tesseract::TextlineOrder textline_order;
+    float deskew_angle;
+    it->Orientation(&orientation, &writing_direction, &textline_order,
+                    &deskew_angle);
+    return orientation;
+}
+
 OcrBaseline get_baseline(const std::unique_ptr<tesseract::ResultIterator>& it, const OcrBox& box)
 {
     int x1, y1, x2, y2;
@@ -57,7 +68,34 @@ OcrBaseline get_baseline(const std::unique_ptr<tesseract::ResultIterator>& it, c
         }
     }
 
-    return OcrBaseline{x1d, y1d, std::atan((y2d - y1d) / (x2d - x1d))};
+    double angle = std::atan((y2d - y1d) / (x2d - x1d));
+
+    // The above method to compute the angle of the baseline always considers the baseline to go
+    // from left to right. To properly compute baseline angle for upside-down text and similar
+    // cases we need to look into the orientation.
+    auto swap_angle_if_needed = [](double angle, double min_deg, double max_deg) {
+        while (angle < deg_to_rad(min_deg)) {
+            angle += deg_to_rad(180);
+        }
+        while (angle > deg_to_rad(max_deg)) {
+            angle -= deg_to_rad(180);
+        }
+        return angle;
+    };
+
+    auto orientation = get_orientation(it);
+    if (orientation == tesseract::ORIENTATION_PAGE_RIGHT) {
+        // angle must be within 0 and 180 degrees
+        angle = swap_angle_if_needed(angle, 0, 180);
+    } else if (orientation == tesseract::ORIENTATION_PAGE_DOWN) {
+        // angle must be within 90 and 270 degrees
+        angle = swap_angle_if_needed(angle, 90, 270);
+    } else if (orientation == tesseract::ORIENTATION_PAGE_LEFT) {
+        // angle must be within 180 and 360 degrees
+        angle = swap_angle_if_needed(angle, 180, 360);
+    }
+
+    return OcrBaseline{x1d, y1d, angle};
 }
 
 OcrBaseline adjust_baseline_for_other_box(const OcrBaseline& src_baseline, const OcrBox& src_box,
