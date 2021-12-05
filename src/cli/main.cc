@@ -18,6 +18,7 @@
 
 #include "ocr/tesseract.h"
 #include "ocr/ocr_utils.h"
+#include "ocr/ocr_options.h"
 #include "util/math.h"
 #include "ocr/pdf.h"
 
@@ -45,7 +46,8 @@ void rotate_image(cv::Mat& image, double angle_rad)
 }
 
 void prepare_image_rotation(TesseractRecognizer& recognizer,
-                            cv::Mat& image, std::vector<OcrParagraph>& recognized)
+                            cv::Mat& image, std::vector<OcrParagraph>& recognized,
+                            OcrOptions options)
 {
     // Handle the case when all text within the image is rotated slightly due to the input data
     // scan just being rotated. In such case whole image will be rotated to address the following
@@ -62,13 +64,18 @@ void prepare_image_rotation(TesseractRecognizer& recognizer,
     // While handling the slightly rotated text case we can also detect whether the page is rotated
     // 90, 180 or 270 degrees. We rotate it back so that the text is horizontal which helps text
     // selection in PDF readers.
+    if (!options.fix_page_orientation && !options.fix_text_rotation) {
+        return;
+    }
+
     auto all_text_angles = get_all_text_angles(recognized);
 
-    {
+    if (options.fix_page_orientation) {
         auto [angle, in_window] = get_dominant_angle(all_text_angles,
                                                      deg_to_rad(360), deg_to_rad(5));
         double angle_mod90 = near_zero_fmod(angle, deg_to_rad(90));
-        if (std::abs(angle_mod90) < deg_to_rad(5) && in_window > 0.95) {
+        if (std::abs(angle_mod90) < options.fix_page_orientation_max_angle_diff &&
+            in_window > options.fix_page_orientation_min_text_fraction) {
 
             // In this case we want to rotate whole page which changes the dimensions of the image.
             // First we use cv::rotate to rotate 90, 180 or 270 degrees and then rotate_image
@@ -88,16 +95,22 @@ void prepare_image_rotation(TesseractRecognizer& recognizer,
                 cv::rotate(image, image, cv::ROTATE_90_COUNTERCLOCKWISE);
             }
 
-            rotate_image(image, angle);
+            if (std::abs(angle_mod90) < options.fix_text_rotation_max_angle_diff &&
+                in_window > options.fix_text_rotation_min_text_fraction)
+            {
+                rotate_image(image, angle);
+            }
             recognized = recognizer.recognize(image);
             return;
         }
     }
 
-    {
+    if (options.fix_text_rotation) {
         auto [angle, in_window] = get_dominant_angle(all_text_angles,
                                                      deg_to_rad(90), deg_to_rad(5));
-        if (std::abs(angle) < deg_to_rad(5) && in_window > 0.95) {
+        if (std::abs(angle) < options.fix_text_rotation_max_angle_diff &&
+            in_window > options.fix_text_rotation_min_text_fraction)
+        {
             rotate_image(image, angle);
             recognized = recognizer.recognize(image);
             return;
@@ -106,7 +119,7 @@ void prepare_image_rotation(TesseractRecognizer& recognizer,
 }
 
 bool read_ocr_write(const std::string& input_path, const std::string& output_path,
-                    bool debug_ocr)
+                    bool debug_ocr, OcrOptions options)
 {
     auto image = cv::imread(input_path);
     if (image.data == nullptr) {
@@ -117,7 +130,7 @@ bool read_ocr_write(const std::string& input_path, const std::string& output_pat
 
     auto recognized = recognizer.recognize(image);
 
-    prepare_image_rotation(recognizer, image, recognized);
+    prepare_image_rotation(recognizer, image, recognized, options);
 
     sanescan::OcrParagraph combined;
     for (const auto& par : recognized) {
@@ -191,7 +204,7 @@ Options)");
     }
 
     try {
-        if (!sanescan::read_ocr_write(input_path, output_path, options.count("debug"))) {
+        if (!sanescan::read_ocr_write(input_path, output_path, options.count("debug"), {})) {
             std::cerr << "Unknown failure";
             return EXIT_FAILURE;
         }
