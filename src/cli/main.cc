@@ -159,12 +159,14 @@ int main(int argc, char* argv[])
     positional_options_desc.add("input-path", 1);
     positional_options_desc.add("output-path", 1);
 
-    po::options_description options_desc(R"(Usage:
+    auto introduction_desc = R"(Usage:
     sanescancli [OPTION]... [input_path] [output_path]
 
 input_path and output_path options can be passed either as positional or named arguments.
 
-Options)");
+)";
+
+    po::options_description options_desc("Options");
 
     options_desc.add_options()
             ("input-path", po::value(&input_path), "the path to the input image")
@@ -189,7 +191,7 @@ Options)");
     }
 
     if (options.count("help")) {
-        std::cout << options_desc << "\n";
+        std::cout << introduction_desc << options_desc << "\n";
         return EXIT_SUCCESS;
     }
 
