@@ -85,7 +85,7 @@ TesseractRecognizer::TesseractRecognizer(const std::string& tesseract_datapath) 
 
 TesseractRecognizer::~TesseractRecognizer() = default;
 
-std::vector<OcrParagraph> TesseractRecognizer::recognize_tesseract(const cv::Mat& image)
+std::vector<OcrParagraph> TesseractRecognizer::recognize(const cv::Mat& image)
 {
     auto* pix = cv_mat_to_pix(image);
 

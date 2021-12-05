@@ -89,7 +89,7 @@ void prepare_image_rotation(TesseractRecognizer& recognizer,
             }
 
             rotate_image(image, angle);
-            recognized = recognizer.recognize_tesseract(image);
+            recognized = recognizer.recognize(image);
             return;
         }
     }
@@ -99,7 +99,7 @@ void prepare_image_rotation(TesseractRecognizer& recognizer,
                                                      deg_to_rad(90), deg_to_rad(5));
         if (std::abs(angle) < deg_to_rad(5) && in_window > 0.95) {
             rotate_image(image, angle);
-            recognized = recognizer.recognize_tesseract(image);
+            recognized = recognizer.recognize(image);
             return;
         }
     }
@@ -115,7 +115,7 @@ bool read_ocr_write(const std::string& input_path, const std::string& output_pat
 
     TesseractRecognizer recognizer{"/usr/share/tesseract-ocr/4.00/tessdata/"};
 
-    auto recognized = recognizer.recognize_tesseract(image);
+    auto recognized = recognizer.recognize(image);
 
     prepare_image_rotation(recognizer, image, recognized);
 
