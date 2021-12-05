@@ -148,6 +148,13 @@ bool read_ocr_write(const std::string& input_path, const std::string& output_pat
 
 } // namespace sanescan
 
+struct Options {
+    static constexpr const char* INPUT_PATH = "input-path";
+    static constexpr const char* OUTPUT_PATH = "output-path";
+    static constexpr const char* HELP = "help";
+    static constexpr const char* DEBUG = "debug";
+};
+
 int main(int argc, char* argv[])
 {
     namespace po = boost::program_options;
@@ -156,8 +163,8 @@ int main(int argc, char* argv[])
     std::string output_path;
 
     po::positional_options_description positional_options_desc;
-    positional_options_desc.add("input-path", 1);
-    positional_options_desc.add("output-path", 1);
+    positional_options_desc.add(Options::INPUT_PATH, 1);
+    positional_options_desc.add(Options::OUTPUT_PATH, 1);
 
     auto introduction_desc = R"(Usage:
     sanescancli [OPTION]... [input_path] [output_path]
@@ -169,10 +176,10 @@ input_path and output_path options can be passed either as positional or named a
     po::options_description options_desc("Options");
 
     options_desc.add_options()
-            ("input-path", po::value(&input_path), "the path to the input image")
-            ("output-path", po::value(&output_path), "the path to the output PDF file")
-            ("help", "produce this help message")
-            ("debug", "enable debugging output in the output PDF file");
+            (Options::INPUT_PATH, po::value(&input_path), "the path to the input image")
+            (Options::OUTPUT_PATH, po::value(&output_path), "the path to the output PDF file")
+            (Options::HELP, "produce this help message")
+            (Options::DEBUG, "enable debugging output in the output PDF file");
 
     po::variables_map options;
     try {
@@ -190,23 +197,24 @@ input_path and output_path options can be passed either as positional or named a
         return EXIT_FAILURE;
     }
 
-    if (options.count("help")) {
+    if (options.count(Options::HELP)) {
         std::cout << introduction_desc << options_desc << "\n";
         return EXIT_SUCCESS;
     }
 
-    if (options.count("input-path") != 1) {
+    if (options.count(Options::INPUT_PATH) != 1) {
         std::cerr << "Must specify single input path\n";
         return EXIT_FAILURE;
     }
 
-    if (options.count("output-path") != 1) {
+    if (options.count(Options::OUTPUT_PATH) != 1) {
         std::cerr << "Must specify single output path\n";
         return EXIT_FAILURE;
     }
 
     try {
-        if (!sanescan::read_ocr_write(input_path, output_path, options.count("debug"), {})) {
+        if (!sanescan::read_ocr_write(input_path, output_path,
+                                      options.count(Options::DEBUG), {})) {
             std::cerr << "Unknown failure";
             return EXIT_FAILURE;
         }
