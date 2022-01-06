@@ -20,6 +20,7 @@
 #define SANESCAN_OCR_TESSERACT_H
 
 #include "ocr_paragraph.h"
+#include "ocr_options.h"
 #include <opencv2/core/mat.hpp>
 #include <memory>
 #include <vector>
@@ -31,9 +32,18 @@ public:
     TesseractRecognizer(const std::string& tesseract_datapath);
     ~TesseractRecognizer();
 
-    std::vector<OcrParagraph> recognize(const cv::Mat& image);
+    // Recognizes text in the given image. Returns the image that should be used for display.
+    // It may not be the same image as input image in cases when the rotation is adjusted to make
+    // text level and in similar cases.
+    std::pair<cv::Mat, std::vector<OcrParagraph>> recognize(cv::Mat image,
+                                                            const OcrOptions& options);
 
 private:
+    void adjust_image_rotation(cv::Mat& image, std::vector<OcrParagraph>& recognized,
+                               OcrOptions options);
+
+    std::vector<OcrParagraph> recognize_internal(const cv::Mat& image);
+
     struct Private;
     std::unique_ptr<Private> data_;
 };
