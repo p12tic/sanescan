@@ -153,6 +153,14 @@ struct Options {
     static constexpr const char* OUTPUT_PATH = "output-path";
     static constexpr const char* HELP = "help";
     static constexpr const char* DEBUG = "debug";
+
+    static constexpr const char* FIX_ROTATION_ENABLE = "ocr-enable-fix-text-rotation";
+    static constexpr const char* FIX_ROTATION_FRACTION = "ocr-fix-text-rotation-min-text-fraction";
+    static constexpr const char* FIX_ROTATION_ANGLE = "ocr-fix-text-rotation-max-angle-diff";
+
+    static constexpr const char* FIX_ORIENTATION_ENABLE = "ocr-enable-fix-page-orientation";
+    static constexpr const char* FIX_ORIENTATION_FRACTION = "ocr-fix-page-orientation-min-text-fraction";
+    static constexpr const char* FIX_ORIENTATION_ANGLE = "ocr-fix-page-orientation-max-angle-diff";
 };
 
 int main(int argc, char* argv[])
@@ -170,7 +178,6 @@ int main(int argc, char* argv[])
     sanescancli [OPTION]... [input_path] [output_path]
 
 input_path and output_path options can be passed either as positional or named arguments.
-
 )";
 
     po::options_description options_desc("Options");
@@ -180,6 +187,34 @@ input_path and output_path options can be passed either as positional or named a
             (Options::OUTPUT_PATH, po::value(&output_path), "the path to the output PDF file")
             (Options::HELP, "produce this help message")
             (Options::DEBUG, "enable debugging output in the output PDF file");
+
+    sanescan::OcrOptions ocr_options;
+
+    po::options_description ocr_options_desc("OCR options");
+
+    ocr_options_desc.add_options()
+            (Options::FIX_ROTATION_ENABLE,
+             "enable adjusting image rotation to make text lines level")
+            (Options::FIX_ROTATION_FRACTION,
+             po::value(&ocr_options.fix_text_rotation_min_text_fraction)->default_value(0.95, "0.95"),
+             "minimum fraction of the text characters pointing to the same direction (modulo 90 "
+             "degrees) to consider image rotation")
+            (Options::FIX_ROTATION_ANGLE,
+             po::value(&ocr_options.fix_text_rotation_max_angle_diff)->default_value(5),
+             "maximum difference between the text direction and any level direction in degrees to "
+             "consider image rotation")
+
+            (Options::FIX_ORIENTATION_ENABLE,
+             "enable automatic fixing of page orientation")
+            (Options::FIX_ORIENTATION_FRACTION,
+             po::value(&ocr_options.fix_page_orientation_min_text_fraction)->default_value(0.95, "0.95"),
+             "minimum fraction of the text characters pointing to the same direction to consider "
+             "page orientation")
+            (Options::FIX_ORIENTATION_FRACTION,
+             po::value(&ocr_options.fix_page_orientation_max_angle_diff)->default_value(5),
+             "maximum difference between the text direction and any level direction in degrees to "
+             "consider page orientation fix")
+    ;
 
     po::variables_map options;
     try {
@@ -198,7 +233,9 @@ input_path and output_path options can be passed either as positional or named a
     }
 
     if (options.count(Options::HELP)) {
-        std::cout << introduction_desc << options_desc << "\n";
+        std::cout << introduction_desc << "\n"
+                  << options_desc << "\n"
+                  << ocr_options_desc << "\n";
         return EXIT_SUCCESS;
     }
 
@@ -212,9 +249,44 @@ input_path and output_path options can be passed either as positional or named a
         return EXIT_FAILURE;
     }
 
+    if (!options.count(Options::FIX_ROTATION_ENABLE)) {
+        if (options.count(Options::FIX_ROTATION_FRACTION)) {
+            std::cerr << "Can't specify " << Options::FIX_ROTATION_FRACTION << " without "
+                      << Options::FIX_ROTATION_ENABLE << "\n";
+            return EXIT_FAILURE;
+        }
+
+        if (options.count(Options::FIX_ROTATION_ANGLE)) {
+            std::cerr << "Can't specify " << Options::FIX_ROTATION_ANGLE << " without "
+                      << Options::FIX_ROTATION_ENABLE << "\n";
+            return EXIT_FAILURE;
+        }
+    }
+
+    if (!options.count(Options::FIX_ORIENTATION_ENABLE)) {
+        if (options.count(Options::FIX_ORIENTATION_FRACTION)) {
+            std::cerr << "Can't specify " << Options::FIX_ORIENTATION_FRACTION << " without "
+                      << Options::FIX_ORIENTATION_ENABLE << "\n";
+            return EXIT_FAILURE;
+        }
+
+        if (options.count(Options::FIX_ORIENTATION_ANGLE)) {
+            std::cerr << "Can't specify " << Options::FIX_ORIENTATION_ANGLE << " without "
+                      << Options::FIX_ORIENTATION_ENABLE << "\n";
+            return EXIT_FAILURE;
+        }
+    }
+
+    ocr_options.fix_text_rotation = options.count(Options::FIX_ROTATION_ENABLE);
+    ocr_options.fix_page_orientation = options.count(Options::FIX_ORIENTATION_ENABLE);
+    ocr_options.fix_page_orientation_max_angle_diff =
+            sanescan::deg_to_rad(ocr_options.fix_page_orientation_max_angle_diff);
+    ocr_options.fix_text_rotation_max_angle_diff =
+            sanescan::deg_to_rad(ocr_options.fix_text_rotation_max_angle_diff);
+
     try {
         if (!sanescan::read_ocr_write(input_path, output_path,
-                                      options.count(Options::DEBUG), {})) {
+                                      options.count(Options::DEBUG), ocr_options)) {
             std::cerr << "Unknown failure";
             return EXIT_FAILURE;
         }
