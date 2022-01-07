@@ -15,10 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+include(FindPkgConfig)
 find_package(Threads)
+find_package(OpenCV REQUIRED)
 
 set(SOURCES
     buffer_manager.cc
+    file_loader_image.cc
     sane_device_wrapper.cc
     sane_types.cc
     sane_utils.cc
@@ -30,5 +33,10 @@ add_library(sanescanlib OBJECT ${SOURCES})
 
 target_link_libraries(sanescanlib PUBLIC
     Threads::Threads
+    ${OpenCV_LIBS}
     sane
+)
+
+target_include_directories(sanescanlib PUBLIC
+    ${OpenCV_INCLUDE_DIRS}
 )
