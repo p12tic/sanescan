@@ -31,6 +31,7 @@ set(SOURCES
     pdf_writer.cc
     tesseract.cc
     tesseract_renderer.cc
+    ../util/image.cc
 )
 
 add_library(sanescanocr OBJECT ${SOURCES})

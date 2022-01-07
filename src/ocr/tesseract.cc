@@ -19,11 +19,11 @@
 #include "tesseract.h"
 #include "ocr_utils.h"
 #include "tesseract_renderer.h"
+#include "util/image.h"
 #include "util/math.h"
 
 #include <leptonica/allheaders.h>
 #include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <tesseract/baseapi.h>
 #include <stdexcept>
 
@@ -69,20 +69,6 @@ PIX* cv_mat_to_pix(const cv::Mat& image)
         }
     }
     return pix;
-}
-
-void rotate_image_centered(cv::Mat& image, double angle_rad)
-{
-    auto height = image.size.p[0];
-    auto width = image.size.p[1];
-
-    cv::Mat rotation_mat = cv::getRotationMatrix2D(cv::Point2f(width / 2, height / 2),
-                                                   rad_to_deg(angle_rad), 1.0);
-
-    cv::Mat rotated_image;
-    cv::warpAffine(image, rotated_image, rotation_mat, image.size(),
-                   cv::INTER_LINEAR, cv::BORDER_REPLICATE);
-    image = rotated_image;
 }
 
 } // namespace
@@ -165,7 +151,7 @@ void TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
             if (std::abs(angle_mod90) < options.fix_text_rotation_max_angle_diff &&
                 in_window > options.fix_text_rotation_min_text_fraction)
             {
-                rotate_image_centered(image, angle);
+                image = rotate_image_centered(image, angle);
             }
             recognized = recognize_internal(image);
             return;
@@ -178,7 +164,7 @@ void TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
         if (std::abs(angle) < options.fix_text_rotation_max_angle_diff &&
             in_window > options.fix_text_rotation_min_text_fraction)
         {
-            rotate_image_centered(image, angle);
+            image = rotate_image_centered(image, angle);
             recognized = recognize_internal(image);
             return;
         }
