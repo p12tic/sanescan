@@ -18,10 +18,12 @@
 include(FindPkgConfig)
 find_package(Threads)
 find_package(OpenCV REQUIRED)
+pkg_check_modules(poppler REQUIRED poppler-cpp)
 
 set(SOURCES
     buffer_manager.cc
     file_loader_image.cc
+    file_loader_pdf.cc
     sane_device_wrapper.cc
     sane_types.cc
     sane_utils.cc
@@ -34,6 +36,7 @@ add_library(sanescanlib OBJECT ${SOURCES})
 target_link_libraries(sanescanlib PUBLIC
     Threads::Threads
     ${OpenCV_LIBS}
+    ${poppler_LIBRARIES}
     sane
 )
 
