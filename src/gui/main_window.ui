@@ -16,9 +16,6 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
-     <widget class="sanescan::ImageWidget" name="image_area" native="true"/>
-    </item>
-    <item row="0" column="1">
      <widget class="QStackedWidget" name="stack_settings">
       <property name="currentIndex">
        <number>0</number>
@@ -92,6 +89,9 @@
        </layout>
       </widget>
      </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="sanescan::ImageWidget" name="image_area" native="true"/>
     </item>
    </layout>
   </widget>
