@@ -21,14 +21,9 @@
 
 #include "scan_engine.h"
 #include <QtWidgets/QMainWindow>
-#include <QtCore/QTimer>
 #include <memory>
 
 namespace sanescan {
-
-namespace Ui {
-    class MainWindow;
-}
 
 class MainWindow : public QMainWindow
 {
@@ -51,10 +46,8 @@ private:
     void start_scanning();
     void scanning_finished();
 
-    std::unique_ptr<Ui::MainWindow> ui_;
-    std::string open_device_after_close_;
-    ScanEngine engine_;
-    QTimer engine_timer_;
+    struct Private;
+    std::unique_ptr<Private> d_;
 };
 
 } // namespace sanescan

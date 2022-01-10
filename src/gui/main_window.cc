@@ -21,63 +21,72 @@
 #include "image_widget.h"
 #include "scan_settings_widget.h"
 #include "ui_main_window.h"
+#include <QtCore/QTimer>
 
 namespace sanescan {
 
+struct MainWindow::Private {
+    std::unique_ptr<Ui::MainWindow> ui;
+    std::string open_device_after_close;
+    ScanEngine engine;
+    QTimer engine_timer;
+};
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui_{std::make_unique<Ui::MainWindow>()}
+    d_{std::make_unique<Private>()}
 {
-    ui_->setupUi(this);
+    d_->ui = std::make_unique<Ui::MainWindow>();
+    d_->ui->setupUi(this);
 
-    connect(ui_->action_about, &QAction::triggered, [this](){ present_about_dialog(); });
+    connect(d_->ui->action_about, &QAction::triggered, [this](){ present_about_dialog(); });
 
-    connect(&engine_timer_, &QTimer::timeout, [this]() { engine_.perform_step(); });
-    connect(&engine_, &ScanEngine::devices_refreshed, [this]() { devices_refreshed(); });
-    connect(&engine_, &ScanEngine::start_polling, [this]() { engine_timer_.start(1); });
-    connect(&engine_, &ScanEngine::stop_polling, [this]() { engine_timer_.stop(); });
-    connect(&engine_, &ScanEngine::options_changed, [this]()
+    connect(&d_->engine_timer, &QTimer::timeout, [this]() { d_->engine.perform_step(); });
+    connect(&d_->engine, &ScanEngine::devices_refreshed, [this]() { devices_refreshed(); });
+    connect(&d_->engine, &ScanEngine::start_polling, [this]() { d_->engine_timer.start(1); });
+    connect(&d_->engine, &ScanEngine::stop_polling, [this]() { d_->engine_timer.stop(); });
+    connect(&d_->engine, &ScanEngine::options_changed, [this]()
     {
-        ui_->settings_widget->set_options(engine_.get_option_groups());
+        d_->ui->settings_widget->set_options(d_->engine.get_option_groups());
     });
-    connect(&engine_, &ScanEngine::option_values_changed, [this]()
+    connect(&d_->engine, &ScanEngine::option_values_changed, [this]()
     {
-        ui_->settings_widget->set_option_values(engine_.get_option_values());
+        d_->ui->settings_widget->set_option_values(d_->engine.get_option_values());
     });
-    connect(&engine_, &ScanEngine::device_opened, [this]()
+    connect(&d_->engine, &ScanEngine::device_opened, [this]()
     {
-        ui_->settings_widget->device_opened();
+        d_->ui->settings_widget->device_opened();
     });
-    connect(&engine_, &ScanEngine::device_closed, [this]()
+    connect(&d_->engine, &ScanEngine::device_closed, [this]()
     {
-        if (!open_device_after_close_.empty()) {
+        if (!d_->open_device_after_close.empty()) {
             std::string name;
-            name.swap(open_device_after_close_);
-            engine_.open_device(name);
+            name.swap(d_->open_device_after_close);
+            d_->engine.open_device(name);
         }
     });
-    connect(&engine_, &ScanEngine::image_updated, [this]()
+    connect(&d_->engine, &ScanEngine::image_updated, [this]()
     {
-        ui_->image_area->set_image_ptr(&engine_.scan_image());
+        d_->ui->image_area->set_image_ptr(&d_->engine.scan_image());
     });
-    connect(&engine_, &ScanEngine::scan_finished, [this]()
+    connect(&d_->engine, &ScanEngine::scan_finished, [this]()
     {
         scanning_finished();
     });
 
-    connect(ui_->settings_widget, &ScanSettingsWidget::refresh_devices_clicked,
+    connect(d_->ui->settings_widget, &ScanSettingsWidget::refresh_devices_clicked,
             [this]() { refresh_devices(); });
-    connect(ui_->settings_widget, &ScanSettingsWidget::device_selected,
+    connect(d_->ui->settings_widget, &ScanSettingsWidget::device_selected,
             [this](const std::string& name) { select_device(name); });
-    connect(ui_->settings_widget, &ScanSettingsWidget::option_value_changed,
+    connect(d_->ui->settings_widget, &ScanSettingsWidget::option_value_changed,
             [this](const auto& name, const auto& value)
     {
-        engine_.set_option_value(name, value);
+        d_->engine.set_option_value(name, value);
     });
-    connect(ui_->settings_widget, &ScanSettingsWidget::scan_started,
+    connect(d_->ui->settings_widget, &ScanSettingsWidget::scan_started,
             [this]()
     {
-        engine_.start_scan();
+        d_->engine.start_scan();
     });
 
     refresh_devices();
@@ -93,36 +102,36 @@ void MainWindow::present_about_dialog()
 
 void MainWindow::refresh_devices()
 {
-    ui_->stack_settings->setCurrentIndex(STACK_LOADING);
-    engine_.refresh_devices();
+    d_->ui->stack_settings->setCurrentIndex(STACK_LOADING);
+    d_->engine.refresh_devices();
 }
 
 void MainWindow::devices_refreshed()
 {
-    ui_->stack_settings->setCurrentIndex(STACK_SETTINGS);
-    ui_->settings_widget->set_current_devices(engine_.current_devices());
+    d_->ui->stack_settings->setCurrentIndex(STACK_SETTINGS);
+    d_->ui->settings_widget->set_current_devices(d_->engine.current_devices());
 }
 
 void MainWindow::start_scanning()
 {
-    engine_.start_scan();
-    ui_->stack_settings->setCurrentIndex(STACK_SCANNING);
+    d_->engine.start_scan();
+    d_->ui->stack_settings->setCurrentIndex(STACK_SCANNING);
 }
 
 void MainWindow::scanning_finished()
 {
-    ui_->stack_settings->setCurrentIndex(STACK_SETTINGS);
+    d_->ui->stack_settings->setCurrentIndex(STACK_SETTINGS);
 }
 
 void MainWindow::select_device(const std::string& name)
 {
-    // we are guaranteed by ui_->settings_widget that device_selected will not be emitted between
+    // we are guaranteed by d_->ui->settings_widget that device_selected will not be emitted between
     // a previous emission to select_device and a call to device_opened.
-    if (engine_.is_device_opened()) {
-        engine_.close_device();
-        open_device_after_close_ = name;
+    if (d_->engine.is_device_opened()) {
+        d_->engine.close_device();
+        d_->open_device_after_close = name;
     } else {
-        engine_.open_device(name);
+        d_->engine.open_device(name);
     }
 }
 
