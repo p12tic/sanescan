@@ -30,8 +30,8 @@ namespace {
 }
 
 struct ImageWidget::Impl {
-    QGraphicsScene* scene; // parent widget is an owner
-    const QImage* image;
+    QGraphicsScene* scene = nullptr; // parent widget is an owner
+    const QImage* image = nullptr;
 };
 
 ImageWidget::ImageWidget(QWidget *parent) :
