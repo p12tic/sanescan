@@ -18,6 +18,7 @@
 
 #include "page_list_view.h"
 #include "page_list_model.h"
+#include <QtGui/QResizeEvent>
 #include <stdexcept>
 
 namespace sanescan {
@@ -50,6 +51,11 @@ const QPixmap& PageListView::image_for_item(const QModelIndex& index)
         throw std::runtime_error("Can't acquire image when no model is set");
     }
     return d_->model->image_at(index.row());
+}
+
+void PageListView::resizeEvent(QResizeEvent* event)
+{
+    d_->model->set_image_sizes(event->size().width());
 }
 
 } // namespace sanescan

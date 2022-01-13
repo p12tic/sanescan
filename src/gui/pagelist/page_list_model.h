@@ -33,10 +33,11 @@ public:
     int rowCount(const QModelIndex& parent) const override;
     QVariant data(const QModelIndex& index, int role) const override;
 
-    void add_page(std::uint64_t identifier, QPixmap image);
+    void add_page(std::uint64_t identifier, const QImage& image);
 
     const QPixmap& image_at(std::size_t pos) const;
 
+    void set_image_sizes(unsigned width);
 
 private:
     struct Private;

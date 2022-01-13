@@ -130,9 +130,7 @@ void MainWindow::start_scanning()
 void MainWindow::scanning_finished()
 {
     d_->ui->stack_settings->setCurrentIndex(STACK_SETTINGS);
-    QPixmap pix = QPixmap::fromImage(d_->engine.scan_image());
-    pix = pix.scaledToWidth(200);
-    d_->page_list_model->add_page(d_->last_scan_id++, pix);
+    d_->page_list_model->add_page(d_->last_scan_id++, d_->engine.scan_image());
 }
 
 void MainWindow::select_device(const std::string& name)

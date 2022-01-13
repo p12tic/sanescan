@@ -22,9 +22,23 @@
 
 namespace sanescan {
 
+struct PageImages {
+    PageImages(const QImage& image) : image{image} {}
+
+    void resize(unsigned new_width)
+    {
+        QPixmap pix = QPixmap::fromImage(image);
+        resized_pixmap = pix.scaledToWidth(new_width);
+    }
+
+    QImage image;
+    QPixmap resized_pixmap;
+};
+
 struct PageListModel::Private {
     std::vector<std::uint64_t> pages;
-    std::map<std::uint64_t, QPixmap> images;
+    std::map<std::uint64_t, PageImages> images;
+    unsigned pixmap_width = 200;
 };
 
 PageListModel::PageListModel(QObject* parent) :
@@ -57,10 +71,13 @@ QVariant PageListModel::data(const QModelIndex& index, int role) const
     return {static_cast<int>(d_->pages.at(index.row()))};
 }
 
-void PageListModel::add_page(std::uint64_t identifier, QPixmap image)
+void PageListModel::add_page(std::uint64_t identifier, const QImage& image)
 {
+    PageImages page_images{image};
+    page_images.resize(d_->pixmap_width);
+
     d_->pages.push_back(identifier);
-    d_->images.emplace(identifier, image);
+    d_->images.emplace(identifier, std::move(page_images));
     Q_EMIT layoutChanged();
 }
 
@@ -71,7 +88,18 @@ const QPixmap& PageListModel::image_at(std::size_t pos) const
     if (it == d_->images.end()) {
         throw std::runtime_error("Image for index does not exist");
     }
-    return it->second;
+    return it->second.resized_pixmap;
+}
+
+void PageListModel::set_image_sizes(unsigned width)
+{
+    if (width == d_->pixmap_width) {
+        return;
+    }
+    d_->pixmap_width = width;
+    for (auto& [ident, images] : d_->images) {
+        images.resize(width);
+    }
 }
 
 } // namespace sanescan

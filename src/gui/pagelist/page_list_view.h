@@ -34,6 +34,10 @@ public:
     void setModel(QAbstractItemModel* model) override;
 
     const QPixmap& image_for_item(const QModelIndex& index);
+
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+
 private:
     struct Private;
     std::unique_ptr<Private> d_;
