@@ -31,6 +31,9 @@ set(SOURCES
     scan_engine.cc
     scan_settings_widget.cc
     scan_settings_widget.ui
+    pagelist/page_list_model.cc
+    pagelist/page_list_view.cc
+    pagelist/page_list_view_delegate.cc
     settings/setting_combo.cc
     settings/setting_combo.ui
     settings/setting_spin.cc

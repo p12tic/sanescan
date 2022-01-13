@@ -21,6 +21,8 @@
 #include "image_widget.h"
 #include "scan_settings_widget.h"
 #include "ui_main_window.h"
+#include "pagelist/page_list_model.h"
+#include "pagelist/page_list_view_delegate.h"
 #include <QtCore/QTimer>
 
 namespace sanescan {
@@ -30,6 +32,9 @@ struct MainWindow::Private {
     std::string open_device_after_close;
     ScanEngine engine;
     QTimer engine_timer;
+
+    std::unique_ptr<PageListModel> page_list_model;
+    std::uint64_t last_scan_id = 0;
 };
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -89,6 +94,10 @@ MainWindow::MainWindow(QWidget *parent) :
         d_->engine.start_scan();
     });
 
+    d_->page_list_model = std::make_unique<PageListModel>(this);
+    d_->ui->page_list->setModel(d_->page_list_model.get());
+    d_->ui->page_list->setItemDelegate(new PageListViewDelegate(d_->ui->page_list));
+
     refresh_devices();
 }
 
@@ -121,6 +130,9 @@ void MainWindow::start_scanning()
 void MainWindow::scanning_finished()
 {
     d_->ui->stack_settings->setCurrentIndex(STACK_SETTINGS);
+    QPixmap pix = QPixmap::fromImage(d_->engine.scan_image());
+    pix = pix.scaledToWidth(200);
+    d_->page_list_model->add_page(d_->last_scan_id++, pix);
 }
 
 void MainWindow::select_device(const std::string& name)
