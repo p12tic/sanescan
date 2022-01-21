@@ -23,6 +23,8 @@
 
 namespace sanescan {
 
+constexpr unsigned LIST_ITEM_PADDING = 8;
+
 struct PageListView::Private {
     PageListModel* model = nullptr;
 };
@@ -53,9 +55,14 @@ const QPixmap& PageListView::image_for_item(const QModelIndex& index)
     return d_->model->image_at(index.row());
 }
 
+unsigned PageListView::list_item_padding() const
+{
+    return LIST_ITEM_PADDING;
+}
+
 void PageListView::resizeEvent(QResizeEvent* event)
 {
-    d_->model->set_image_sizes(event->size().width());
+    d_->model->set_image_sizes(event->size().width() - 2 * LIST_ITEM_PADDING);
 }
 
 } // namespace sanescan

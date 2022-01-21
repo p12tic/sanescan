@@ -39,14 +39,22 @@ void PageListViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem& 
                                  const QModelIndex& index) const
 {
     const auto& pix = d_->list->image_for_item(index);
-    painter->drawPixmap(option.rect.left(), option.rect.top(), pix);
+    QSize pix_size = pix.size();
+    QRect rect = option.rect;
+
+    QRect pix_rect = QRect(rect.left() + (rect.width() - pix_size.width()) / 2,
+                           rect.top() + (rect.height() - pix_size.height()) / 2,
+                           pix_size.width(), pix_size.height());
+
+    painter->drawPixmap(pix_rect.left(), pix_rect.top(), pix);
 }
 
 QSize PageListViewDelegate::sizeHint(const QStyleOptionViewItem& option,
                                      const QModelIndex& index) const
 {
+    auto padding = d_->list->list_item_padding();
     const auto& pix = d_->list->image_for_item(index);
-    return pix.size();
+    return pix.size() + 2 * QSize(padding, padding);
 }
 
 } // namespace sanescan

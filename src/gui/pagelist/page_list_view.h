@@ -35,6 +35,8 @@ public:
 
     const QPixmap& image_for_item(const QModelIndex& index);
 
+    unsigned list_item_padding() const;
+
 protected:
     void resizeEvent(QResizeEvent* event) override;
 
