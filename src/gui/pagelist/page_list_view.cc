@@ -63,6 +63,7 @@ unsigned PageListView::list_item_padding() const
 void PageListView::resizeEvent(QResizeEvent* event)
 {
     d_->model->set_image_sizes(event->size().width() - 2 * LIST_ITEM_PADDING);
+    scheduleDelayedItemsLayout();
 }
 
 } // namespace sanescan
