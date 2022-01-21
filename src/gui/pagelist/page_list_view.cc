@@ -33,6 +33,26 @@ PageListView::PageListView(QWidget* parent) :
     QListView{parent},
     d_{std::make_unique<Private>()}
 {
+    // TODO: take into account themes somehow
+    setStyleSheet(R"(
+QListView {
+    background-color: #a0a0a0;
+}
+
+QListView::item {
+    background-color: #606060;
+    border-top: 1px solid #202020;
+    border-bottom: 1px solid #202020;
+}
+
+QListView::item:selected {
+    background-color: #4040f0;
+}
+
+QListView::item:hover:!selected {
+    background-color: #8080f0;
+}
+)");
 }
 
 PageListView::~PageListView() = default;

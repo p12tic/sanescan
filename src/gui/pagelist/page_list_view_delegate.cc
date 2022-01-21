@@ -19,6 +19,7 @@
 #include "page_list_view_delegate.h"
 #include "page_list_view.h"
 #include <QtGui/QPainter>
+#include <QtWidgets/QApplication>
 
 namespace sanescan {
 
@@ -45,6 +46,9 @@ void PageListViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem& 
     QRect pix_rect = QRect(rect.left() + (rect.width() - pix_size.width()) / 2,
                            rect.top() + (rect.height() - pix_size.height()) / 2,
                            pix_size.width(), pix_size.height());
+
+    QStyle* style = option.widget ? option.widget->style() : QApplication::style();
+    style->drawControl(QStyle::CE_ItemViewItem, &option, painter, option.widget);
 
     painter->drawPixmap(pix_rect.left(), pix_rect.top(), pix);
 }
