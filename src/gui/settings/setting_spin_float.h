@@ -21,6 +21,7 @@
 
 #include "setting_widget.h"
 #include <memory>
+#include <optional>
 
 namespace sanescan {
 

@@ -22,6 +22,7 @@
 #include "setting_widget.h"
 #include <QtWidgets/QWidget>
 #include <memory>
+#include <optional>
 
 namespace sanescan {
 
