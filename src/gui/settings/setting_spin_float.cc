@@ -50,7 +50,7 @@ void SettingSpinFloat::set_option_descriptor(const SaneOptionDescriptor& descrip
         ui_->label->setText(QString::fromStdString(descriptor.title));
         ui_->label->setToolTip(QString::fromStdString(descriptor.description));
 
-        const auto* constraint = std::get_if<SaneConstraintIntRange>(&descriptor.constraint);
+        const auto* constraint = std::get_if<SaneConstraintFloatRange>(&descriptor.constraint);
         if (constraint != nullptr) {
             constraint_ = *constraint;
             ui_->spinbox->setRange(constraint_->min, constraint_->max);

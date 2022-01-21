@@ -42,7 +42,7 @@ public:
     static bool is_descriptor_supported(const SaneOptionDescriptor& descriptor);
 
 private:
-    std::optional<SaneConstraintIntRange> constraint_;
+    std::optional<SaneConstraintFloatRange> constraint_;
 
     SaneOptionDescriptor descriptor_;
     bool suppress_value_changed_ = false;
