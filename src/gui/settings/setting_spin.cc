@@ -18,6 +18,7 @@
 
 #include "setting_spin.h"
 #include "ui_setting_spin.h"
+#include <limits>
 
 namespace sanescan {
 
@@ -57,6 +58,9 @@ void SettingSpin::set_option_descriptor(const SaneOptionDescriptor& descriptor)
             ui_->spinbox->setSingleStep(constraint_->quantization);
         } else {
             constraint_.reset();
+            ui_->spinbox->setRange(std::numeric_limits<int>::min(),
+                                   std::numeric_limits<int>::max());
+            ui_->spinbox->setSingleStep(1);
         }
     }
     ui_->spinbox->setEnabled(false);
