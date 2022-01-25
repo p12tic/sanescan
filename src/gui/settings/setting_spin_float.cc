@@ -18,9 +18,33 @@
 
 #include "setting_spin_float.h"
 #include "ui_setting_spin_float.h"
+#include <cmath>
 #include <limits>
 
 namespace sanescan {
+
+namespace {
+
+double get_quantization_from_constraint(const SaneConstraintFloatRange& constraint)
+{
+    if (constraint.quantization != 0) {
+        return constraint.quantization;
+    }
+
+    // If quantization is unspecified, pick 3 orders of magnitude smaller power of 10 than any of
+    // the limits.
+    double max_log10 = 0;
+    if (constraint.min != 0) {
+        max_log10 = std::max(max_log10, std::log10(constraint.min));
+    }
+    if (constraint.max != 0) {
+        max_log10 = std::max(max_log10, std::log10(constraint.max));
+    }
+    auto quant_log10 = std::round(max_log10) - 3;
+    return std::pow(10.0, quant_log10);
+}
+
+} // namespace
 
 SettingSpinFloat::SettingSpinFloat(QWidget *parent) :
     SettingWidget(parent),
@@ -55,7 +79,7 @@ void SettingSpinFloat::set_option_descriptor(const SaneOptionDescriptor& descrip
         if (constraint != nullptr) {
             constraint_ = *constraint;
             ui_->spinbox->setRange(constraint_->min, constraint_->max);
-            ui_->spinbox->setSingleStep(constraint_->quantization);
+            ui_->spinbox->setSingleStep(get_quantization_from_constraint(*constraint_));
         } else {
             constraint_.reset();
             ui_->spinbox->setRange(-std::numeric_limits<double>::infinity(),
