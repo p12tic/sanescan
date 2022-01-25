@@ -20,6 +20,7 @@
 #include "ui_setting_spin_float.h"
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 namespace sanescan {
 

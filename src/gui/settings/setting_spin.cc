@@ -19,6 +19,7 @@
 #include "setting_spin.h"
 #include "ui_setting_spin.h"
 #include <limits>
+#include <stdexcept>
 
 namespace sanescan {
 
