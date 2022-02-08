@@ -25,10 +25,10 @@ namespace sanescan {
 struct PageImages {
     PageImages(const QImage& image) : image{image} {}
 
-    void resize(unsigned new_width)
+    void resize(unsigned new_height)
     {
         QPixmap pix = QPixmap::fromImage(image);
-        resized_pixmap = pix.scaledToWidth(new_width);
+        resized_pixmap = pix.scaledToHeight(new_height);
     }
 
     QImage image;
@@ -38,7 +38,7 @@ struct PageImages {
 struct PageListModel::Private {
     std::vector<std::uint64_t> pages;
     std::map<std::uint64_t, PageImages> images;
-    unsigned pixmap_width = 200;
+    unsigned pixmap_height = 200;
 };
 
 PageListModel::PageListModel(QObject* parent) :
@@ -74,7 +74,7 @@ QVariant PageListModel::data(const QModelIndex& index, int role) const
 void PageListModel::add_page(std::uint64_t identifier, const QImage& image)
 {
     PageImages page_images{image};
-    page_images.resize(d_->pixmap_width);
+    page_images.resize(d_->pixmap_height);
 
     d_->pages.push_back(identifier);
     d_->images.emplace(identifier, std::move(page_images));
@@ -91,14 +91,14 @@ const QPixmap& PageListModel::image_at(std::size_t pos) const
     return it->second.resized_pixmap;
 }
 
-void PageListModel::set_image_sizes(unsigned width)
+void PageListModel::set_image_sizes(unsigned height)
 {
-    if (width == d_->pixmap_width) {
+    if (height == d_->pixmap_height) {
         return;
     }
-    d_->pixmap_width = width;
+    d_->pixmap_height = height;
     for (auto& [ident, images] : d_->images) {
-        images.resize(width);
+        images.resize(height);
     }
 }
 

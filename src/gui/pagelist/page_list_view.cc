@@ -33,6 +33,8 @@ PageListView::PageListView(QWidget* parent) :
     QListView{parent},
     d_{std::make_unique<Private>()}
 {
+    setFlow(QListView::Flow::LeftToRight);
+
     // TODO: take into account themes somehow
     setStyleSheet(R"(
 QListView {
@@ -82,7 +84,7 @@ unsigned PageListView::list_item_padding() const
 
 void PageListView::resizeEvent(QResizeEvent* event)
 {
-    d_->model->set_image_sizes(event->size().width() - 2 * LIST_ITEM_PADDING);
+    d_->model->set_image_sizes(event->size().height() - 2 * LIST_ITEM_PADDING);
     scheduleDelayedItemsLayout();
 }
 
