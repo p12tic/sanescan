@@ -75,9 +75,16 @@ void ImageWidget::wheelEvent(QWheelEvent* event)
 
 void ImageWidget::drawBackground(QPainter* painter, const QRectF& rect)
 {
+    QColor background_color{0xa0, 0xa0, 0xa0};
+
     if (impl_->image) {
         auto image_rect = rect & sceneRect();
+        if (image_rect != rect) {
+            painter->fillRect(rect, background_color);
+        }
         painter->drawImage(image_rect, *impl_->image, image_rect);
+    } else {
+        painter->fillRect(rect, background_color);
     }
 }
 
