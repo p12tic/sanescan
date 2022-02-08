@@ -41,9 +41,6 @@ ImageWidget::ImageWidget(QWidget *parent) :
     impl_->scene = new QGraphicsScene(this);
     setScene(impl_->scene);
 
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-
     set_image_ptr(nullptr);
 }
 
