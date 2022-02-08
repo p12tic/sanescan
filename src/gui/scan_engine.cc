@@ -256,7 +256,7 @@ void ScanEngine::start_scan()
                 impl_->device_wrapper->start(),
                 [this]()
     {
-        impl_->image_converter.start_frame(impl_->params);
+        impl_->image_converter.start_frame(impl_->params, QColor{0xff, 0xff, 0xff});
         push_poller(std::make_unique<ScanDataPoller>(this, impl_->device_wrapper.get(),
                                                      &impl_->image_converter));
     }));

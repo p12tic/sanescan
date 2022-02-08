@@ -85,13 +85,14 @@ QImageConverter::QImageConverter() :
 
 QImageConverter::~QImageConverter() = default;
 
-void QImageConverter::start_frame(const SaneParameters& params)
+void QImageConverter::start_frame(const SaneParameters& params, QColor init_color)
 {
     impl_->params = params;
     auto lines = impl_->params.lines > 0 ? impl_->params.lines : 16;
     auto conversion_params = get_conversion(params);
     impl_->line_converter = conversion_params.converter;
     impl_->image = QImage(impl_->params.pixels_per_line, lines, conversion_params.image_format);
+    impl_->image.fill(init_color);
 }
 
 void QImageConverter::add_line(std::size_t line_index, const char* data, std::size_t data_size)

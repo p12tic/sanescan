@@ -20,6 +20,7 @@
 #define SANESCAN_GUI_IMAGE_CONVERTER_H
 
 #include "../lib/sane_types.h"
+#include <QtGui/QColor>
 #include <memory>
 
 class QImage;
@@ -31,7 +32,7 @@ public:
     QImageConverter();
     ~QImageConverter();
 
-    void start_frame(const SaneParameters& params);
+    void start_frame(const SaneParameters& params, QColor init_color);
     void add_line(std::size_t line_index, const char* data, std::size_t data_size);
 
     const QImage& image() const;
