@@ -16,26 +16,27 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_GUI_IMAGE_CONVERTER_H
-#define SANESCAN_GUI_IMAGE_CONVERTER_H
+#ifndef SANESCAN_LIB_SCAN_IMAGES_BUFFER_H
+#define SANESCAN_LIB_SCAN_IMAGES_BUFFER_H
 
-#include "../lib/sane_types.h"
+#include "sane_types.h"
 #include <opencv2/core/types.hpp>
+#include <cstddef>
 #include <memory>
-
-class QImage;
 
 namespace sanescan {
 
-class QImageConverter {
+class ScanImageBuffer {
 public:
-    QImageConverter();
-    ~QImageConverter();
+    ScanImageBuffer();
+    ~ScanImageBuffer();
+
+    void set_on_resize_callback(const std::function<void()>& on_resize);
 
     void start_frame(const SaneParameters& params, cv::Scalar init_color);
     void add_line(std::size_t line_index, const char* data, std::size_t data_size);
 
-    const QImage& image() const;
+    const cv::Mat& image() const;
 
     static void convert_mono1(char* dst, const char* src, std::size_t bytes);
     static void convert_mono8(char* dst, const char* src, std::size_t bytes);
@@ -45,10 +46,10 @@ private:
 
     void grow_image(std::size_t min_height);
 
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
+    struct Private;
+    std::unique_ptr<Private> d_;
 };
 
 } // namespace sanescan
 
-#endif // SANESCAN_GUI_IMAGE_CONVERTER_H
+#endif // SANESCAN_LIB_SCAN_IMAGES_BUFFER_H

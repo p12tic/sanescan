@@ -18,7 +18,9 @@
 
 #include "scan_engine.h"
 #include "../lib/sane_wrapper.h"
-#include "qimage_converter.h"
+#include "../lib/scan_image_buffer.h"
+#include <QtGui/QImage>
+#include <opencv2/core/mat.hpp>
 #include <deque>
 #include <functional>
 
@@ -81,10 +83,10 @@ struct Poller<void> : IPoller {
 
 struct ScanDataPoller : IPoller {
     ScanDataPoller(ScanEngine* engine, SaneDeviceWrapper* device_wrapper,
-                   QImageConverter* converter) :
+                   ScanImageBuffer* image_buffer) :
         engine{engine},
         wrapper{device_wrapper},
-        converter{converter}
+        image_buffer{image_buffer}
     {}
 
     bool poll() override
@@ -96,7 +98,7 @@ struct ScanDataPoller : IPoller {
         wrapper->receive_read_lines([this](std::size_t line_index, const char* data,
                                            std::size_t data_size)
         {
-            converter->add_line(line_index, data, data_size);
+            image_buffer->add_line(line_index, data, data_size);
         });
         Q_EMIT engine->image_updated();
         return false;
@@ -104,8 +106,41 @@ struct ScanDataPoller : IPoller {
 
     ScanEngine* engine = nullptr;
     SaneDeviceWrapper* wrapper = nullptr;
-    QImageConverter* converter = nullptr;
+    ScanImageBuffer* image_buffer = nullptr;
 };
+
+namespace {
+
+QImage::Format qimage_format_from_depth_channels(int depth, int channels)
+{
+    if (depth == 1 && channels == 1) {
+        return QImage::Format_Grayscale8;
+    }
+    if (depth == 1 && channels == 3) {
+        return QImage::Format_RGB888;
+    }
+    if (depth == 2 && channels == 4) {
+        return QImage::Format_RGBX64;
+    }
+    throw std::invalid_argument("Unsupported depth+channels combination " + std::to_string(depth) +
+                                " " + std::to_string(channels));
+}
+
+QImage qimage_from_cv_mat(const cv::Mat& mat)
+{
+    if (mat.empty()) {
+        return {};
+    }
+
+    if (mat.size.dims() != 2) {
+        throw std::invalid_argument("Unsupported number of dimensions");
+    }
+
+    return QImage(mat.data, mat.size.p[1], mat.size.p[0],
+                  qimage_format_from_depth_channels(mat.elemSize1(), mat.channels()));
+}
+
+} // namespace
 
 struct ScanEngine::Impl {
     std::vector<std::unique_ptr<IPoller>> pollers;
@@ -121,7 +156,8 @@ struct ScanEngine::Impl {
     bool scan_active = false;
 
     SaneParameters params;
-    QImageConverter image_converter;
+    ScanImageBuffer image_buffer;
+    QImage image_wrapper;
 };
 
 ScanEngine::ScanEngine() :
@@ -256,9 +292,14 @@ void ScanEngine::start_scan()
                 impl_->device_wrapper->start(),
                 [this]()
     {
-        impl_->image_converter.start_frame(impl_->params, cv::Scalar(0xff, 0xff, 0xff));
+        impl_->image_wrapper = QImage();
+        impl_->image_buffer.set_on_resize_callback([&]()
+        {
+            impl_->image_wrapper = qimage_from_cv_mat(impl_->image_buffer.image());
+        });
+        impl_->image_buffer.start_frame(impl_->params, cv::Scalar(0xff, 0xff, 0xff));
         push_poller(std::make_unique<ScanDataPoller>(this, impl_->device_wrapper.get(),
-                                                     &impl_->image_converter));
+                                                     &impl_->image_buffer));
     }));
 }
 
@@ -271,7 +312,7 @@ void ScanEngine::cancel_scan()
 
 const QImage& ScanEngine::scan_image() const
 {
-    return impl_->image_converter.image();
+    return impl_->image_wrapper;
 }
 
 void ScanEngine::request_options()

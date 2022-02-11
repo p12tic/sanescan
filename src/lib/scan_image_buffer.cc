@@ -16,55 +16,21 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "qimage_converter.h"
-#include <QtGui/QImage>
+#include "scan_image_buffer.h"
 #include <opencv2/core/mat.hpp>
 #include <cstring>
 #include <stdexcept>
 
 namespace sanescan {
 
-namespace {
-
 using ConversionFunction = std::function<void(char*, const char*, std::size_t)>;
+
+namespace {
 
 struct ConversionParams {
     int format;
     ConversionFunction converter;
 };
-
-namespace {
-
-QImage::Format qimage_format_from_depth_channels(int depth, int channels)
-{
-    if (depth == 1 && channels == 1) {
-        return QImage::Format_Grayscale8;
-    }
-    if (depth == 1 && channels == 3) {
-        return QImage::Format_RGB888;
-    }
-    if (depth == 2 && channels == 4) {
-        return QImage::Format_RGBX64;
-    }
-    throw std::invalid_argument("Unsupported depth+channels combination " + std::to_string(depth) +
-                                " " + std::to_string(channels));
-}
-
-QImage qimage_from_cv_mat(const cv::Mat& mat)
-{
-    if (mat.empty()) {
-        return {};
-    }
-
-    if (mat.size.dims() != 2) {
-        throw std::invalid_argument("Unsupported number of dimensions");
-    }
-
-    return QImage(mat.data, mat.size.p[1], mat.size.p[0],
-                  qimage_format_from_depth_channels(mat.elemSize1(), mat.channels()));
-}
-
-} // namespace
 
 ConversionParams get_conversion(const SaneParameters& params)
 {
@@ -72,9 +38,9 @@ ConversionParams get_conversion(const SaneParameters& params)
         case SaneFrameType::GRAY:
             switch (params.depth) {
                 case 1:
-                    return {CV_8UC1, QImageConverter::convert_mono1};
+                    return {CV_8UC1, ScanImageBuffer::convert_mono1};
                 case 8:
-                    return {CV_8UC1, QImageConverter::convert_mono8};
+                    return {CV_8UC1, ScanImageBuffer::convert_mono8};
                 // FIXME: uncomment when Qt 5.13 is the minimum supported version
                 // case 16:
                 //     return QImage::Format_Grayscale16;
@@ -91,9 +57,9 @@ ConversionParams get_conversion(const SaneParameters& params)
         case SaneFrameType::RGB: {
             switch (params.depth) {
                 case 8:
-                    return {CV_8UC3, QImageConverter::convert_rgb888};
+                    return {CV_8UC3, ScanImageBuffer::convert_rgb888};
                 case 16:
-                    return {CV_16UC4, QImageConverter::convert_rgb161616};
+                    return {CV_16UC4, ScanImageBuffer::convert_rgb161616};
                 default:
                     throw std::runtime_error("Unsupported bit depth " +
                                              std::to_string(params.depth));
@@ -108,70 +74,77 @@ ConversionParams get_conversion(const SaneParameters& params)
 
 } // namespace
 
-struct QImageConverter::Impl {
+struct ScanImageBuffer::Private {
     cv::Mat image;
-    QImage qimage;
     ConversionFunction line_converter;
     SaneParameters params;
+    std::function<void()> on_resize;
 };
 
-QImageConverter::QImageConverter() :
-    impl_{std::make_unique<Impl>()}
+ScanImageBuffer::ScanImageBuffer() :
+    d_{std::make_unique<Private>()}
 {}
 
-QImageConverter::~QImageConverter() = default;
+ScanImageBuffer::~ScanImageBuffer() = default;
 
-void QImageConverter::start_frame(const SaneParameters& params, cv::Scalar init_color)
+void ScanImageBuffer::set_on_resize_callback(const std::function<void()>& on_resize)
 {
-    impl_->params = params;
-    auto lines = impl_->params.lines > 0 ? impl_->params.lines : 16;
-    auto conversion_params = get_conversion(params);
-    impl_->line_converter = conversion_params.converter;
-
-    impl_->image = cv::Mat(lines, impl_->params.pixels_per_line, conversion_params.format,
-                           init_color);
-    impl_->qimage = qimage_from_cv_mat(impl_->image);
+    d_->on_resize = on_resize;
 }
 
-void QImageConverter::add_line(std::size_t line_index, const char* data, std::size_t data_size)
+void ScanImageBuffer::start_frame(const SaneParameters& params, cv::Scalar init_color)
 {
-    if (line_index >= impl_->image.size.p[0]) {
+    d_->params = params;
+    auto lines = d_->params.lines > 0 ? d_->params.lines : 16;
+    auto conversion_params = get_conversion(params);
+    d_->line_converter = conversion_params.converter;
+
+    d_->image = cv::Mat(lines, d_->params.pixels_per_line, conversion_params.format, init_color);
+    if (d_->on_resize) {
+        d_->on_resize();
+    }
+}
+
+void ScanImageBuffer::add_line(std::size_t line_index, const char* data, std::size_t data_size)
+{
+    if (line_index >= d_->image.size.p[0]) {
         grow_image(line_index);
     }
 
-    impl_->line_converter(reinterpret_cast<char*>(impl_->image.ptr(line_index)),
-                          data, std::min<std::size_t>(data_size, impl_->params.bytes_per_line));
+    d_->line_converter(reinterpret_cast<char*>(d_->image.ptr(line_index)),
+                       data, std::min<std::size_t>(data_size, d_->params.bytes_per_line));
 }
 
-const QImage& QImageConverter::image() const
+const cv::Mat& ScanImageBuffer::image() const
 {
-    return impl_->qimage;
+    return d_->image;
 }
 
-void QImageConverter::grow_image(std::size_t min_height)
+void ScanImageBuffer::grow_image(std::size_t min_height)
 {
-    auto new_height = std::max<std::size_t>(min_height, impl_->image.size.p[0] * 1.5);
-    impl_->image.resize(new_height);
-    impl_->qimage = qimage_from_cv_mat(impl_->image);
+    auto new_height = std::max<std::size_t>(min_height, d_->image.size.p[0] * 1.5);
+    d_->image.resize(new_height);
+    if (d_->on_resize) {
+        d_->on_resize();
+    }
 }
 
-
-void QImageConverter::convert_mono1(char* dst, const char* src, std::size_t bytes)
-{
-    std::memcpy(dst, src, bytes);
-}
-
-void QImageConverter::convert_mono8(char* dst, const char* src, std::size_t bytes)
+void ScanImageBuffer::convert_mono1(char* dst, const char* src, std::size_t bytes)
 {
     std::memcpy(dst, src, bytes);
 }
 
-void QImageConverter::convert_rgb888(char* dst, const char* src, std::size_t bytes)
+void ScanImageBuffer::convert_mono8(char* dst, const char* src, std::size_t bytes)
 {
     std::memcpy(dst, src, bytes);
 }
 
-void QImageConverter::convert_rgb161616(char* dst, const char* src, std::size_t bytes)
+void ScanImageBuffer::convert_rgb888(char* dst, const char* src, std::size_t bytes)
+{
+    std::memcpy(dst, src, bytes);
+}
+
+void ScanImageBuffer::convert_rgb161616(char* dst, const char* src, std::size_t bytes)
 {
     auto* dst16 = reinterpret_cast<std::uint16_t*>(dst);
     auto* src16 = reinterpret_cast<const std::uint16_t*>(src);

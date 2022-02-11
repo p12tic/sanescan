@@ -27,7 +27,6 @@ set(SOURCES
     main.cc
     main_window.cc
     main_window.ui
-    qimage_converter.cc
     scan_engine.cc
     scan_settings_widget.cc
     scan_settings_widget.ui
