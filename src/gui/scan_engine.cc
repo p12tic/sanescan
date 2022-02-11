@@ -17,6 +17,7 @@
 */
 
 #include "scan_engine.h"
+#include "qimage_utils.h"
 #include "../lib/sane_wrapper.h"
 #include "../lib/scan_image_buffer.h"
 #include <QtGui/QImage>
@@ -108,39 +109,6 @@ struct ScanDataPoller : IPoller {
     SaneDeviceWrapper* wrapper = nullptr;
     ScanImageBuffer* image_buffer = nullptr;
 };
-
-namespace {
-
-QImage::Format qimage_format_from_depth_channels(int depth, int channels)
-{
-    if (depth == 1 && channels == 1) {
-        return QImage::Format_Grayscale8;
-    }
-    if (depth == 1 && channels == 3) {
-        return QImage::Format_RGB888;
-    }
-    if (depth == 2 && channels == 4) {
-        return QImage::Format_RGBX64;
-    }
-    throw std::invalid_argument("Unsupported depth+channels combination " + std::to_string(depth) +
-                                " " + std::to_string(channels));
-}
-
-QImage qimage_from_cv_mat(const cv::Mat& mat)
-{
-    if (mat.empty()) {
-        return {};
-    }
-
-    if (mat.size.dims() != 2) {
-        throw std::invalid_argument("Unsupported number of dimensions");
-    }
-
-    return QImage(mat.data, mat.size.p[1], mat.size.p[0],
-                  qimage_format_from_depth_channels(mat.elemSize1(), mat.channels()));
-}
-
-} // namespace
 
 struct ScanEngine::Impl {
     std::vector<std::unique_ptr<IPoller>> pollers;
