@@ -18,7 +18,9 @@
 
 #include "qimage_converter.h"
 #include <QtGui/QImage>
+#include <opencv2/core/mat.hpp>
 #include <cstring>
+#include <stdexcept>
 
 namespace sanescan {
 
@@ -27,9 +29,42 @@ namespace {
 using ConversionFunction = std::function<void(char*, const char*, std::size_t)>;
 
 struct ConversionParams {
-    QImage::Format image_format;
+    int format;
     ConversionFunction converter;
 };
+
+namespace {
+
+QImage::Format qimage_format_from_depth_channels(int depth, int channels)
+{
+    if (depth == 1 && channels == 1) {
+        return QImage::Format_Grayscale8;
+    }
+    if (depth == 1 && channels == 3) {
+        return QImage::Format_RGB888;
+    }
+    if (depth == 2 && channels == 4) {
+        return QImage::Format_RGBX64;
+    }
+    throw std::invalid_argument("Unsupported depth+channels combination " + std::to_string(depth) +
+                                " " + std::to_string(channels));
+}
+
+QImage qimage_from_cv_mat(const cv::Mat& mat)
+{
+    if (mat.empty()) {
+        return {};
+    }
+
+    if (mat.size.dims() != 2) {
+        throw std::invalid_argument("Unsupported number of dimensions");
+    }
+
+    return QImage(mat.data, mat.size.p[1], mat.size.p[0],
+                  qimage_format_from_depth_channels(mat.elemSize1(), mat.channels()));
+}
+
+} // namespace
 
 ConversionParams get_conversion(const SaneParameters& params)
 {
@@ -37,9 +72,9 @@ ConversionParams get_conversion(const SaneParameters& params)
         case SaneFrameType::GRAY:
             switch (params.depth) {
                 case 1:
-                    return {QImage::Format_Mono, QImageConverter::convert_mono1};
+                    return {CV_8UC1, QImageConverter::convert_mono1};
                 case 8:
-                    return {QImage::Format_Grayscale8, QImageConverter::convert_mono8};
+                    return {CV_8UC1, QImageConverter::convert_mono8};
                 // FIXME: uncomment when Qt 5.13 is the minimum supported version
                 // case 16:
                 //     return QImage::Format_Grayscale16;
@@ -56,9 +91,9 @@ ConversionParams get_conversion(const SaneParameters& params)
         case SaneFrameType::RGB: {
             switch (params.depth) {
                 case 8:
-                    return {QImage::Format_RGB32, QImageConverter::convert_rgb888};
+                    return {CV_8UC3, QImageConverter::convert_rgb888};
                 case 16:
-                    return {QImage::Format_RGBX64, QImageConverter::convert_rgb161616};
+                    return {CV_16UC4, QImageConverter::convert_rgb161616};
                 default:
                     throw std::runtime_error("Unsupported bit depth " +
                                              std::to_string(params.depth));
@@ -74,7 +109,8 @@ ConversionParams get_conversion(const SaneParameters& params)
 } // namespace
 
 struct QImageConverter::Impl {
-    QImage image;
+    cv::Mat image;
+    QImage qimage;
     ConversionFunction line_converter;
     SaneParameters params;
 };
@@ -85,35 +121,38 @@ QImageConverter::QImageConverter() :
 
 QImageConverter::~QImageConverter() = default;
 
-void QImageConverter::start_frame(const SaneParameters& params, QColor init_color)
+void QImageConverter::start_frame(const SaneParameters& params, cv::Scalar init_color)
 {
     impl_->params = params;
     auto lines = impl_->params.lines > 0 ? impl_->params.lines : 16;
     auto conversion_params = get_conversion(params);
     impl_->line_converter = conversion_params.converter;
-    impl_->image = QImage(impl_->params.pixels_per_line, lines, conversion_params.image_format);
-    impl_->image.fill(init_color);
+
+    impl_->image = cv::Mat(lines, impl_->params.pixels_per_line, conversion_params.format,
+                           init_color);
+    impl_->qimage = qimage_from_cv_mat(impl_->image);
 }
 
 void QImageConverter::add_line(std::size_t line_index, const char* data, std::size_t data_size)
 {
-    if (line_index >= impl_->image.height()) {
+    if (line_index >= impl_->image.size.p[0]) {
         grow_image(line_index);
     }
 
-    impl_->line_converter(reinterpret_cast<char*>(impl_->image.scanLine(line_index)),
+    impl_->line_converter(reinterpret_cast<char*>(impl_->image.ptr(line_index)),
                           data, std::min<std::size_t>(data_size, impl_->params.bytes_per_line));
 }
 
 const QImage& QImageConverter::image() const
 {
-    return impl_->image;
+    return impl_->qimage;
 }
 
 void QImageConverter::grow_image(std::size_t min_height)
 {
-    auto new_height = std::max<std::size_t>(min_height, impl_->image.height() * 1.5);
-    impl_->image = impl_->image.copy(0, 0, impl_->image.width(), new_height);
+    auto new_height = std::max<std::size_t>(min_height, impl_->image.size.p[0] * 1.5);
+    impl_->image.resize(new_height);
+    impl_->qimage = qimage_from_cv_mat(impl_->image);
 }
 
 
