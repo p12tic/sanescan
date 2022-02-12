@@ -72,7 +72,7 @@ MainWindow::MainWindow(QWidget *parent) :
     });
     connect(&d_->engine, &ScanEngine::image_updated, [this]()
     {
-        d_->ui->image_area->set_image_ptr(&d_->engine.scan_image());
+        d_->ui->image_area->set_image(d_->engine.scan_image());
     });
     connect(&d_->engine, &ScanEngine::scan_finished, [this]()
     {

@@ -32,8 +32,9 @@ public:
     explicit ImageWidget(QWidget *parent = nullptr);
     ~ImageWidget() override;
 
-    /// does not take ownership of the image. Set to nullptr to remove any referenced images
-    void set_image_ptr(const QImage* image);
+    /// Note that QImage uses reference semantics, so internally the widget refers to the under
+    /// lying data of the argument even after the call.
+    void set_image(const QImage& image);
 
 protected:
     void wheelEvent(QWheelEvent* event) override;
