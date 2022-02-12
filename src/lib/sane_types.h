@@ -21,6 +21,7 @@
 
 #include <string>
 #include <string_view>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -152,6 +153,10 @@ struct SaneOptionGroupDestriptor {
 
     bool operator==(const SaneOptionGroupDestriptor& other) const;
 };
+
+std::optional<SaneOptionDescriptor>
+    find_option_descriptor(const std::vector<SaneOptionGroupDestriptor>& descriptors,
+                           std::string_view name);
 
 struct SaneOptionValueNone {
     bool operator==(const SaneOptionValueNone& other) const { return true; }

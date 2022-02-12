@@ -141,5 +141,19 @@ bool SaneOptionGroupDestriptor::operator==(const SaneOptionGroupDestriptor& othe
             options == other.options;
 }
 
+std::optional<SaneOptionDescriptor>
+    find_option_descriptor(const std::vector<SaneOptionGroupDestriptor>& descriptors,
+                           std::string_view name)
+{
+    for (const auto& group : descriptors) {
+        for (const auto& option : group.options) {
+            if (option.name == name) {
+                return option;
+            }
+        }
+    }
+    return {};
+}
+
 } // namespace sanescan
 
