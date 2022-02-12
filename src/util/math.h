@@ -56,6 +56,16 @@ constexpr double rad_to_deg(double rad)
     return rad * 180.0 / boost::math::double_constants::pi;
 }
 
+constexpr double inch_to_mm(double inch)
+{
+    return inch * 25.4;
+}
+
+constexpr double mm_to_inch(double inch)
+{
+    return inch / 25.4;
+}
+
 } // namespace sanescan
 
 #endif // SANESCAN_UTIL_MATH_H
