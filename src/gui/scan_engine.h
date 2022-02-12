@@ -21,6 +21,7 @@
 
 #include "../lib/sane_types.h"
 #include <QtCore/QObject>
+#include <opencv2/core/mat.hpp>
 #include <memory>
 
 namespace sanescan {
@@ -86,8 +87,7 @@ public:
     void cancel_scan();
 
     /// Returns the current state of the scanned image.
-    /// FIXME: this API will change once image data sharing is figured out
-    const QImage& scan_image() const;
+    const cv::Mat& scan_image() const;
 
 Q_SIGNALS:
     void devices_refreshed();

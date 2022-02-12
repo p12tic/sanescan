@@ -19,6 +19,7 @@
 #include "main_window.h"
 #include "about_dialog.h"
 #include "image_widget.h"
+#include "qimage_utils.h"
 #include "scan_settings_widget.h"
 #include "ui_main_window.h"
 #include "pagelist/page_list_model.h"
@@ -72,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
     });
     connect(&d_->engine, &ScanEngine::image_updated, [this]()
     {
-        d_->ui->image_area->set_image(d_->engine.scan_image());
+        d_->ui->image_area->set_image(qimage_from_cv_mat(d_->engine.scan_image()));
     });
     connect(&d_->engine, &ScanEngine::scan_finished, [this]()
     {
@@ -130,7 +131,8 @@ void MainWindow::start_scanning()
 void MainWindow::scanning_finished()
 {
     d_->ui->stack_settings->setCurrentIndex(STACK_SETTINGS);
-    d_->page_list_model->add_page(d_->last_scan_id++, d_->engine.scan_image());
+    d_->page_list_model->add_page(d_->last_scan_id++,
+                                  qimage_from_cv_mat(d_->engine.scan_image()).copy());
 }
 
 void MainWindow::select_device(const std::string& name)

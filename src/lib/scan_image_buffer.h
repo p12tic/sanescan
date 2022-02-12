@@ -31,8 +31,6 @@ public:
     ScanImageBuffer();
     ~ScanImageBuffer();
 
-    void set_on_resize_callback(const std::function<void()>& on_resize);
-
     void start_frame(const SaneParameters& params, cv::Scalar init_color);
     void add_line(std::size_t line_index, const char* data, std::size_t data_size);
 

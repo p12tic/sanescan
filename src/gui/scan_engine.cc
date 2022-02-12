@@ -17,7 +17,6 @@
 */
 
 #include "scan_engine.h"
-#include "qimage_utils.h"
 #include "../lib/sane_wrapper.h"
 #include "../lib/scan_image_buffer.h"
 #include <QtGui/QImage>
@@ -125,7 +124,6 @@ struct ScanEngine::Impl {
 
     SaneParameters params;
     ScanImageBuffer image_buffer;
-    QImage image_wrapper;
 };
 
 ScanEngine::ScanEngine() :
@@ -260,11 +258,6 @@ void ScanEngine::start_scan()
                 impl_->device_wrapper->start(),
                 [this]()
     {
-        impl_->image_wrapper = QImage();
-        impl_->image_buffer.set_on_resize_callback([&]()
-        {
-            impl_->image_wrapper = qimage_from_cv_mat(impl_->image_buffer.image());
-        });
         impl_->image_buffer.start_frame(impl_->params, cv::Scalar(0xff, 0xff, 0xff));
         push_poller(std::make_unique<ScanDataPoller>(this, impl_->device_wrapper.get(),
                                                      &impl_->image_buffer));
@@ -278,9 +271,9 @@ void ScanEngine::cancel_scan()
     }
 }
 
-const QImage& ScanEngine::scan_image() const
+const cv::Mat& ScanEngine::scan_image() const
 {
-    return impl_->image_wrapper;
+    return impl_->image_buffer.image();
 }
 
 void ScanEngine::request_options()

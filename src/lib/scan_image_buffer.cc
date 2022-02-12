@@ -87,11 +87,6 @@ ScanImageBuffer::ScanImageBuffer() :
 
 ScanImageBuffer::~ScanImageBuffer() = default;
 
-void ScanImageBuffer::set_on_resize_callback(const std::function<void()>& on_resize)
-{
-    d_->on_resize = on_resize;
-}
-
 void ScanImageBuffer::start_frame(const SaneParameters& params, cv::Scalar init_color)
 {
     d_->params = params;
@@ -100,9 +95,6 @@ void ScanImageBuffer::start_frame(const SaneParameters& params, cv::Scalar init_
     d_->line_converter = conversion_params.converter;
 
     d_->image = cv::Mat(lines, d_->params.pixels_per_line, conversion_params.format, init_color);
-    if (d_->on_resize) {
-        d_->on_resize();
-    }
 }
 
 void ScanImageBuffer::add_line(std::size_t line_index, const char* data, std::size_t data_size)
@@ -124,9 +116,6 @@ void ScanImageBuffer::grow_image(std::size_t min_height)
 {
     auto new_height = std::max<std::size_t>(min_height, d_->image.size.p[0] * 1.5);
     d_->image.resize(new_height);
-    if (d_->on_resize) {
-        d_->on_resize();
-    }
 }
 
 void ScanImageBuffer::convert_mono1(char* dst, const char* src, std::size_t bytes)
