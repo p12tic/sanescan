@@ -20,6 +20,7 @@
 #define SANESCAN_GUI_MAIN_WINDOW_H
 
 #include "scan_engine.h"
+#include "../lib/sane_types.h"
 #include <QtWidgets/QMainWindow>
 #include <memory>
 
@@ -45,6 +46,8 @@ private:
     void select_device(const std::string& name);
     void start_scanning();
     void scanning_finished();
+
+    void setup_preview_image(const std::vector<SaneOptionGroupDestriptor>& options);
 
     struct Private;
     std::unique_ptr<Private> d_;

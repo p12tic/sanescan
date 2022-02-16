@@ -24,9 +24,80 @@
 #include "ui_main_window.h"
 #include "pagelist/page_list_model.h"
 #include "pagelist/page_list_view_delegate.h"
+#include "../util/math.h"
 #include <QtCore/QTimer>
 
 namespace sanescan {
+
+namespace {
+
+struct PreviewConfig {
+    double width_mm = 0;
+    double height_mm = 0;
+    unsigned dpi = 0;
+};
+
+PreviewConfig get_default_preview_config()
+{
+    // Use A4 size by default. At the given dpi the blank image is relatively small at 163x233
+    // pixels
+    return PreviewConfig{210, 297, 20};
+}
+
+PreviewConfig setup_blank_preview_size(const std::vector<SaneOptionGroupDestriptor>& options)
+{
+    auto tl_x_desc = find_option_descriptor(options, "tl-x");
+    auto tl_y_desc = find_option_descriptor(options, "tl-y");
+    auto br_x_desc = find_option_descriptor(options, "br-x");
+    auto br_y_desc = find_option_descriptor(options, "br-y");
+
+    if (!tl_x_desc || !tl_y_desc || !br_x_desc || !br_y_desc) {
+        return get_default_preview_config();
+    }
+
+    auto* tl_x_constraint = std::get_if<SaneConstraintFloatRange>(&tl_x_desc->constraint);
+    auto* tl_y_constraint = std::get_if<SaneConstraintFloatRange>(&tl_y_desc->constraint);
+    auto* br_x_constraint = std::get_if<SaneConstraintFloatRange>(&br_x_desc->constraint);
+    auto* br_y_constraint = std::get_if<SaneConstraintFloatRange>(&br_y_desc->constraint);
+
+    if (!tl_x_constraint || !tl_y_constraint || !br_x_constraint || !br_y_constraint) {
+        return get_default_preview_config();
+    }
+
+    double width_mm = br_x_constraint->max - tl_x_constraint->min;
+    double height_mm = br_y_constraint->max - tl_y_constraint->min;
+
+    // Do some checking against scanners returning useless size (negative or one dimension much
+    // larger than the other). In such case the user would need to do a preview scan anyway because
+    // we can't display it properly.
+    double MAX_RELATIVE_SIZE_DIFF = 10;
+    if (width_mm < 0 || height_mm < 0 ||
+        width_mm > height_mm * MAX_RELATIVE_SIZE_DIFF ||
+        height_mm > width_mm * MAX_RELATIVE_SIZE_DIFF)
+    {
+        return get_default_preview_config();
+    }
+
+    double dpi = 50;
+    double dots_per_mm = dpi / 25.4;
+
+    // Look at the scanner size and set appropriate dpi so that weird huge maximum scan area sizes
+    // don't result in out of memory conditions when the user never even requests a large scan.
+    double MAX_BLANK_PREVIEW_SIZE = 1000 * 1000;
+    double MIN_BLANK_PREVIEW_SIZE = 200 * 200;
+    if (dots_per_mm * dots_per_mm * width_mm * height_mm > MAX_BLANK_PREVIEW_SIZE) {
+        dots_per_mm = std::sqrt(MAX_BLANK_PREVIEW_SIZE / (width_mm * height_mm));
+    }
+    if (dots_per_mm * dots_per_mm * width_mm * height_mm < MIN_BLANK_PREVIEW_SIZE) {
+        dots_per_mm = std::sqrt(MIN_BLANK_PREVIEW_SIZE / (width_mm * height_mm));
+    }
+
+    dpi = dots_per_mm * 25.4;
+
+    return PreviewConfig{width_mm, height_mm, static_cast<unsigned>(dpi)};
+}
+
+} // namespace
 
 struct MainWindow::Private {
     std::unique_ptr<Ui::MainWindow> ui;
@@ -36,6 +107,9 @@ struct MainWindow::Private {
 
     std::unique_ptr<PageListModel> page_list_model;
     std::uint64_t last_scan_id = 0;
+
+    QImage preview_image;
+    PreviewConfig preview_config;
 };
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -53,8 +127,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&d_->engine, &ScanEngine::stop_polling, [this]() { d_->engine_timer.stop(); });
     connect(&d_->engine, &ScanEngine::options_changed, [this]()
     {
-        d_->ui->settings_widget->set_options(d_->engine.get_option_groups());
+        const auto& options = d_->engine.get_option_groups();
+        setup_preview_image(options);
+        d_->ui->settings_widget->set_options(options);
     });
+
     connect(&d_->engine, &ScanEngine::option_values_changed, [this]()
     {
         d_->ui->settings_widget->set_option_values(d_->engine.get_option_values());
@@ -145,6 +222,17 @@ void MainWindow::select_device(const std::string& name)
     } else {
         d_->engine.open_device(name);
     }
+}
+
+void MainWindow::setup_preview_image(const std::vector<SaneOptionGroupDestriptor>& options)
+{
+    // TODO: only setup preview image when we don't have one for the current scanner
+    d_->preview_config = setup_blank_preview_size(options);
+    d_->preview_image = QImage(mm_to_inch(d_->preview_config.width_mm) * d_->preview_config.dpi,
+                               mm_to_inch(d_->preview_config.height_mm) * d_->preview_config.dpi,
+                               QImage::Format_Mono);
+    d_->preview_image.fill(255);
+    d_->ui->image_area->set_image(d_->preview_image);
 }
 
 } // namespace sanescan
