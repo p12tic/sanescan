@@ -41,8 +41,8 @@ protected:
     void drawBackground(QPainter* painter, const QRectF& rect) override;
 
 private:
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
+    struct Private;
+    std::unique_ptr<Private> d_;
 };
 
 } // namespace sanescan

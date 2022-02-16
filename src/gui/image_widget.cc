@@ -29,29 +29,29 @@ namespace {
     }
 }
 
-struct ImageWidget::Impl {
+struct ImageWidget::Private {
     QGraphicsScene* scene = nullptr; // parent widget is an owner
     QImage image;
 };
 
 ImageWidget::ImageWidget(QWidget *parent) :
     QGraphicsView(parent),
-    impl_{std::make_unique<Impl>()}
+    d_{std::make_unique<Private>()}
 {
-    impl_->scene = new QGraphicsScene(this);
-    setScene(impl_->scene);
+    d_->scene = new QGraphicsScene(this);
+    setScene(d_->scene);
 }
 
 ImageWidget::~ImageWidget() = default;
 
 void ImageWidget::set_image(const QImage& image)
 {
-    impl_->image = image;
+    d_->image = image;
     if (!image.isNull()) {
-        impl_->scene->setSceneRect(0, 0, image.width(), image.height());
-        fitInView(impl_->image.rect(), Qt::KeepAspectRatio);
+        d_->scene->setSceneRect(0, 0, image.width(), image.height());
+        fitInView(d_->image.rect(), Qt::KeepAspectRatio);
     } else {
-        impl_->scene->setSceneRect(0, 0, 300, 400);
+        d_->scene->setSceneRect(0, 0, 300, 400);
     }
 }
 
@@ -75,12 +75,12 @@ void ImageWidget::drawBackground(QPainter* painter, const QRectF& rect)
 {
     QColor background_color{0xa0, 0xa0, 0xa0};
 
-    if (!impl_->image.isNull()) {
+    if (!d_->image.isNull()) {
         auto image_rect = rect & sceneRect();
         if (image_rect != rect) {
             painter->fillRect(rect, background_color);
         }
-        painter->drawImage(image_rect, impl_->image, image_rect);
+        painter->drawImage(image_rect, d_->image, image_rect);
     } else {
         painter->fillRect(rect, background_color);
     }

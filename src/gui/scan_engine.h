@@ -109,8 +109,8 @@ private:
     std::size_t get_option_index(const std::string& name) const;
     void push_poller(std::unique_ptr<IPoller>&& poller);
 
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
+    struct Private;
+    std::unique_ptr<Private> d_;
 };
 
 } // namespace sanescan

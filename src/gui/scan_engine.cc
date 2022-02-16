@@ -109,7 +109,7 @@ struct ScanDataPoller : IPoller {
     ScanImageBuffer* image_buffer = nullptr;
 };
 
-struct ScanEngine::Impl {
+struct ScanEngine::Private {
     std::vector<std::unique_ptr<IPoller>> pollers;
 
     SaneWrapper wrapper;
@@ -127,7 +127,7 @@ struct ScanEngine::Impl {
 };
 
 ScanEngine::ScanEngine() :
-    impl_{std::make_unique<Impl>()}
+    d_{std::make_unique<Private>()}
 {}
 
 ScanEngine::~ScanEngine() = default; // TODO: maybe wait for thread
@@ -137,10 +137,10 @@ void ScanEngine::perform_step()
     // Note that pollers may cause signals to be emitted which may cause additional pollers to be
     // added. As a result we can't use iterators because they may be invalidated whenever poll()
     // is called.
-    for (std::size_t i = 0; i < impl_->pollers.size();) {
-        if (impl_->pollers[i]->poll()) {
-            impl_->pollers.erase(impl_->pollers.begin() + i);
-            if (impl_->pollers.empty()) {
+    for (std::size_t i = 0; i < d_->pollers.size();) {
+        if (d_->pollers[i]->poll()) {
+            d_->pollers.erase(d_->pollers.begin() + i);
+            if (d_->pollers.empty()) {
                 Q_EMIT stop_polling();
             }
         } else {
@@ -152,31 +152,31 @@ void ScanEngine::perform_step()
 void ScanEngine::refresh_devices()
 {
     push_poller(std::make_unique<Poller<std::vector<SaneDeviceInfo>>>(
-                impl_->wrapper.get_device_info(),
+                d_->wrapper.get_device_info(),
                 [this](auto devices)
     {
-        impl_->current_devices = std::move(devices);
+        d_->current_devices = std::move(devices);
         Q_EMIT devices_refreshed();
     }));
 }
 
 const std::vector<SaneDeviceInfo>& ScanEngine::current_devices() const
 {
-    return impl_->current_devices;
+    return d_->current_devices;
 }
 
 void ScanEngine::open_device(const std::string& name)
 {
-    if (impl_->device_open) {
+    if (d_->device_open) {
         throw std::runtime_error("Can't open multiple devices concurrently");
     }
 
     push_poller(std::make_unique<Poller<std::unique_ptr<SaneDeviceWrapper>>>(
-                impl_->wrapper.open_device(name),
+                d_->wrapper.open_device(name),
                 [this](auto device_wrapper)
     {
-        impl_->device_wrapper = std::move(device_wrapper);
-        impl_->device_open = true;
+        d_->device_wrapper = std::move(device_wrapper);
+        d_->device_open = true;
         Q_EMIT device_opened();
         request_options();
         request_option_values();
@@ -185,43 +185,43 @@ void ScanEngine::open_device(const std::string& name)
 
 bool ScanEngine::is_device_opened() const
 {
-    return impl_->device_open;
+    return d_->device_open;
 }
 
 void ScanEngine::close_device()
 {
-    if (!impl_->device_open) {
+    if (!d_->device_open) {
         throw std::runtime_error("Can't close already closed device");
     }
-    impl_->device_wrapper = nullptr; // this will close device implicitly
-    impl_->device_open = false;
+    d_->device_wrapper = nullptr; // this will close device implicitly
+    d_->device_open = false;
     Q_EMIT device_closed();
 }
 
 const std::vector<SaneOptionGroupDestriptor>& ScanEngine::get_option_groups() const
 {
-    if (!impl_->device_open) {
+    if (!d_->device_open) {
         throw std::runtime_error("Can't access options when device is closed");
     }
-    return impl_->option_groups;
+    return d_->option_groups;
 }
 
 const std::map<std::string, SaneOptionValue>& ScanEngine::get_option_values() const
 {
-    if (!impl_->device_open) {
+    if (!d_->device_open) {
         throw std::runtime_error("Can't access options when device is closed");
     }
-    return impl_->option_values;
+    return d_->option_values;
 }
 
 void ScanEngine::set_option_value(const std::string& name, const SaneOptionValue& value)
 {
-    if (!impl_->device_open) {
+    if (!d_->device_open) {
         throw std::runtime_error("Can't access options when device is closed");
     }
 
     push_poller(std::make_unique<Poller<SaneOptionSetInfo>>(
-                impl_->device_wrapper->set_option_value(get_option_index(name), value),
+                d_->device_wrapper->set_option_value(get_option_index(name), value),
                 [this](SaneOptionSetInfo set_info)
     {
         refresh_after_set_if_needed(set_info);
@@ -230,12 +230,12 @@ void ScanEngine::set_option_value(const std::string& name, const SaneOptionValue
 
 void ScanEngine::set_option_value_auto(const std::string& name)
 {
-    if (!impl_->device_open) {
+    if (!d_->device_open) {
         throw std::runtime_error("Can't access options when device is closed");
     }
 
     push_poller(std::make_unique<Poller<SaneOptionSetInfo>>(
-                impl_->device_wrapper->set_option_value_auto(get_option_index(name)),
+                d_->device_wrapper->set_option_value_auto(get_option_index(name)),
                 [this](SaneOptionSetInfo set_info)
     {
         refresh_after_set_if_needed(set_info);
@@ -244,51 +244,51 @@ void ScanEngine::set_option_value_auto(const std::string& name)
 
 void ScanEngine::start_scan()
 {
-    if (!impl_->device_open) {
+    if (!d_->device_open) {
         throw std::runtime_error("Can't control scan when device is closed");
     }
     push_poller(std::make_unique<Poller<SaneParameters>>(
-                impl_->device_wrapper->get_parameters(),
+                d_->device_wrapper->get_parameters(),
                 [this](SaneParameters params)
     {
-        impl_->params = params;
+        d_->params = params;
     }));
 
     push_poller(std::make_unique<Poller<void>>(
-                impl_->device_wrapper->start(),
+                d_->device_wrapper->start(),
                 [this]()
     {
-        impl_->image_buffer.start_frame(impl_->params, cv::Scalar(0xff, 0xff, 0xff));
-        push_poller(std::make_unique<ScanDataPoller>(this, impl_->device_wrapper.get(),
-                                                     &impl_->image_buffer));
+        d_->image_buffer.start_frame(d_->params, cv::Scalar(0xff, 0xff, 0xff));
+        push_poller(std::make_unique<ScanDataPoller>(this, d_->device_wrapper.get(),
+                                                     &d_->image_buffer));
     }));
 }
 
 void ScanEngine::cancel_scan()
 {
-    if (!impl_->device_open) {
+    if (!d_->device_open) {
         throw std::runtime_error("Can't control scan when device is closed");
     }
 }
 
 const cv::Mat& ScanEngine::scan_image() const
 {
-    return impl_->image_buffer.image();
+    return d_->image_buffer.image();
 }
 
 void ScanEngine::request_options()
 {
     push_poller(std::make_unique<Poller<std::vector<SaneOptionGroupDestriptor>>>(
-                impl_->device_wrapper->get_option_groups(),
+                d_->device_wrapper->get_option_groups(),
                 [this](auto option_groups)
     {
-        impl_->option_groups = std::move(option_groups);
-        impl_->option_index_to_name.clear();
-        impl_->option_name_to_index.clear();
-        for (const auto& group_desc : impl_->option_groups) {
+        d_->option_groups = std::move(option_groups);
+        d_->option_index_to_name.clear();
+        d_->option_name_to_index.clear();
+        for (const auto& group_desc : d_->option_groups) {
             for (const auto& desc : group_desc.options) {
-                impl_->option_index_to_name.emplace(desc.index, desc.name);
-                impl_->option_name_to_index.emplace(desc.name, desc.index);
+                d_->option_index_to_name.emplace(desc.index, desc.name);
+                d_->option_name_to_index.emplace(desc.name, desc.index);
             }
         }
         Q_EMIT options_changed();
@@ -301,12 +301,12 @@ void ScanEngine::request_option_values()
     // the parameter list becomes out of date. We don't need to do any additional synchronization
     // here because all requests are processed in order.
     push_poller(std::make_unique<Poller<std::vector<SaneOptionIndexedValue>>>(
-                impl_->device_wrapper->get_all_option_values(),
+                d_->device_wrapper->get_all_option_values(),
                 [this](auto option_values)
     {
-        impl_->option_values.clear();
+        d_->option_values.clear();
         for (const auto& option : option_values) {
-            impl_->option_values.emplace(impl_->option_index_to_name.at(option.index),
+            d_->option_values.emplace(d_->option_index_to_name.at(option.index),
                                          option.value);
         }
         Q_EMIT option_values_changed();
@@ -327,8 +327,8 @@ void ScanEngine::refresh_after_set_if_needed(SaneOptionSetInfo set_info)
 
 std::size_t ScanEngine::get_option_index(const std::string& name) const
 {
-    auto index_it = impl_->option_name_to_index.find(name);
-    if (index_it == impl_->option_name_to_index.end()) {
+    auto index_it = d_->option_name_to_index.find(name);
+    if (index_it == d_->option_name_to_index.end()) {
         throw std::runtime_error("Unknown option: " + name);
     }
     return index_it->second;
@@ -336,8 +336,8 @@ std::size_t ScanEngine::get_option_index(const std::string& name) const
 
 void ScanEngine::push_poller(std::unique_ptr<IPoller>&& poller)
 {
-    bool empty = impl_->pollers.empty();
-    impl_->pollers.push_back(std::move(poller));
+    bool empty = d_->pollers.empty();
+    d_->pollers.push_back(std::move(poller));
     if (empty) {
         Q_EMIT start_polling();
     }
