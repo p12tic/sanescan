@@ -21,7 +21,7 @@
 
 namespace sanescan {
 
-struct TaskExecutor::Impl {
+struct TaskExecutor::Private {
     std::mutex mutex;
     std::condition_variable cv;
     std::deque<std::unique_ptr<ITask>> tasks;
@@ -31,28 +31,28 @@ struct TaskExecutor::Impl {
 };
 
 TaskExecutor::TaskExecutor() :
-    impl_{std::make_unique<Impl>()}
+    d_{std::make_unique<Private>()}
 {
-    impl_->thread = std::thread([this]()
+    d_->thread = std::thread([this]()
     {
         std::unique_ptr<ITask> task;
 
         while (true) {
             {
-                std::unique_lock lock{impl_->mutex};
+                std::unique_lock lock{d_->mutex};
 
-                impl_->active = false;
-                impl_->cv.wait(lock, [this](){ return !impl_->tasks.empty() || impl_->stop; });
+                d_->active = false;
+                d_->cv.wait(lock, [this](){ return !d_->tasks.empty() || d_->stop; });
 
-                if (impl_->tasks.empty()) {
+                if (d_->tasks.empty()) {
                     // if task list is empty at this point, stop has been requested (see
                     // the condition-variable condition above)
                     break;
                 }
-                impl_->active = true;
+                d_->active = true;
 
-                task = std::move(impl_->tasks.front());
-                impl_->tasks.pop_front();
+                task = std::move(d_->tasks.front());
+                d_->tasks.pop_front();
             }
             task->call();
             task.reset();
@@ -62,46 +62,46 @@ TaskExecutor::TaskExecutor() :
 
 TaskExecutor::~TaskExecutor()
 {
-    if (impl_->thread.joinable())
+    if (d_->thread.joinable())
         join();
 }
 
 void TaskExecutor::join()
 {
     {
-        std::unique_lock lock{impl_->mutex};
-        impl_->stop = true;
-        impl_->cv.notify_all();
+        std::unique_lock lock{d_->mutex};
+        d_->stop = true;
+        d_->cv.notify_all();
     }
-    impl_->thread.join();
+    d_->thread.join();
 }
 
 void TaskExecutor::join_cancel()
 {
     {
-        std::unique_lock lock{impl_->mutex};
-        impl_->stop = true;
-        impl_->tasks.clear();
-        impl_->cv.notify_all();
+        std::unique_lock lock{d_->mutex};
+        d_->stop = true;
+        d_->tasks.clear();
+        d_->cv.notify_all();
     }
-    impl_->thread.join();
+    d_->thread.join();
 }
 
 void TaskExecutor::schedule_task_impl(std::unique_ptr<ITask>&& task)
 {
-    std::unique_lock lock{impl_->mutex};
-    if (!impl_->thread.joinable()) {
+    std::unique_lock lock{d_->mutex};
+    if (!d_->thread.joinable()) {
         throw std::runtime_error("Execution thread has already been stopped");
     }
 
-    impl_->tasks.push_back(std::move(task));
-    impl_->cv.notify_all();
+    d_->tasks.push_back(std::move(task));
+    d_->cv.notify_all();
 }
 
 bool TaskExecutor::active() const
 {
-    std::unique_lock lock{impl_->mutex};
-    return !impl_->tasks.empty() || impl_->active;
+    std::unique_lock lock{d_->mutex};
+    return !d_->tasks.empty() || d_->active;
 }
 
 } // namespace sanescan

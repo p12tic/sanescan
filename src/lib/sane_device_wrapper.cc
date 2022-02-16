@@ -153,13 +153,13 @@ bool is_option_status_no_option(SANE_Status status)
 
 } // namespace
 
-struct SaneDeviceWrapper::Impl {
+struct SaneDeviceWrapper::Private {
     // FIXUP: this should be defined dynamically
     static constexpr std::size_t MAX_BUFFER_SIZE = 128 * 1024 * 1024;
     static constexpr std::size_t MAX_SINGLE_READ_SIZE = 128 * 1024;
     static constexpr std::size_t MIN_SINGLE_READ_LINES = 16;
 
-    Impl(TaskExecutor* executor, void* handle) :
+    Private(TaskExecutor* executor, void* handle) :
         executor{executor},
         handle{handle},
         buffer_manager{MAX_BUFFER_SIZE}
@@ -181,7 +181,7 @@ struct SaneDeviceWrapper::Impl {
 };
 
 SaneDeviceWrapper::SaneDeviceWrapper(TaskExecutor* executor, void* handle) :
-    impl_{std::make_unique<Impl>(executor, handle)}
+    d_{std::make_unique<Private>(executor, handle)}
 {
 }
 
@@ -189,8 +189,8 @@ SaneDeviceWrapper::~SaneDeviceWrapper()
 {
     // We do not wait for the device to close because we don't care. All operations are serialized
     // anyway and sane_exit() is guaranteed to happen some time in the future.
-    void* handle = impl_->handle;
-    impl_->executor->schedule_task<void>([=]()
+    void* handle = d_->handle;
+    d_->executor->schedule_task<void>([=]()
     {
         sane_close(handle);
     });
@@ -199,16 +199,16 @@ SaneDeviceWrapper::~SaneDeviceWrapper()
 std::future<std::vector<SaneOptionGroupDestriptor>>
     SaneDeviceWrapper::get_option_groups()
 {
-    return impl_->executor->schedule_task<std::vector<SaneOptionGroupDestriptor>>([this]()
+    return d_->executor->schedule_task<std::vector<SaneOptionGroupDestriptor>>([this]()
     {
-        auto count = retrieve_option_count(impl_->handle);
+        auto count = retrieve_option_count(d_->handle);
 
         std::vector<SaneOptionGroupDestriptor> result;
 
         SaneOptionGroupDestriptor curr_group;
         for (int i = 1; i < count; ++i)
         {
-            const auto* desc = sane_get_option_descriptor(impl_->handle, i);
+            const auto* desc = sane_get_option_descriptor(d_->handle, i);
             if (desc->type == SANE_TYPE_GROUP) {
                 if (!curr_group.options.empty()) {
                     result.push_back(std::move(curr_group));
@@ -223,7 +223,7 @@ std::future<std::vector<SaneOptionGroupDestriptor>>
             result.push_back(std::move(curr_group));
         }
 
-        impl_->task_option_descriptors = result;
+        d_->task_option_descriptors = result;
         return result;
     });
 }
@@ -231,17 +231,17 @@ std::future<std::vector<SaneOptionGroupDestriptor>>
 std::future<std::vector<SaneOptionIndexedValue>>
     SaneDeviceWrapper::get_all_option_values()
 {
-    return impl_->executor->schedule_task<std::vector<SaneOptionIndexedValue>>([this]()
+    return d_->executor->schedule_task<std::vector<SaneOptionIndexedValue>>([this]()
     {
         std::vector<SaneOptionIndexedValue> result;
-        for (const auto& group_desc : impl_->task_option_descriptors) {
+        for (const auto& group_desc : d_->task_option_descriptors) {
             for (const auto& desc : group_desc.options) {
                 switch (desc.type) {
                     case SaneValueType::BOOL:
                     case SaneValueType::BUTTON: {
                         std::vector<SANE_Bool> temp;
                         temp.resize(desc.size);
-                        auto status = sane_control_option(impl_->handle, desc.index,
+                        auto status = sane_control_option(d_->handle, desc.index,
                                                           SANE_ACTION_GET_VALUE,
                                                           temp.data(), nullptr);
                         if (is_option_status_no_option(status)) {
@@ -258,7 +258,7 @@ std::future<std::vector<SaneOptionIndexedValue>>
                         static_assert(sizeof(SANE_Word) == sizeof(int));
                         std::vector<int> values;
                         values.resize(desc.size);
-                        auto status = sane_control_option(impl_->handle, desc.index,
+                        auto status = sane_control_option(d_->handle, desc.index,
                                                           SANE_ACTION_GET_VALUE,
                                                           values.data(), nullptr);
                         if (is_option_status_no_option(status)) {
@@ -274,7 +274,7 @@ std::future<std::vector<SaneOptionIndexedValue>>
                         static_assert(sizeof(SANE_Word) == sizeof(int));
                         std::vector<int> temp;
                         temp.resize(desc.size);
-                        auto status = sane_control_option(impl_->handle, desc.index,
+                        auto status = sane_control_option(d_->handle, desc.index,
                                                           SANE_ACTION_GET_VALUE,
                                                           temp.data(), nullptr);
 
@@ -295,7 +295,7 @@ std::future<std::vector<SaneOptionIndexedValue>>
                     case SaneValueType::STRING: {
                         std::string value;
                         value.resize(desc.size);
-                        auto status = sane_control_option(impl_->handle, desc.index,
+                        auto status = sane_control_option(d_->handle, desc.index,
                                                           SANE_ACTION_GET_VALUE,
                                                           value.data(), nullptr);
 
@@ -323,7 +323,7 @@ std::future<std::vector<SaneOptionIndexedValue>>
 std::future<SaneOptionSetInfo>
     SaneDeviceWrapper::set_option_value(std::size_t index, const SaneOptionValue& value)
 {
-    return impl_->executor->schedule_task<SaneOptionSetInfo>([&, index, value]()
+    return d_->executor->schedule_task<SaneOptionSetInfo>([&, index, value]()
     {
         SANE_Int info = 0;
 
@@ -338,7 +338,7 @@ std::future<SaneOptionSetInfo>
 
             // implicit conversion from bool to word will do the right thing
             temp.assign(bool_values->begin(), bool_values->end());
-            throw_if_sane_status_not_good(sane_control_option(impl_->handle, index,
+            throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
                                                               SANE_ACTION_SET_VALUE,
                                                               temp.data(), &info));
             return sane_options_info_to_sanescan(info);
@@ -348,7 +348,7 @@ std::future<SaneOptionSetInfo>
         if (int_values) {
             static_assert(sizeof(SANE_Word) == sizeof(int));
             void* ptr = const_cast<void*>(static_cast<const void*>(int_values->data()));
-            throw_if_sane_status_not_good(sane_control_option(impl_->handle, index,
+            throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
                                                               SANE_ACTION_SET_VALUE,
                                                               ptr, &info));
             return sane_options_info_to_sanescan(info);
@@ -361,7 +361,7 @@ std::future<SaneOptionSetInfo>
             for (std::size_t i = 0; i < temp.size(); ++i) {
                 temp[i] = SANE_FIX((*double_values)[i]);
             }
-            throw_if_sane_status_not_good(sane_control_option(impl_->handle, index,
+            throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
                                                               SANE_ACTION_SET_VALUE,
                                                               temp.data(), &info));
             return sane_options_info_to_sanescan(info);
@@ -370,7 +370,7 @@ std::future<SaneOptionSetInfo>
         const auto* string = std::get_if<std::string>(&value);
         if (string) {
             void* ptr = const_cast<void*>(static_cast<const void*>(string->c_str()));
-            throw_if_sane_status_not_good(sane_control_option(impl_->handle, index,
+            throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
                                                               SANE_ACTION_SET_VALUE,
                                                               ptr, &info));
             return sane_options_info_to_sanescan(info);
@@ -383,10 +383,10 @@ std::future<SaneOptionSetInfo>
 std::future<SaneOptionSetInfo>
     SaneDeviceWrapper::set_option_value_auto(std::size_t index)
 {
-    return impl_->executor->schedule_task<SaneOptionSetInfo>([this, index]()
+    return d_->executor->schedule_task<SaneOptionSetInfo>([this, index]()
     {
         SANE_Int info = 0;
-        throw_if_sane_status_not_good(sane_control_option(impl_->handle, index,
+        throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
                                                           SANE_ACTION_SET_AUTO,
                                                           nullptr, &info));
         return sane_options_info_to_sanescan(info);
@@ -396,10 +396,10 @@ std::future<SaneOptionSetInfo>
 std::future<SaneParameters>
     SaneDeviceWrapper::get_parameters()
 {
-    return impl_->executor->schedule_task<SaneParameters>([this]()
+    return d_->executor->schedule_task<SaneParameters>([this]()
     {
         SANE_Parameters params;
-        throw_if_sane_status_not_good(sane_get_parameters(impl_->handle, &params));
+        throw_if_sane_status_not_good(sane_get_parameters(d_->handle, &params));
 
         SaneParameters result;
         result.frame = sane_frame_type_to_sanescan(params.format);
@@ -414,46 +414,46 @@ std::future<SaneParameters>
 
 std::future<void> SaneDeviceWrapper::start()
 {
-    return impl_->executor->schedule_task<void>([this]()
+    return d_->executor->schedule_task<void>([this]()
     {
-        impl_->buffer_manager.reset();
-        throw_if_sane_status_not_good(sane_start(impl_->handle));
-        impl_->finished = false;
+        d_->buffer_manager.reset();
+        throw_if_sane_status_not_good(sane_start(d_->handle));
+        d_->finished = false;
         task_start_read();
     });
 }
 
 void SaneDeviceWrapper::task_start_read()
 {
-    impl_->executor->schedule_task<void>([this]()
+    d_->executor->schedule_task<void>([this]()
     {
         try {
-            throw_if_sane_status_not_good(sane_get_parameters(impl_->handle,
-                                                              &impl_->task_curr_frame_params));
-            impl_->task_last_read_line = 0;
+            throw_if_sane_status_not_good(sane_get_parameters(d_->handle,
+                                                              &d_->task_curr_frame_params));
+            d_->task_last_read_line = 0;
             task_schedule_read();
         }  catch (...) {
-            impl_->finished = true;
-            impl_->read_exception = std::current_exception();
+            d_->finished = true;
+            d_->read_exception = std::current_exception();
         }
     });
 }
 
 void SaneDeviceWrapper::task_schedule_read()
 {
-    auto max_read_lines = compute_read_lines(impl_->task_curr_frame_params.bytes_per_line);
+    auto max_read_lines = compute_read_lines(d_->task_curr_frame_params.bytes_per_line);
 
-    auto first_line = impl_->task_last_read_line;
-    auto max_last_line = impl_->task_curr_frame_params.lines;
+    auto first_line = d_->task_last_read_line;
+    auto max_last_line = d_->task_curr_frame_params.lines;
 
     auto read_lines = std::min(max_read_lines, max_last_line - first_line);
     auto last_line = first_line + read_lines;
 
-    impl_->executor->schedule_task<void>([=]()
+    d_->executor->schedule_task<void>([=]()
     {
         try {
-            auto bytes_per_line = impl_->task_curr_frame_params.bytes_per_line;
-            auto write_buf = impl_->buffer_manager.get_write(first_line, last_line, bytes_per_line);
+            auto bytes_per_line = d_->task_curr_frame_params.bytes_per_line;
+            auto write_buf = d_->buffer_manager.get_write(first_line, last_line, bytes_per_line);
 
             if (!write_buf.has_value()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -464,46 +464,46 @@ void SaneDeviceWrapper::task_schedule_read()
             // sane_read() may read any number of bytes it wants, including zero. That means it
             // may read incomplete line. For these cases we store a partial line in a separate
             // buffer so that write_buf always gets full line.
-            auto [buffer, write_size] = impl_->task_partial_line.before_read(write_buf->data(),
-                                                                             write_buf->size());
+            auto [buffer, write_size] = d_->task_partial_line.before_read(write_buf->data(),
+                                                                          write_buf->size());
 
             SANE_Int bytes_written = 0;
-            auto status = sane_read(impl_->handle, reinterpret_cast<SANE_Byte*>(buffer),
+            auto status = sane_read(d_->handle, reinterpret_cast<SANE_Byte*>(buffer),
                                     write_size, &bytes_written);
 
-            bytes_written = impl_->task_partial_line.after_read(buffer, bytes_written,
-                                                                bytes_per_line);
+            bytes_written = d_->task_partial_line.after_read(buffer, bytes_written,
+                                                             bytes_per_line);
 
             write_buf->finish(bytes_written);
 
             if (status == SANE_STATUS_EOF || status == SANE_STATUS_CANCELLED) {
-                impl_->finished = true;
+                d_->finished = true;
                 return;
             }
             throw_if_sane_status_not_good(status);
 
             // IncompleteLineManager ensures that the number of written bytes is a multiple of
             // per-line byte count.
-            impl_->task_last_read_line = first_line + bytes_written / bytes_per_line;
+            d_->task_last_read_line = first_line + bytes_written / bytes_per_line;
             task_schedule_read();
         }  catch (...) {
-            impl_->finished = true;
-            impl_->read_exception = std::current_exception();
+            d_->finished = true;
+            d_->read_exception = std::current_exception();
         }
     });
 }
 
 std::size_t SaneDeviceWrapper::compute_read_lines(std::size_t line_bytes)
 {
-    auto min_lines = Impl::MIN_SINGLE_READ_LINES;
-    auto max_lines = Impl::MAX_SINGLE_READ_SIZE / line_bytes;
+    auto min_lines = Private::MIN_SINGLE_READ_LINES;
+    auto max_lines = Private::MAX_SINGLE_READ_SIZE / line_bytes;
     return std::max(min_lines, max_lines);
 }
 
 void SaneDeviceWrapper::receive_read_lines(const LineReceivedCallback& on_line_cb)
 {
     while (true) {
-        auto read_buf = impl_->buffer_manager.get_read();
+        auto read_buf = d_->buffer_manager.get_read();
         if (!read_buf.has_value()) {
             return;
         }
@@ -520,14 +520,14 @@ void SaneDeviceWrapper::receive_read_lines(const LineReceivedCallback& on_line_c
 
 bool SaneDeviceWrapper::finished()
 {
-    return impl_->finished;
+    return d_->finished;
 }
 
 void SaneDeviceWrapper::cancel()
 {
-    impl_->executor->schedule_task<void>([this]()
+    d_->executor->schedule_task<void>([this]()
     {
-        sane_cancel(impl_->handle);
+        sane_cancel(d_->handle);
     });
 }
 

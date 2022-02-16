@@ -154,8 +154,8 @@ private:
     void maybe_bump_next_read_index_on_insert();
     void bump_next_write_index();
 
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
+    struct Private;
+    std::unique_ptr<Private> d_;
 };
 
 

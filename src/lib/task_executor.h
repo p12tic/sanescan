@@ -76,8 +76,8 @@ private:
 
     void schedule_task_impl(std::unique_ptr<ITask>&& task);
 
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
+    struct Private;
+    std::unique_ptr<Private> d_;
 };
 
 } // namespace sanescan

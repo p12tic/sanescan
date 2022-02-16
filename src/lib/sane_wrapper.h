@@ -48,8 +48,8 @@ public:
     std::future<std::unique_ptr<SaneDeviceWrapper>> open_device(const std::string& name);
 private:
 
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
+    struct Private;
+    std::unique_ptr<Private> d_;
 };
 
 } // namespace sanescan

@@ -23,26 +23,26 @@
 
 namespace sanescan {
 
-struct SaneWrapper::Impl
+struct SaneWrapper::Private
 {
     TaskExecutor executor;
     bool initialized = false;
 };
 
-SaneWrapper::SaneWrapper() : impl_{std::make_unique<Impl>()}
+SaneWrapper::SaneWrapper() : d_{std::make_unique<Private>()}
 {
-    auto fut = impl_->executor.schedule_task<void>([]()
+    auto fut = d_->executor.schedule_task<void>([]()
     {
         throw_if_sane_status_not_good(sane_init(nullptr, nullptr));
     });
     fut.wait();
-    impl_->initialized = true;
+    d_->initialized = true;
 }
 
 SaneWrapper::~SaneWrapper()
 {
-    if (impl_->initialized) {
-        auto fut = impl_->executor.schedule_task<void>([]()
+    if (d_->initialized) {
+        auto fut = d_->executor.schedule_task<void>([]()
         {
             sane_exit();
         });
@@ -52,7 +52,7 @@ SaneWrapper::~SaneWrapper()
 
 std::future<std::vector<SaneDeviceInfo>> SaneWrapper::get_device_info()
 {
-    return impl_->executor.schedule_task<std::vector<SaneDeviceInfo>>([]()
+    return d_->executor.schedule_task<std::vector<SaneDeviceInfo>>([]()
     {
         const SANE_Device** devices;
         throw_if_sane_status_not_good(sane_get_devices(&devices, true));
@@ -73,11 +73,11 @@ std::future<std::vector<SaneDeviceInfo>> SaneWrapper::get_device_info()
 
 std::future<std::unique_ptr<SaneDeviceWrapper>> SaneWrapper::open_device(const std::string& name)
 {
-    return impl_->executor.schedule_task<std::unique_ptr<SaneDeviceWrapper>>([this, name]()
+    return d_->executor.schedule_task<std::unique_ptr<SaneDeviceWrapper>>([this, name]()
     {
         SANE_Handle handle = nullptr;
         throw_if_sane_status_not_good(sane_open(name.c_str(), &handle));
-        return std::make_unique<SaneDeviceWrapper>(&impl_->executor, handle);
+        return std::make_unique<SaneDeviceWrapper>(&d_->executor, handle);
     });
 }
 

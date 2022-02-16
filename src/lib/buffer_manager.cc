@@ -114,7 +114,7 @@ struct BufferManagerBuffer
     BufferManagerBuffer& operator=(const BufferManagerBuffer& other) = delete;
 };
 
-struct BufferManager::Impl {
+struct BufferManager::Private {
     std::size_t max_buffer_size = 0;
 
     std::mutex mutex;
@@ -133,9 +133,9 @@ struct BufferManager::Impl {
 };
 
 BufferManager::BufferManager(std::size_t max_buffer_size) :
-    impl_{std::make_unique<Impl>()}
+    d_{std::make_unique<Private>()}
 {
-    impl_->max_buffer_size = max_buffer_size;
+    d_->max_buffer_size = max_buffer_size;
 }
 
 BufferManager::~BufferManager() = default;
@@ -144,20 +144,20 @@ std::optional<BufferWriteRef>
     BufferManager::get_write(std::size_t first_line, std::size_t last_line,
                              std::size_t line_byte_count)
 {
-    std::lock_guard lock{impl_->mutex};
-    if (impl_->next_write_index != impl_->next_read_index) {
-        if (impl_->buffers[impl_->next_write_index]->in_progress) {
+    std::lock_guard lock{d_->mutex};
+    if (d_->next_write_index != d_->next_read_index) {
+        if (d_->buffers[d_->next_write_index]->in_progress) {
             return maybe_insert_for_writing(first_line, last_line, line_byte_count);
         } else {
             return setup_for_writing(first_line, last_line, line_byte_count);
         }
     }
 
-    if (impl_->has_data || impl_->buffers.empty()) {
+    if (d_->has_data || d_->buffers.empty()) {
         return maybe_insert_for_writing(first_line, last_line, line_byte_count);
     }
 
-    if (impl_->buffers[impl_->next_write_index]->in_progress) {
+    if (d_->buffers[d_->next_write_index]->in_progress) {
         return maybe_insert_for_writing(first_line, last_line, line_byte_count);
     } else {
         return setup_for_writing(first_line, last_line, line_byte_count);
@@ -166,15 +166,15 @@ std::optional<BufferWriteRef>
 
 std::optional<BufferReadRef> BufferManager::get_read()
 {
-    std::lock_guard lock{impl_->mutex};
-    if (!impl_->has_data) {
+    std::lock_guard lock{d_->mutex};
+    if (!d_->has_data) {
         return {};
     }
-    if (impl_->buffers[impl_->next_read_index]->in_progress) {
+    if (d_->buffers[d_->next_read_index]->in_progress) {
         return {};
     }
 
-    auto& buffer_ptr = impl_->buffers[impl_->next_read_index];
+    auto& buffer_ptr = d_->buffers[d_->next_read_index];
     bump_next_read_index();
     buffer_ptr->in_progress = true;
 
@@ -185,18 +185,18 @@ std::optional<BufferReadRef> BufferManager::get_read()
 
 void BufferManager::reset()
 {
-    impl_->next_write_index = 0;
-    impl_->next_read_index = 0;
-    impl_->has_data = false;
-    for (auto& buf_ptr : impl_->buffers) {
+    d_->next_write_index = 0;
+    d_->next_read_index = 0;
+    d_->has_data = false;
+    for (auto& buf_ptr : d_->buffers) {
         buf_ptr->in_progress = false;
     }
 }
 
 void BufferManager::finish_read(std::size_t index)
 {
-    std::lock_guard lock{impl_->mutex};
-    for (auto& buffer_ptr : impl_->buffers) {
+    std::lock_guard lock{d_->mutex};
+    for (auto& buffer_ptr : d_->buffers) {
         if (buffer_ptr->index == index) {
             if (!buffer_ptr->in_progress) {
                 throw std::runtime_error("Attempt to finish already finished buffer");
@@ -210,8 +210,8 @@ void BufferManager::finish_read(std::size_t index)
 
 void BufferManager::finish_write(std::size_t index, std::size_t size)
 {
-    std::lock_guard lock{impl_->mutex};
-    for (auto& buffer_ptr : impl_->buffers) {
+    std::lock_guard lock{d_->mutex};
+    for (auto& buffer_ptr : d_->buffers) {
         if (buffer_ptr->index == index) {
             if (!buffer_ptr->in_progress) {
                 throw std::runtime_error("Attempt to finish already finished buffer");
@@ -234,16 +234,16 @@ std::optional<BufferWriteRef>
                                             std::size_t line_byte_count)
 {
     std::size_t requested_size = (last_line - first_line) * line_byte_count;
-    if (impl_->curr_buffer_size + requested_size > impl_->max_buffer_size)
+    if (d_->curr_buffer_size + requested_size > d_->max_buffer_size)
         return {};
 
 
-    auto insert_pos = impl_->buffers.begin() + impl_->next_write_index;
-    auto ptr_to_insert = std::make_unique<BufferManagerBuffer>(impl_->buffers.size(),
+    auto insert_pos = d_->buffers.begin() + d_->next_write_index;
+    auto ptr_to_insert = std::make_unique<BufferManagerBuffer>(d_->buffers.size(),
                                                                requested_size);
 
-    auto& buffer_ptr = *impl_->buffers.insert(insert_pos, std::move(ptr_to_insert));
-    impl_->curr_buffer_size += requested_size;
+    auto& buffer_ptr = *d_->buffers.insert(insert_pos, std::move(ptr_to_insert));
+    d_->curr_buffer_size += requested_size;
 
     maybe_bump_next_read_index_on_insert();
     bump_next_write_index();
@@ -257,11 +257,11 @@ BufferWriteRef BufferManager::setup_for_writing(std::size_t first_line, std::siz
                                                 std::size_t line_byte_count)
 {
     std::size_t requested_size = (last_line - first_line) * line_byte_count;
-    auto& buffer_ptr = impl_->buffers[impl_->next_write_index];
+    auto& buffer_ptr = d_->buffers[d_->next_write_index];
     bump_next_write_index();
 
     if (buffer_ptr->data.size() < requested_size) {
-        impl_->curr_buffer_size += requested_size - buffer_ptr->data.size();
+        d_->curr_buffer_size += requested_size - buffer_ptr->data.size();
         buffer_ptr->data.resize(requested_size);
     }
 
@@ -272,28 +272,28 @@ BufferWriteRef BufferManager::setup_for_writing(std::size_t first_line, std::siz
 
 void BufferManager::bump_next_read_index()
 {
-    impl_->next_read_index++;
-    if (impl_->next_read_index == impl_->buffers.size()) {
-        impl_->next_read_index = 0;
+    d_->next_read_index++;
+    if (d_->next_read_index == d_->buffers.size()) {
+        d_->next_read_index = 0;
     }
-    if (impl_->next_read_index == impl_->next_write_index)
-        impl_->has_data = false;
+    if (d_->next_read_index == d_->next_write_index)
+        d_->has_data = false;
 }
 
 void BufferManager::maybe_bump_next_read_index_on_insert()
 {
-    if (impl_->next_read_index > impl_->next_write_index ||
-            ((impl_->next_read_index == impl_->next_write_index) && impl_->has_data)) {
-        impl_->next_read_index++;
+    if (d_->next_read_index > d_->next_write_index ||
+            ((d_->next_read_index == d_->next_write_index) && d_->has_data)) {
+        d_->next_read_index++;
     }
 }
 
 void BufferManager::bump_next_write_index()
 {
-    impl_->next_write_index++;
-    if (impl_->next_write_index == impl_->buffers.size()) {
-        impl_->next_write_index = 0;
+    d_->next_write_index++;
+    if (d_->next_write_index == d_->buffers.size()) {
+        d_->next_write_index = 0;
     }
-    impl_->has_data = true;
+    d_->has_data = true;
 }
 } // namespace sanescan

@@ -69,8 +69,8 @@ private:
     static std::size_t compute_read_lines(std::size_t line_bytes);
 
 private:
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
+    struct Private;
+    std::unique_ptr<Private> d_;
 };
 
 } // namespace sanescan
