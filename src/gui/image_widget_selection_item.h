@@ -26,11 +26,13 @@ namespace sanescan {
 
 class ImageWidgetSelectionItem : public QGraphicsItem {
 public:
-    explicit ImageWidgetSelectionItem(const QRectF& rect);
+    explicit ImageWidgetSelectionItem(const QRectF& move_bounds, const QRectF& rect);
     ~ImageWidgetSelectionItem() override;
 
     void set_rect(const QRectF& rect);
     const QRectF& rect() const;
+
+    void set_move_bounds(const QRectF& move_bounds);
 
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
     QRectF boundingRect() const override;

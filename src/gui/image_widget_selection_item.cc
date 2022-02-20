@@ -95,6 +95,7 @@ namespace {
 
 struct ImageWidgetSelectionItem::Private {
     QRectF rect;
+    QRectF move_bounds_rect;
     QPen bounds_pen;
 
     bool waiting_for_first_click = true;
@@ -104,9 +105,10 @@ struct ImageWidgetSelectionItem::Private {
     HoverType last_press_hover_type{};
 };
 
-ImageWidgetSelectionItem::ImageWidgetSelectionItem(const QRectF& rect) :
+ImageWidgetSelectionItem::ImageWidgetSelectionItem(const QRectF& move_bounds, const QRectF& rect) :
     d_{std::make_unique<Private>()}
 {
+    d_->move_bounds_rect = move_bounds;
     set_rect(rect);
 
     // In case this item is created and added when a button has already been clicked we assume
@@ -126,17 +128,23 @@ ImageWidgetSelectionItem::~ImageWidgetSelectionItem() = default;
 
 void ImageWidgetSelectionItem::set_rect(const QRectF& rect)
 {
-    if (d_->rect == rect) {
+    auto clipped_rect = rect & d_->move_bounds_rect;
+    if (d_->rect == clipped_rect) {
         return;
     }
     prepareGeometryChange();
-    d_->rect = rect;
+    d_->rect = clipped_rect;
     update();
 }
 
 const QRectF& ImageWidgetSelectionItem::rect() const
 {
     return d_->rect;
+}
+
+void ImageWidgetSelectionItem::set_move_bounds(const QRectF& move_bounds)
+{
+    d_->move_bounds_rect = move_bounds;
 }
 
 void ImageWidgetSelectionItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
