@@ -103,6 +103,8 @@ struct ImageWidgetSelectionItem::Private {
     QPointF last_press_moving_point;
     QPointF last_press_static_point;
     HoverType last_press_hover_type{};
+
+    std::function<void(const QRectF&)> moved_callback;
 };
 
 ImageWidgetSelectionItem::ImageWidgetSelectionItem(const QRectF& move_bounds, const QRectF& rect) :
@@ -126,6 +128,11 @@ ImageWidgetSelectionItem::ImageWidgetSelectionItem(const QRectF& move_bounds, co
 
 ImageWidgetSelectionItem::~ImageWidgetSelectionItem() = default;
 
+void ImageWidgetSelectionItem::set_on_moved(const std::function<void(const QRectF&)>& cb)
+{
+    d_->moved_callback = cb;
+}
+
 void ImageWidgetSelectionItem::set_rect(const QRectF& rect)
 {
     auto clipped_rect = rect & d_->move_bounds_rect;
@@ -135,6 +142,9 @@ void ImageWidgetSelectionItem::set_rect(const QRectF& rect)
     prepareGeometryChange();
     d_->rect = clipped_rect;
     update();
+    if (d_->moved_callback) {
+        d_->moved_callback(clipped_rect);
+    }
 }
 
 const QRectF& ImageWidgetSelectionItem::rect() const

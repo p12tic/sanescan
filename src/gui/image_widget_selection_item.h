@@ -29,6 +29,8 @@ public:
     explicit ImageWidgetSelectionItem(const QRectF& move_bounds, const QRectF& rect);
     ~ImageWidgetSelectionItem() override;
 
+    void set_on_moved(const std::function<void(const QRectF&)>& cb);
+
     void set_rect(const QRectF& rect);
     const QRectF& rect() const;
 
