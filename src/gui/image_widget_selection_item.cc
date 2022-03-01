@@ -244,9 +244,17 @@ void ImageWidgetSelectionItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 
     // TODO: handle scale
     switch (d_->last_press_hover_type) {
-        case HoverType::MOVE:
-            set_rect(d_->last_press_moving_rect.translated(mouse_pos_diff));
+        case HoverType::MOVE: {
+            auto moved_rect = d_->last_press_moving_rect.translated(mouse_pos_diff);
+            if ((moved_rect & d_->move_bounds_rect) != moved_rect) {
+                // In case of move operations we want to ignore any attemps to move the rectangle
+                // out of bounds. Doing that will resize the selection, potentially to empty
+                // rectangle.
+                return;
+            }
+            set_rect(moved_rect);
             return;
+        }
         case HoverType::RESIZE_TOP_RIGHT:
         case HoverType::RESIZE_TOP_LEFT:
         case HoverType::RESIZE_BOTTOM_RIGHT:
