@@ -21,6 +21,7 @@
 #include <QtGui/QPen>
 #include <QtGui/QPainter>
 #include <QtWidgets/QGraphicsSceneHoverEvent>
+#include <algorithm>
 #include <cmath>
 
 namespace sanescan {
@@ -245,14 +246,25 @@ void ImageWidgetSelectionItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
     // TODO: handle scale
     switch (d_->last_press_hover_type) {
         case HoverType::MOVE: {
-            auto moved_rect = d_->last_press_moving_rect.translated(mouse_pos_diff);
-            if ((moved_rect & d_->move_bounds_rect) != moved_rect) {
+            auto dx = mouse_pos_diff.x();
+            auto dy = mouse_pos_diff.y();
+
+            dx = std::clamp(dx,
+                            d_->move_bounds_rect.left() - d_->last_press_moving_rect.left(),
+                            d_->move_bounds_rect.right() - d_->last_press_moving_rect.right());
+
+            dy = std::clamp(dy,
+                            d_->move_bounds_rect.top() - d_->last_press_moving_rect.top(),
+                            d_->move_bounds_rect.bottom() - d_->last_press_moving_rect.bottom());
+
+            if (dx == 0 && dy == 0) {
                 // In case of move operations we want to ignore any attemps to move the rectangle
                 // out of bounds. Doing that will resize the selection, potentially to empty
                 // rectangle.
                 return;
             }
-            set_rect(moved_rect);
+
+            set_rect(d_->last_press_moving_rect.translated(dx, dy));
             return;
         }
         case HoverType::RESIZE_TOP_RIGHT:
