@@ -43,7 +43,7 @@ public:
 
 Q_SIGNALS:
     /// Emitted with the current value returned by get_value() when that one changes as a result of
-    /// user action.
+    /// user action (i.e. not via `set_value()`).
     void value_changed(const SaneOptionValue& value);
 };
 
