@@ -71,24 +71,29 @@ void ScanSettingsWidget::set_options(const std::vector<SaneOptionGroupDestriptor
 void ScanSettingsWidget::set_option_values(const std::map<std::string, SaneOptionValue>& values)
 {
     for (const auto& [name, value] : values) {
-        auto it = setting_widgets_.find(name);
-        if (it == setting_widgets_.end()) {
-            continue;
-        }
-
-        auto* setting_widget = it->second;
-        auto curr_value = setting_widget->get_value();
-        if (curr_value == value && !setting_widgets_need_initial_values_) {
-            continue;
-        }
-
-        if (std::get_if<SaneOptionValueNone>(&value)) {
-            continue;  // FIXME: we need a way to show currently not set options
-        }
-
-        setting_widget->set_value(value);
+        set_option_value(name, value);
     }
     setting_widgets_need_initial_values_ = false;
+}
+
+void ScanSettingsWidget::set_option_value(const std::string& name, const SaneOptionValue& value)
+{
+    auto it = setting_widgets_.find(name);
+    if (it == setting_widgets_.end()) {
+        return;
+    }
+
+    auto* setting_widget = it->second;
+    auto curr_value = setting_widget->get_value();
+    if (curr_value == value && !setting_widgets_need_initial_values_) {
+        return;
+    }
+
+    if (std::get_if<SaneOptionValueNone>(&value)) {
+        return;  // FIXME: we need a way to show currently not set options
+    }
+
+    setting_widget->set_value(value);
 }
 
 void ScanSettingsWidget::device_selected_impl(int index)

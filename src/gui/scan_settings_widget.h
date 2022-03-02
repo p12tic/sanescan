@@ -42,7 +42,14 @@ public:
     void set_current_devices(const std::vector<SaneDeviceInfo>& devices);
     void device_opened();
     void set_options(const std::vector<SaneOptionGroupDestriptor>& descriptors);
+
+    /// This must be called at least once for all initial options value. After that
+    /// `set_option_value` can be used to adjust option values if needed.
     void set_option_values(const std::map<std::string, SaneOptionValue>& values);
+
+    /// Sets individual option. `set_option_values` must have been called before to setup initial
+    /// values.
+    void set_option_value(const std::string& name, const SaneOptionValue& value);
 
 Q_SIGNALS:
     void refresh_devices_clicked();
