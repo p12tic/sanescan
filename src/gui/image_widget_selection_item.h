@@ -26,7 +26,8 @@ namespace sanescan {
 
 class ImageWidgetSelectionItem : public QGraphicsItem {
 public:
-    explicit ImageWidgetSelectionItem(const QRectF& move_bounds, const QRectF& rect);
+    explicit ImageWidgetSelectionItem(const QRectF& move_bounds, const QRectF& rect,
+                                      bool force_resizing_on_first_click);
     ~ImageWidgetSelectionItem() override;
 
     void set_on_moved(const std::function<void(const QRectF&)>& cb);

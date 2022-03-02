@@ -99,7 +99,7 @@ struct ImageWidgetSelectionItem::Private {
     QRectF move_bounds_rect;
     QPen bounds_pen;
 
-    bool waiting_for_first_click = true;
+    bool waiting_for_first_click = false;
     QRectF last_press_moving_rect;
     QPointF last_press_moving_point;
     QPointF last_press_static_point;
@@ -108,7 +108,8 @@ struct ImageWidgetSelectionItem::Private {
     std::function<void(const QRectF&)> moved_callback;
 };
 
-ImageWidgetSelectionItem::ImageWidgetSelectionItem(const QRectF& move_bounds, const QRectF& rect) :
+ImageWidgetSelectionItem::ImageWidgetSelectionItem(const QRectF& move_bounds, const QRectF& rect,
+                                                   bool force_resizing_on_first_click) :
     d_{std::make_unique<Private>()}
 {
     d_->move_bounds_rect = move_bounds;
@@ -116,9 +117,12 @@ ImageWidgetSelectionItem::ImageWidgetSelectionItem(const QRectF& move_bounds, co
 
     // In case this item is created and added when a button has already been clicked we assume
     // that we've been given a newly created small item and we need to allow to resize it.
-    d_->last_press_moving_point = rect.bottomRight();
-    d_->last_press_static_point = rect.topLeft();
-    d_->last_press_hover_type = HoverType::RESIZE_BOTTOM_RIGHT;
+    if (force_resizing_on_first_click) {
+        d_->last_press_moving_point = rect.bottomRight();
+        d_->last_press_static_point = rect.topLeft();
+        d_->last_press_hover_type = HoverType::RESIZE_BOTTOM_RIGHT;
+        d_->waiting_for_first_click = true;
+    }
 
     d_->bounds_pen.setWidth(0);
     d_->bounds_pen.setColor(Qt::black);
