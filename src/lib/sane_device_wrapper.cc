@@ -24,7 +24,10 @@
 #include "task_executor.h"
 #include "sane_types_conv.h"
 #include <sane/sane.h>
+#include <algorithm>
+#include <atomic>
 #include <cstring>
+#include <thread>
 
 namespace sanescan {
 
