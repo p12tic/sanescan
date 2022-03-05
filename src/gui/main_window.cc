@@ -128,7 +128,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&d_->engine, &ScanEngine::options_changed, [this]()
     {
         const auto& options = d_->engine.get_option_groups();
-        setup_preview_image(options);
+
+        if (d_->preview_image.isNull()) {
+            setup_preview_image(options);
+        }
+
         d_->ui->settings_widget->set_options(options);
     });
 
@@ -233,6 +237,36 @@ void MainWindow::setup_preview_image(const std::vector<SaneOptionGroupDestriptor
                                QImage::Format_Mono);
     d_->preview_image.fill(255);
     d_->ui->image_area->set_image(d_->preview_image);
+    d_->ui->image_area->set_selection_enabled(true);
+    connect(d_->ui->image_area, &ImageWidget::selection_changed, [this](std::optional<QRectF> rect)
+    {
+        if (rect.has_value()) {
+            double top = inch_to_mm(rect->top() / d_->preview_config.dpi);
+            double bottom = inch_to_mm(rect->bottom() / d_->preview_config.dpi);
+            double left = inch_to_mm(rect->left() / d_->preview_config.dpi);
+            double right = inch_to_mm(rect->right() / d_->preview_config.dpi);
+
+            SaneOptionValue value_left = std::vector<double>{left};
+            SaneOptionValue value_top = std::vector<double>{top};
+            SaneOptionValue value_right = std::vector<double>{right};
+            SaneOptionValue value_bottom = std::vector<double>{bottom};
+
+            d_->ui->settings_widget->set_option_value("tl-x", value_left);
+            d_->ui->settings_widget->set_option_value("tl-y", value_top);
+            d_->ui->settings_widget->set_option_value("br-x", value_right);
+            d_->ui->settings_widget->set_option_value("br-y", value_bottom);
+
+            // TODO: need to ensure that we set the values in correct order so that the scan window
+            // is first widened, then shrunk. Otherwise we may create a situation with negative
+            // size scan window and SANE driver will just ignore some of our settings.
+            d_->engine.set_option_value("tl-x", value_left);
+            d_->engine.set_option_value("tl-y", value_top);
+            d_->engine.set_option_value("br-x", value_right);
+            d_->engine.set_option_value("br-y", value_bottom);
+        } else {
+            // TODO: clear the selection to default values
+        }
+    });
 }
 
 } // namespace sanescan
