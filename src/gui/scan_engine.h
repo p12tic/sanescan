@@ -74,7 +74,8 @@ public:
     /// Returns current option values
     const std::map<std::string, SaneOptionValue>& get_option_values() const;
 
-    /// Sets option value. Once the request finishes, `options_changed` signal will be emitted.
+    /// Sets option value. Once the request finishes, `options_changed` or `option_values_changed`
+    /// signal may be emitted if any values of the options become different then what was set.
     void set_option_value(const std::string& name, const SaneOptionValue& value);
     void set_option_value_auto(const std::string& name);
 
