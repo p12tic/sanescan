@@ -17,8 +17,11 @@
 */
 
 #include "image_widget.h"
+#include "image_widget_highlight_item.h"
+#include "image_widget_selection_item.h"
 #include <QtWidgets/QScrollBar>
 #include <QtGui/QWheelEvent>
+#include <QtWidgets/QGraphicsRectItem>
 
 namespace sanescan {
 
@@ -32,6 +35,10 @@ namespace {
 struct ImageWidget::Private {
     QGraphicsScene* scene = nullptr; // parent widget is an owner
     QImage image;
+    bool selection_enabled = false;
+
+    ImageWidgetHighlightItem* highlight_item = nullptr;
+    ImageWidgetSelectionItem* selection_item = nullptr;
 };
 
 ImageWidget::ImageWidget(QWidget *parent) :
@@ -53,6 +60,50 @@ void ImageWidget::set_image(const QImage& image)
     } else {
         d_->scene->setSceneRect(0, 0, 300, 400);
     }
+}
+
+void ImageWidget::set_selection_enabled(bool enabled)
+{
+    if (d_->selection_enabled == enabled) {
+        return;
+    }
+    d_->selection_enabled = enabled;
+    if (!enabled && d_->selection_item != nullptr) {
+        destroy_selection_items();
+    }
+}
+
+bool ImageWidget::get_selection_enabled() const
+{
+    return d_->selection_enabled;
+}
+
+void ImageWidget::set_selection(const std::optional<QRectF>& rect)
+{
+    if (!d_->selection_enabled) {
+        return;
+    }
+    if (rect.has_value()) {
+        if (d_->selection_item == nullptr) {
+            setup_selection_items(rect.value(), false);
+        } else {
+            d_->selection_item->set_rect(rect.value());
+            d_->highlight_item->set_highlight_rect(rect.value());
+        }
+
+    } else {
+        if (d_->selection_item != nullptr) {
+            destroy_selection_items();
+        }
+    }
+}
+
+std::optional<QRectF> ImageWidget::get_selection() const
+{
+    if (d_->selection_item == nullptr) {
+        return {};
+    }
+    return d_->selection_item->rect();
 }
 
 void ImageWidget::wheelEvent(QWheelEvent* event)
@@ -84,6 +135,66 @@ void ImageWidget::drawBackground(QPainter* painter, const QRectF& rect)
     } else {
         painter->fillRect(rect, background_color);
     }
+}
+
+void ImageWidget::mousePressEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::LeftButton) {
+        // Check if any other view item accepted the event and if not then we probably can create
+        // a selection area.
+        event->ignore();
+        QGraphicsView::mousePressEvent(event);
+
+        if (!event->isAccepted()) {
+            if (!d_->selection_enabled || d_->selection_item != nullptr) {
+                return;
+            }
+
+            // Attempt to create a new selection item and if we created one and click again to
+            // activate resizing of it.
+            auto event_pos_in_scene = mapToScene(event->pos());
+            auto image_rect = sceneRect();
+            if (!image_rect.contains(event_pos_in_scene)) {
+                return;
+            }
+
+            setup_selection_items(QRectF(event_pos_in_scene, QSizeF(10, 10)), true);
+
+            QGraphicsView::mousePressEvent(event);
+        }
+    } else {
+        QGraphicsView::mousePressEvent(event);
+    }
+}
+
+void ImageWidget::setup_selection_items(const QRectF& rect, bool force_resizing_on_first_click)
+{
+    auto image_rect = sceneRect();
+    d_->selection_item = new ImageWidgetSelectionItem(image_rect, rect,
+                                                      force_resizing_on_first_click);
+    d_->scene->addItem(d_->selection_item);
+
+    QColor highlight_color = Qt::black;
+    highlight_color.setAlpha(50);
+
+    d_->highlight_item = new ImageWidgetHighlightItem(image_rect, rect, highlight_color);
+    d_->selection_item->set_on_moved([=, this](const QRectF& rect)
+    {
+        d_->highlight_item->set_highlight_rect(rect);
+        Q_EMIT selection_changed(rect);
+    });
+
+    d_->scene->addItem(d_->highlight_item);
+}
+
+void ImageWidget::destroy_selection_items()
+{
+    d_->scene->removeItem(d_->selection_item);
+    d_->scene->removeItem(d_->highlight_item);
+    delete d_->selection_item;
+    delete d_->highlight_item;
+    d_->selection_item = nullptr;
+    d_->highlight_item = nullptr;
 }
 
 } // namespace sanescan

@@ -21,6 +21,7 @@
 
 #include <QtWidgets/QGraphicsView>
 #include <memory>
+#include <optional>
 
 namespace sanescan {
 
@@ -36,11 +37,34 @@ public:
     /// lying data of the argument even after the call.
     void set_image(const QImage& image);
 
+    /// Enables or disables selection box. In case selection is disabled the current selection
+    /// is cleared.
+    void set_selection_enabled(bool enabled);
+
+    /// Returns whether selection via clicking and dragging mouse on the widget are enabled.
+    bool get_selection_enabled() const;
+
+    /// Sets the visible selection. To disable selection, pass empty optional. If selections
+    /// are disabled the call is ignored. Does not emit `selection_changed` signal.
+    void set_selection(const std::optional<QRectF>& rect);
+
+    /// Returns the current selection. If there's none, returns empty optional.
+    std::optional<QRectF> get_selection() const;
+
+Q_SIGNALS:
+    /// Emitted when the selection box is changed. The coordinates are in image coordinates.
+    void selection_changed(std::optional<QRectF> rect);
+
 protected:
+
     void wheelEvent(QWheelEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
     void drawBackground(QPainter* painter, const QRectF& rect) override;
 
 private:
+    void setup_selection_items(const QRectF& rect, bool force_resizing_on_first_click);
+    void destroy_selection_items();
+
     struct Private;
     std::unique_ptr<Private> d_;
 };
