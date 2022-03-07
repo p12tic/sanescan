@@ -26,10 +26,39 @@
 #include "pagelist/page_list_view_delegate.h"
 #include "../util/math.h"
 #include <QtCore/QTimer>
+#include <optional>
+#include <stdexcept>
 
 namespace sanescan {
 
 namespace {
+
+std::optional<QRectF>
+    get_scan_size_from_options(const std::vector<SaneOptionGroupDestriptor>& options)
+{
+    auto tl_x_desc = find_option_descriptor(options, "tl-x");
+    auto tl_y_desc = find_option_descriptor(options, "tl-y");
+    auto br_x_desc = find_option_descriptor(options, "br-x");
+    auto br_y_desc = find_option_descriptor(options, "br-y");
+
+    if (!tl_x_desc || !tl_y_desc || !br_x_desc || !br_y_desc) {
+        return {};
+    }
+
+    auto* tl_x_constraint = std::get_if<SaneConstraintFloatRange>(&tl_x_desc->constraint);
+    auto* tl_y_constraint = std::get_if<SaneConstraintFloatRange>(&tl_y_desc->constraint);
+    auto* br_x_constraint = std::get_if<SaneConstraintFloatRange>(&br_x_desc->constraint);
+    auto* br_y_constraint = std::get_if<SaneConstraintFloatRange>(&br_y_desc->constraint);
+
+    if (!tl_x_constraint || !tl_y_constraint || !br_x_constraint || !br_y_constraint) {
+        return {};
+    }
+
+    QRectF rect = {tl_x_constraint->min, tl_y_constraint->min,
+                   br_x_constraint->max - tl_x_constraint->min,
+                   br_y_constraint->max - tl_y_constraint->min};
+    return {rect.normalized()};
+}
 
 struct PreviewConfig {
     double width_mm = 0;
@@ -44,35 +73,20 @@ PreviewConfig get_default_preview_config()
     return PreviewConfig{210, 297, 20};
 }
 
-PreviewConfig setup_blank_preview_size(const std::vector<SaneOptionGroupDestriptor>& options)
+PreviewConfig setup_blank_preview_size(const std::optional<QRectF>& bounds_mm)
 {
-    auto tl_x_desc = find_option_descriptor(options, "tl-x");
-    auto tl_y_desc = find_option_descriptor(options, "tl-y");
-    auto br_x_desc = find_option_descriptor(options, "br-x");
-    auto br_y_desc = find_option_descriptor(options, "br-y");
-
-    if (!tl_x_desc || !tl_y_desc || !br_x_desc || !br_y_desc) {
+    if (!bounds_mm.has_value()) {
         return get_default_preview_config();
     }
 
-    auto* tl_x_constraint = std::get_if<SaneConstraintFloatRange>(&tl_x_desc->constraint);
-    auto* tl_y_constraint = std::get_if<SaneConstraintFloatRange>(&tl_y_desc->constraint);
-    auto* br_x_constraint = std::get_if<SaneConstraintFloatRange>(&br_x_desc->constraint);
-    auto* br_y_constraint = std::get_if<SaneConstraintFloatRange>(&br_y_desc->constraint);
+    double width_mm = bounds_mm->width();
+    double height_mm = bounds_mm->height();
 
-    if (!tl_x_constraint || !tl_y_constraint || !br_x_constraint || !br_y_constraint) {
-        return get_default_preview_config();
-    }
-
-    double width_mm = br_x_constraint->max - tl_x_constraint->min;
-    double height_mm = br_y_constraint->max - tl_y_constraint->min;
-
-    // Do some checking against scanners returning useless size (negative or one dimension much
-    // larger than the other). In such case the user would need to do a preview scan anyway because
+    // Do some checking against scanners returning useless size (e.g. one dimension much larger
+    // than the other). In such case the user would need to do a preview scan anyway because
     // we can't display it properly.
     double MAX_RELATIVE_SIZE_DIFF = 10;
-    if (width_mm < 0 || height_mm < 0 ||
-        width_mm > height_mm * MAX_RELATIVE_SIZE_DIFF ||
+    if (width_mm > height_mm * MAX_RELATIVE_SIZE_DIFF ||
         height_mm > width_mm * MAX_RELATIVE_SIZE_DIFF)
     {
         return get_default_preview_config();
@@ -108,6 +122,7 @@ struct MainWindow::Private {
     std::unique_ptr<PageListModel> page_list_model;
     std::uint64_t last_scan_id = 0;
 
+    std::optional<QRectF> scan_bounds;
     QImage preview_image;
     PreviewConfig preview_config;
 };
@@ -129,8 +144,12 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         const auto& options = d_->engine.get_option_groups();
 
+        if (!d_->scan_bounds.has_value()) {
+            d_->scan_bounds = get_scan_size_from_options(options);
+        }
+
         if (d_->preview_image.isNull()) {
-            setup_preview_image(options);
+            setup_preview_image(d_->scan_bounds);
         }
 
         d_->ui->settings_widget->set_options(options);
@@ -146,6 +165,10 @@ MainWindow::MainWindow(QWidget *parent) :
     });
     connect(&d_->engine, &ScanEngine::device_closed, [this]()
     {
+        d_->preview_image = QImage();
+        d_->preview_config = {};
+        d_->ui->image_area->set_selection_enabled(false);
+
         if (!d_->open_device_after_close.empty()) {
             std::string name;
             name.swap(d_->open_device_after_close);
@@ -228,44 +251,54 @@ void MainWindow::select_device(const std::string& name)
     }
 }
 
-void MainWindow::setup_preview_image(const std::vector<SaneOptionGroupDestriptor>& options)
+void MainWindow::setup_preview_image()
 {
     // TODO: only setup preview image when we don't have one for the current scanner
-    d_->preview_config = setup_blank_preview_size(options);
+    d_->preview_config = setup_blank_preview_size(d_->scan_bounds);
     d_->preview_image = QImage(mm_to_inch(d_->preview_config.width_mm) * d_->preview_config.dpi,
                                mm_to_inch(d_->preview_config.height_mm) * d_->preview_config.dpi,
                                QImage::Format_Mono);
     d_->preview_image.fill(255);
     d_->ui->image_area->set_image(d_->preview_image);
-    d_->ui->image_area->set_selection_enabled(true);
+    d_->ui->image_area->set_selection_enabled(d_->scan_bounds.has_value());
     connect(d_->ui->image_area, &ImageWidget::selection_changed, [this](std::optional<QRectF> rect)
     {
+        double top = 0;
+        double bottom = 0;
+        double left = 0;
+        double right = 0;
         if (rect.has_value()) {
-            double top = inch_to_mm(rect->top() / d_->preview_config.dpi);
-            double bottom = inch_to_mm(rect->bottom() / d_->preview_config.dpi);
-            double left = inch_to_mm(rect->left() / d_->preview_config.dpi);
-            double right = inch_to_mm(rect->right() / d_->preview_config.dpi);
-
-            SaneOptionValue value_left = std::vector<double>{left};
-            SaneOptionValue value_top = std::vector<double>{top};
-            SaneOptionValue value_right = std::vector<double>{right};
-            SaneOptionValue value_bottom = std::vector<double>{bottom};
-
-            d_->ui->settings_widget->set_option_value("tl-x", value_left);
-            d_->ui->settings_widget->set_option_value("tl-y", value_top);
-            d_->ui->settings_widget->set_option_value("br-x", value_right);
-            d_->ui->settings_widget->set_option_value("br-y", value_bottom);
-
-            // TODO: need to ensure that we set the values in correct order so that the scan window
-            // is first widened, then shrunk. Otherwise we may create a situation with negative
-            // size scan window and SANE driver will just ignore some of our settings.
-            d_->engine.set_option_value("tl-x", value_left);
-            d_->engine.set_option_value("tl-y", value_top);
-            d_->engine.set_option_value("br-x", value_right);
-            d_->engine.set_option_value("br-y", value_bottom);
+            top = inch_to_mm(rect->top() / d_->preview_config.dpi);
+            bottom = inch_to_mm(rect->bottom() / d_->preview_config.dpi);
+            left = inch_to_mm(rect->left() / d_->preview_config.dpi);
+            right = inch_to_mm(rect->right() / d_->preview_config.dpi);
         } else {
-            // TODO: clear the selection to default values
+            if (!d_->scan_bounds.has_value()) {
+                throw std::runtime_error("Scan bounds does not have value unexpectedly");
+            }
+            top = d_->scan_bounds->left();
+            bottom = d_->scan_bounds->top();
+            left = d_->scan_bounds->right();
+            right = d_->scan_bounds->bottom();
         }
+
+        SaneOptionValue value_left = std::vector<double>{left};
+        SaneOptionValue value_top = std::vector<double>{top};
+        SaneOptionValue value_right = std::vector<double>{right};
+        SaneOptionValue value_bottom = std::vector<double>{bottom};
+
+        d_->ui->settings_widget->set_option_value("tl-x", value_left);
+        d_->ui->settings_widget->set_option_value("tl-y", value_top);
+        d_->ui->settings_widget->set_option_value("br-x", value_right);
+        d_->ui->settings_widget->set_option_value("br-y", value_bottom);
+
+        // TODO: need to ensure that we set the values in correct order so that the scan window
+        // is first widened, then shrunk. Otherwise we may create a situation with negative
+        // size scan window and SANE driver will just ignore some of our settings.
+        d_->engine.set_option_value("tl-x", value_left);
+        d_->engine.set_option_value("tl-y", value_top);
+        d_->engine.set_option_value("br-x", value_right);
+        d_->engine.set_option_value("br-y", value_bottom);
     });
 }
 

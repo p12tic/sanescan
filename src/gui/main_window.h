@@ -47,7 +47,7 @@ private:
     void start_scanning();
     void scanning_finished();
 
-    void setup_preview_image(const std::vector<SaneOptionGroupDestriptor>& options);
+    void setup_preview_image();
 
     struct Private;
     std::unique_ptr<Private> d_;
