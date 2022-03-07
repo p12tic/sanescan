@@ -123,6 +123,7 @@ struct MainWindow::Private {
     std::uint64_t last_scan_id = 0;
 
     std::optional<QRectF> scan_bounds;
+    QRectF curr_scan_area;
     QImage preview_image;
     PreviewConfig preview_config;
 };
@@ -144,12 +145,13 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         const auto& options = d_->engine.get_option_groups();
 
-        if (!d_->scan_bounds.has_value()) {
-            d_->scan_bounds = get_scan_size_from_options(options);
-        }
-
-        if (d_->preview_image.isNull()) {
-            setup_preview_image(d_->scan_bounds);
+        auto scan_bounds = get_scan_size_from_options(options);
+        if (d_->scan_bounds != scan_bounds) {
+            d_->preview_image = QImage();
+            d_->preview_config = {};
+            d_->ui->image_area->set_selection_enabled(false);
+            d_->scan_bounds = scan_bounds;
+            setup_preview_image();
         }
 
         d_->ui->settings_widget->set_options(options);
@@ -168,6 +170,7 @@ MainWindow::MainWindow(QWidget *parent) :
         d_->preview_image = QImage();
         d_->preview_config = {};
         d_->ui->image_area->set_selection_enabled(false);
+        d_->scan_bounds.reset();
 
         if (!d_->open_device_after_close.empty()) {
             std::string name;
@@ -191,11 +194,38 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(d_->ui->settings_widget, &ScanSettingsWidget::option_value_changed,
             [this](const auto& name, const auto& value)
     {
+        if (name == "tl-x" || name == "tl-y" || name == "br-x" || name == "br-y") {
+            auto selection = d_->ui->image_area->get_selection();
+            if (selection.has_value()) {
+                auto selection_rect = selection.value();
+                // TODO: make this less error-prone
+                auto value_as_double = std::get<std::vector<double>>(value)[0];
+                auto scene_pos = mm_to_inch(value_as_double) * d_->preview_config.dpi;
+
+                if (name == "tl-x") {
+                    selection_rect.setLeft(scene_pos);
+                }
+                if (name == "tl-y") {
+                    selection_rect.setTop(scene_pos);
+                }
+                if (name == "br-x") {
+                    selection_rect.setRight(scene_pos);
+                }
+                if (name == "br-y") {
+                    selection_rect.setBottom(scene_pos);
+                }
+                d_->ui->image_area->set_selection(selection_rect.normalized());
+            }
+        }
+
         d_->engine.set_option_value(name, value);
     });
     connect(d_->ui->settings_widget, &ScanSettingsWidget::scan_started,
             [this]()
     {
+        d_->preview_image = QImage();
+        d_->preview_config = {};
+        d_->ui->image_area->set_selection_enabled(false);
         d_->engine.start_scan();
     });
 
