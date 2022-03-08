@@ -155,5 +155,66 @@ std::optional<SaneOptionDescriptor>
     return {};
 }
 
+bool SaneOptionValue::is_none() const
+{
+    return std::get_if<SaneOptionValueNone>(&value) != nullptr;
+}
+
+std::optional<bool> SaneOptionValue::as_bool() const
+{
+    auto* values = as_bool_vector();
+    if (values == nullptr) {
+        return {};
+    }
+    if (values->size() != 1) {
+        return {};
+    }
+    return (*values)[0];
+}
+
+std::optional<int> SaneOptionValue::as_int() const
+{
+    auto* values = as_int_vector();
+    if (values == nullptr) {
+        return {};
+    }
+    if (values->size() != 1) {
+        return {};
+    }
+    return (*values)[0];
+}
+
+std::optional<double> SaneOptionValue::as_double() const
+{
+    auto* values = as_double_vector();
+    if (values == nullptr) {
+        return {};
+    }
+    if (values->size() != 1) {
+        return {};
+    }
+    return (*values)[0];
+}
+
+const std::vector<bool>* SaneOptionValue::as_bool_vector() const
+{
+    return std::get_if<std::vector<bool>>(&value);
+}
+
+const std::vector<int>* SaneOptionValue::as_int_vector() const
+{
+    return std::get_if<std::vector<int>>(&value);
+}
+
+const std::vector<double>* SaneOptionValue::as_double_vector() const
+{
+    return std::get_if<std::vector<double>>(&value);
+}
+
+const std::string* SaneOptionValue::as_string() const
+{
+    return  std::get_if<std::string>(&value);
+}
+
 } // namespace sanescan
 

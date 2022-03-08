@@ -89,7 +89,7 @@ void ScanSettingsWidget::set_option_value(const std::string& name, const SaneOpt
         return;
     }
 
-    if (std::get_if<SaneOptionValueNone>(&value)) {
+    if (value.is_none()) {
         return;  // FIXME: we need a way to show currently not set options
     }
 

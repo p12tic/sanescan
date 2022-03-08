@@ -69,13 +69,13 @@ void SettingSpin::set_option_descriptor(const SaneOptionDescriptor& descriptor)
 
 void SettingSpin::set_value(const SaneOptionValue& value)
 {
-    const auto* int_values = std::get_if<std::vector<int>>(&value);
-    if (!int_values || int_values->size() != 1) {
+    auto int_value = value.as_int();
+    if (!int_value.has_value()) {
         throw std::invalid_argument("Expected integer value");
     }
 
     suppress_value_changed_ = true;
-    ui_->spinbox->setValue(int_values->front());
+    ui_->spinbox->setValue(int_value.value());
     suppress_value_changed_ = false;
 
     ui_->spinbox->setEnabled(true);
@@ -87,7 +87,7 @@ SaneOptionValue SettingSpin::get_value() const
     if (constraint_.has_value() && (value < constraint_->min || value > constraint_->max)) {
         return SaneOptionValueNone{};
     }
-    return std::vector<int>{ value };
+    return static_cast<int>(value);
 }
 
 bool SettingSpin::is_descriptor_supported(const SaneOptionDescriptor& descriptor)

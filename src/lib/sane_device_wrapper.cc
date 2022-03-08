@@ -330,12 +330,12 @@ std::future<SaneOptionSetInfo>
     {
         SANE_Int info = 0;
 
-        if (std::get_if<SaneOptionValueNone>(&value)) {
+        if (std::get_if<SaneOptionValueNone>(&value.value)) {
             throw std::invalid_argument("Option None is invalid in set_option_value");
         }
 
         // note that we expect the caller to send correct data type for the option
-        const auto* bool_values = std::get_if<std::vector<bool>>(&value);
+        const auto* bool_values = value.as_bool_vector();
         if (bool_values) {
             std::vector<SANE_Word> temp;
 
@@ -347,7 +347,7 @@ std::future<SaneOptionSetInfo>
             return sane_options_info_to_sanescan(info);
         }
 
-        const auto* int_values = std::get_if<std::vector<int>>(&value);
+        const auto* int_values = value.as_int_vector();
         if (int_values) {
             static_assert(sizeof(SANE_Word) == sizeof(int));
             void* ptr = const_cast<void*>(static_cast<const void*>(int_values->data()));
@@ -357,7 +357,7 @@ std::future<SaneOptionSetInfo>
             return sane_options_info_to_sanescan(info);
         }
 
-        const auto* double_values = std::get_if<std::vector<double>>(&value);
+        const auto* double_values = value.as_double_vector();
         if (double_values) {
             std::vector<SANE_Word> temp;
             temp.resize(double_values->size());
@@ -370,7 +370,7 @@ std::future<SaneOptionSetInfo>
             return sane_options_info_to_sanescan(info);
         }
 
-        const auto* string = std::get_if<std::string>(&value);
+        const auto* string = value.as_string();
         if (string) {
             void* ptr = const_cast<void*>(static_cast<const void*>(string->c_str()));
             throw_if_sane_status_not_good(sane_control_option(d_->handle, index,

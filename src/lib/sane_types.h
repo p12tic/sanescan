@@ -162,13 +162,39 @@ struct SaneOptionValueNone {
     bool operator==(const SaneOptionValueNone& other) const { return true; }
 };
 
-using SaneOptionValue = std::variant<
+using SaneOptionValueVariant = std::variant<
     SaneOptionValueNone,
     std::vector<bool>, // for both bool and button
     std::vector<int>,
     std::vector<double>,
     std::string
 >;
+
+struct SaneOptionValue {
+    SaneOptionValueVariant value;
+
+    SaneOptionValue(SaneOptionValueNone value) : value{value} {}
+    SaneOptionValue(bool value) : value{std::vector<bool>{value}} {}
+    SaneOptionValue(int value) : value{std::vector<int>{value}} {}
+    SaneOptionValue(double value) : value{std::vector<double>{value}} {}
+    SaneOptionValue(std::vector<bool> value) : value{std::move(value)} {}
+    SaneOptionValue(std::vector<int> value) : value{std::move(value)} {}
+    SaneOptionValue(std::vector<double> value) : value{std::move(value)} {}
+    SaneOptionValue(std::string value) : value{std::move(value)} {}
+
+    bool is_none() const;
+    std::optional<bool> as_bool() const;
+    std::optional<int> as_int() const;
+    std::optional<double> as_double() const;
+
+    const std::vector<bool>* as_bool_vector() const;
+    const std::vector<int>* as_int_vector() const;
+    const std::vector<double>* as_double_vector() const;
+
+    const std::string* as_string() const;
+
+    bool operator==(const SaneOptionValue& other) const { return value == other.value; }
+};
 
 struct SaneOptionIndexedValue {
     SaneOptionIndexedValue(std::size_t index, const SaneOptionValue& value) :

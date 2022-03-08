@@ -93,13 +93,13 @@ void SettingSpinFloat::set_option_descriptor(const SaneOptionDescriptor& descrip
 
 void SettingSpinFloat::set_value(const SaneOptionValue& value)
 {
-    const auto* int_values = std::get_if<std::vector<double>>(&value);
-    if (!int_values || int_values->size() != 1) {
+    auto float_value = value.as_double();
+    if (!float_value.has_value()) {
         throw std::invalid_argument("Expected float value");
     }
 
     suppress_value_changed_ = true;
-    ui_->spinbox->setValue(int_values->front());
+    ui_->spinbox->setValue(float_value.value());
     suppress_value_changed_ = false;
 
     ui_->spinbox->setEnabled(true);
@@ -111,7 +111,7 @@ SaneOptionValue SettingSpinFloat::get_value() const
     if (constraint_.has_value() && (value < constraint_->min || value > constraint_->max)) {
         return SaneOptionValueNone{};
     }
-    return std::vector<double>{ value };
+    return value;
 }
 
 bool SettingSpinFloat::is_descriptor_supported(const SaneOptionDescriptor& descriptor)

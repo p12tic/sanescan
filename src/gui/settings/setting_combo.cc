@@ -165,22 +165,22 @@ bool SettingCombo::is_descriptor_supported(const SaneOptionDescriptor& descripto
 
 int SettingCombo::find_option_index(const SaneOptionValue& value)
 {
-    const auto* string_value = std::get_if<std::string>(&value);
+    const auto* string_value = value.as_string();
     if (string_value) {
         return find_option_index_single_impl(curr_strings_, *string_value,
                                              descriptor_.type, SaneValueType::STRING);
     }
-    const auto* int_values = std::get_if<std::vector<int>>(&value);
+    const auto* int_values = value.as_int_vector();
     if (int_values) {
         return find_option_index_impl(curr_int_numbers_, *int_values,
                                       descriptor_.type, SaneValueType::INT);
     }
-    const auto* float_values = std::get_if<std::vector<double>>(&value);
+    const auto* float_values = value.as_double_vector();
     if (float_values) {
         return find_option_index_impl(curr_float_numbers_, *float_values,
                                       descriptor_.type, SaneValueType::FLOAT);
     }
-    throw std::invalid_argument("Unsupported value type " + std::to_string(value.index()));
+    throw std::invalid_argument("Unsupported value type " + std::to_string(value.value.index()));
 }
 
 } // namespace sanescan

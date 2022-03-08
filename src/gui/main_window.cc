@@ -198,23 +198,24 @@ MainWindow::MainWindow(QWidget *parent) :
             auto selection = d_->ui->image_area->get_selection();
             if (selection.has_value()) {
                 auto selection_rect = selection.value();
-                // TODO: make this less error-prone
-                auto value_as_double = std::get<std::vector<double>>(value)[0];
-                auto scene_pos = mm_to_inch(value_as_double) * d_->preview_config.dpi;
+                auto value_as_double = value.as_double();
+                if (value_as_double.has_value()) {
+                    auto scene_pos = mm_to_inch(value_as_double.value()) * d_->preview_config.dpi;
 
-                if (name == "tl-x") {
-                    selection_rect.setLeft(scene_pos);
+                    if (name == "tl-x") {
+                        selection_rect.setLeft(scene_pos);
+                    }
+                    if (name == "tl-y") {
+                        selection_rect.setTop(scene_pos);
+                    }
+                    if (name == "br-x") {
+                        selection_rect.setRight(scene_pos);
+                    }
+                    if (name == "br-y") {
+                        selection_rect.setBottom(scene_pos);
+                    }
+                    d_->ui->image_area->set_selection(selection_rect.normalized());
                 }
-                if (name == "tl-y") {
-                    selection_rect.setTop(scene_pos);
-                }
-                if (name == "br-x") {
-                    selection_rect.setRight(scene_pos);
-                }
-                if (name == "br-y") {
-                    selection_rect.setBottom(scene_pos);
-                }
-                d_->ui->image_area->set_selection(selection_rect.normalized());
             }
         }
 
@@ -312,23 +313,18 @@ void MainWindow::setup_preview_image()
             right = d_->scan_bounds->bottom();
         }
 
-        SaneOptionValue value_left = std::vector<double>{left};
-        SaneOptionValue value_top = std::vector<double>{top};
-        SaneOptionValue value_right = std::vector<double>{right};
-        SaneOptionValue value_bottom = std::vector<double>{bottom};
-
-        d_->ui->settings_widget->set_option_value("tl-x", value_left);
-        d_->ui->settings_widget->set_option_value("tl-y", value_top);
-        d_->ui->settings_widget->set_option_value("br-x", value_right);
-        d_->ui->settings_widget->set_option_value("br-y", value_bottom);
+        d_->ui->settings_widget->set_option_value("tl-x", left);
+        d_->ui->settings_widget->set_option_value("tl-y", top);
+        d_->ui->settings_widget->set_option_value("br-x", right);
+        d_->ui->settings_widget->set_option_value("br-y", bottom);
 
         // TODO: need to ensure that we set the values in correct order so that the scan window
         // is first widened, then shrunk. Otherwise we may create a situation with negative
         // size scan window and SANE driver will just ignore some of our settings.
-        d_->engine.set_option_value("tl-x", value_left);
-        d_->engine.set_option_value("tl-y", value_top);
-        d_->engine.set_option_value("br-x", value_right);
-        d_->engine.set_option_value("br-y", value_bottom);
+        d_->engine.set_option_value("tl-x", left);
+        d_->engine.set_option_value("tl-y", top);
+        d_->engine.set_option_value("br-x", right);
+        d_->engine.set_option_value("br-y", bottom);
     });
 }
 
