@@ -47,6 +47,8 @@ private:
     void start_scanning();
     void scanning_finished();
 
+    void maybe_update_selection_after_setting_change(const std::string& name,
+                                                     const SaneOptionValue& value);
     void setup_preview_image();
 
     struct Private;

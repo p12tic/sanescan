@@ -60,6 +60,39 @@ std::optional<QRectF>
     return {rect.normalized()};
 }
 
+std::optional<QRectF>
+    get_curr_scan_area_from_options(const std::map<std::string, SaneOptionValue>& options)
+{
+    auto get_value = [&](const std::string& name) -> std::optional<double>
+    {
+        if (options.count(name) == 0) {
+            return {};
+        }
+        return options.at(name).as_double();
+    };
+
+    auto value_tl_x = get_value("tl-x");
+    auto value_tl_y = get_value("tl-y");
+    auto value_br_x = get_value("br-x");
+    auto value_br_y = get_value("br-y");
+
+    if (!value_tl_x.has_value() || !value_tl_y.has_value() ||
+        !value_br_x.has_value() || !value_br_y.has_value()) {
+        return {};
+    }
+
+    return QRectF{value_tl_x.value(), value_tl_y.value(),
+                  value_br_x.value() - value_tl_x.value(), value_br_y.value() - value_tl_y.value()};
+}
+
+QRectF scan_space_to_scene_space(const QRectF& rect, double dpi)
+{
+    return QRectF{mm_to_inch(rect.left()) * dpi,
+                  mm_to_inch(rect.top()) * dpi,
+                  mm_to_inch(rect.right()) * dpi,
+                  mm_to_inch(rect.bottom()) * dpi};
+}
+
 struct PreviewConfig {
     double width_mm = 0;
     double height_mm = 0;
@@ -123,7 +156,6 @@ struct MainWindow::Private {
     std::uint64_t last_scan_id = 0;
 
     std::optional<QRectF> scan_bounds;
-    QRectF curr_scan_area;
     QImage preview_image;
     PreviewConfig preview_config;
 };
@@ -194,31 +226,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(d_->ui->settings_widget, &ScanSettingsWidget::option_value_changed,
             [this](const auto& name, const auto& value)
     {
-        if (name == "tl-x" || name == "tl-y" || name == "br-x" || name == "br-y") {
-            auto selection = d_->ui->image_area->get_selection();
-            if (selection.has_value()) {
-                auto selection_rect = selection.value();
-                auto value_as_double = value.as_double();
-                if (value_as_double.has_value()) {
-                    auto scene_pos = mm_to_inch(value_as_double.value()) * d_->preview_config.dpi;
-
-                    if (name == "tl-x") {
-                        selection_rect.setLeft(scene_pos);
-                    }
-                    if (name == "tl-y") {
-                        selection_rect.setTop(scene_pos);
-                    }
-                    if (name == "br-x") {
-                        selection_rect.setRight(scene_pos);
-                    }
-                    if (name == "br-y") {
-                        selection_rect.setBottom(scene_pos);
-                    }
-                    d_->ui->image_area->set_selection(selection_rect.normalized());
-                }
-            }
-        }
-
+        maybe_update_selection_after_setting_change(name, value);
         d_->engine.set_option_value(name, value);
     });
     connect(d_->ui->settings_widget, &ScanSettingsWidget::scan_started,
@@ -280,6 +288,46 @@ void MainWindow::select_device(const std::string& name)
     } else {
         d_->engine.open_device(name);
     }
+}
+
+void MainWindow::maybe_update_selection_after_setting_change(const std::string& name,
+                                                             const SaneOptionValue& value)
+{
+    if (name != "tl-x" && name != "tl-y" && name != "br-x" && name != "br-y") {
+        return;
+    }
+
+    if (!d_->ui->image_area->get_selection_enabled()) {
+        return;
+    }
+
+    auto curr_scan_area_opt = get_curr_scan_area_from_options(d_->engine.get_option_values());
+    if (!curr_scan_area_opt.has_value()) {
+        return;
+    }
+    auto selection_rect = scan_space_to_scene_space(curr_scan_area_opt.value(),
+                                                    d_->preview_config.dpi);
+
+    auto value_as_double = value.as_double();
+    if (!value_as_double.has_value()) {
+        return;
+    }
+
+    auto scene_pos = mm_to_inch(value_as_double.value()) * d_->preview_config.dpi;
+
+    if (name == "tl-x") {
+        selection_rect.setLeft(scene_pos);
+    }
+    if (name == "tl-y") {
+        selection_rect.setTop(scene_pos);
+    }
+    if (name == "br-x") {
+        selection_rect.setRight(scene_pos);
+    }
+    if (name == "br-y") {
+        selection_rect.setBottom(scene_pos);
+    }
+    d_->ui->image_area->set_selection(selection_rect.normalized());
 }
 
 void MainWindow::setup_preview_image()
