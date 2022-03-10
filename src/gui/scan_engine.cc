@@ -252,13 +252,18 @@ void ScanEngine::start_scan()
                 [this](SaneParameters params)
     {
         d_->params = params;
+
+        // We want to seup the image as soon as scan parameters are known so that the GUI side can
+        // show the image bounds without waiting for some of the scanned data to arrive which can
+        // take a while.
+        d_->image_buffer.start_frame(d_->params, cv::Scalar(0xff, 0xff, 0xff));
+        Q_EMIT image_updated();
     }));
 
     push_poller(std::make_unique<Poller<void>>(
                 d_->device_wrapper->start(),
                 [this]()
     {
-        d_->image_buffer.start_frame(d_->params, cv::Scalar(0xff, 0xff, 0xff));
         push_poller(std::make_unique<ScanDataPoller>(this, d_->device_wrapper.get(),
                                                      &d_->image_buffer));
     }));
