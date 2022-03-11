@@ -51,6 +51,9 @@ public:
     /// values.
     void set_option_value(const std::string& name, const SaneOptionValue& value);
 
+    /// Selects whether options displayed in the UI are editable or not.
+    void set_options_enabled(bool enabled);
+
 Q_SIGNALS:
     void refresh_devices_clicked();
 

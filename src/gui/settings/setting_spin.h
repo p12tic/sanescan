@@ -41,6 +41,8 @@ public:
     void set_value(const SaneOptionValue& value) override;
     SaneOptionValue get_value() const override;
 
+    void set_enabled(bool enabled) override;
+
     static bool is_descriptor_supported(const SaneOptionDescriptor& descriptor);
 
 private:

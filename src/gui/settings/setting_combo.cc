@@ -147,6 +147,11 @@ SaneOptionValue SettingCombo::get_value() const
     }
 }
 
+void SettingCombo::set_enabled(bool enabled)
+{
+    ui_->combobox->setEnabled(enabled);
+}
+
 bool SettingCombo::is_descriptor_supported(const SaneOptionDescriptor& descriptor)
 {
     switch (descriptor.type) {

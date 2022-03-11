@@ -41,6 +41,9 @@ public:
     static std::unique_ptr<SettingWidget>
         create_widget_for_descriptor(const SaneOptionDescriptor& descriptor);
 
+    /// Sets whether the value in the widget is editable or not.
+    virtual void set_enabled(bool enabled) = 0;
+
 Q_SIGNALS:
     /// Emitted with the current value returned by get_value() when that one changes as a result of
     /// user action (i.e. not via `set_value()`).

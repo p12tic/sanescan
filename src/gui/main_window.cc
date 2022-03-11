@@ -216,6 +216,7 @@ MainWindow::MainWindow(QWidget *parent) :
     });
     connect(&d_->engine, &ScanEngine::scan_finished, [this]()
     {
+        d_->ui->settings_widget->set_options_enabled(true);
         scanning_finished();
     });
 
@@ -235,6 +236,7 @@ MainWindow::MainWindow(QWidget *parent) :
         d_->preview_image = QImage();
         d_->preview_config = {};
         d_->ui->image_area->set_selection_enabled(false);
+        d_->ui->settings_widget->set_options_enabled(false);
         d_->engine.start_scan();
     });
 

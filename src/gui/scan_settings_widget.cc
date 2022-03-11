@@ -96,6 +96,14 @@ void ScanSettingsWidget::set_option_value(const std::string& name, const SaneOpt
     setting_widget->set_value(value);
 }
 
+void ScanSettingsWidget::set_options_enabled(bool enabled)
+{
+    for (auto& [name, widget] : setting_widgets_) {
+        widget->set_enabled(enabled);
+    }
+    ui_->cb_scanners->setEnabled(enabled);
+}
+
 void ScanSettingsWidget::device_selected_impl(int index)
 {
     if (index < 0 || index >= devices_.size())
