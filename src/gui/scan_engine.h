@@ -68,6 +68,11 @@ public:
     */
     void close_device();
 
+    /** Returns the name of the currently opened device. The return value is unspecified if no
+        device is currently opened.
+    */
+    const std::string& device_name() const;
+
     /// Returns option descriptors for current device
     const std::vector<SaneOptionGroupDestriptor>& get_option_groups() const;
 

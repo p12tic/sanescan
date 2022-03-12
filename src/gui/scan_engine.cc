@@ -120,6 +120,7 @@ struct ScanEngine::Private {
     std::map<std::string, std::size_t> option_name_to_index;
     std::map<std::string, SaneOptionValue> option_values;
     bool device_open = false;
+    std::string device_name;
     bool scan_active = false;
 
     SaneParameters params;
@@ -173,10 +174,11 @@ void ScanEngine::open_device(const std::string& name)
 
     push_poller(std::make_unique<Poller<std::unique_ptr<SaneDeviceWrapper>>>(
                 d_->wrapper.open_device(name),
-                [this](auto device_wrapper)
+                [this, name](auto device_wrapper)
     {
         d_->device_wrapper = std::move(device_wrapper);
         d_->device_open = true;
+        d_->device_name = name;
         Q_EMIT device_opened();
         request_options();
         request_option_values();
@@ -188,6 +190,11 @@ bool ScanEngine::is_device_opened() const
     return d_->device_open;
 }
 
+const std::string& ScanEngine::device_name() const
+{
+    return d_->device_name;
+}
+
 void ScanEngine::close_device()
 {
     if (!d_->device_open) {
@@ -195,6 +202,7 @@ void ScanEngine::close_device()
     }
     d_->device_wrapper = nullptr; // this will close device implicitly
     d_->device_open = false;
+    d_->device_name.clear();
     Q_EMIT device_closed();
 }
 
