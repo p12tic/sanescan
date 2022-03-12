@@ -41,10 +41,10 @@ bool read_ocr_write(const std::string& input_path, const std::string& output_pat
 
     TesseractRecognizer recognizer{"/usr/share/tesseract-ocr/4.00/tessdata/"};
 
-    auto [adjusted_image, recognized] = recognizer.recognize(image, options);
+    auto results = recognizer.recognize(image, options);
 
     sanescan::OcrParagraph combined;
-    for (const auto& par : recognized) {
+    for (const auto& par : results.paragraphs) {
         for (const auto& line : par.lines) {
             combined.lines.push_back(line);
         }
@@ -52,7 +52,7 @@ bool read_ocr_write(const std::string& input_path, const std::string& output_pat
 
     std::vector<OcrParagraph> sorted_all = {sort_paragraph_text(combined)};
     std::ofstream stream_pdf(output_path);
-    write_pdf(stream_pdf, adjusted_image, sorted_all,
+    write_pdf(stream_pdf, results.adjusted_image, sorted_all,
               debug_ocr ? WritePdfFlags::DEBUG_CHAR_BOXES : WritePdfFlags::NONE);
     return true;
 }

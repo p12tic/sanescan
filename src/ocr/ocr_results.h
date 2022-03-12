@@ -16,36 +16,28 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_OCR_TESSERACT_H
-#define SANESCAN_OCR_TESSERACT_H
+#ifndef SANESCAN_OCR_OCR_RESULTS_H
+#define SANESCAN_OCR_OCR_RESULTS_H
 
 #include "ocr_paragraph.h"
-#include "ocr_options.h"
-#include "ocr_results.h"
 #include <opencv2/core/mat.hpp>
-#include <memory>
 #include <vector>
 
 namespace sanescan {
 
-class TesseractRecognizer {
-public:
-    TesseractRecognizer(const std::string& tesseract_datapath);
-    ~TesseractRecognizer();
+struct OcrResults {
+    /** The image that was used for the OCR. It may differ from the input image as the OCR
+        algorithm automatically recognizes rotation to make text horizontal and other cases.
+    */
+    cv::Mat adjusted_image;
 
-    OcrResults recognize(cv::Mat image, const OcrOptions& options);
+    // The counter-clockwise rotation angle to get the adjusted_image from the source image.
+    double adjust_angle = 0;
 
-private:
-    double adjust_image_rotation(cv::Mat& image, std::vector<OcrParagraph>& recognized,
-                                 const OcrOptions& options);
-
-    std::vector<OcrParagraph> recognize_internal(const cv::Mat& image);
-
-    struct Private;
-    std::unique_ptr<Private> data_;
+    // Recognized paragraphs
+    std::vector<OcrParagraph> paragraphs;
 };
-
 
 } // namespace sanescan
 
-#endif // SANESCAN_OCR_TESSERACT_H
+#endif // SANESCAN_OCR_OCR_RESULTS_H

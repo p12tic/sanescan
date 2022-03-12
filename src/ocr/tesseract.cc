@@ -90,17 +90,20 @@ TesseractRecognizer::TesseractRecognizer(const std::string& tesseract_datapath) 
 
 TesseractRecognizer::~TesseractRecognizer() = default;
 
-std::pair<cv::Mat, std::vector<OcrParagraph>>
-    TesseractRecognizer::recognize(cv::Mat image, const OcrOptions& options)
+OcrResults TesseractRecognizer::recognize(cv::Mat image, const OcrOptions& options)
 {
     auto recognized = recognize_internal(image);
-    adjust_image_rotation(image, recognized, options);
-    return {image, recognized};
+
+    OcrResults results;
+    results.adjust_angle = adjust_image_rotation(image, recognized, options);
+    results.adjusted_image = image;
+    results.paragraphs = recognized;
+    return results;
 }
 
-void TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
-                                                std::vector<OcrParagraph>& recognized,
-                                                OcrOptions options)
+double TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
+                                                  std::vector<OcrParagraph>& recognized,
+                                                  const OcrOptions& options)
 {
     // Handle the case when all text within the image is rotated slightly due to the input data
     // scan just being rotated. In such case whole image will be rotated to address the following
@@ -118,7 +121,7 @@ void TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
     // 90, 180 or 270 degrees. We rotate it back so that the text is horizontal which helps text
     // selection in PDF readers.
     if (!options.fix_page_orientation && !options.fix_text_rotation) {
-        return;
+        return 0;
     }
 
     auto all_text_angles = get_all_text_angles(recognized);
@@ -130,6 +133,8 @@ void TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
         if (std::abs(angle_mod90) < options.fix_page_orientation_max_angle_diff &&
             in_window > options.fix_page_orientation_min_text_fraction) {
 
+            double adjust_angle = 0;
+
             // In this case we want to rotate whole page which changes the dimensions of the image.
             // First we use cv::rotate to rotate 90, 180 or 270 degrees and then rotate_image
             // for the final adjustment.
@@ -139,22 +144,26 @@ void TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
             double eps = 0.1;
             if (angle - angle_mod90 > deg_to_rad(270 - eps)) {
                 angle -= deg_to_rad(270);
+                adjust_angle += 270;
                 cv::rotate(image, image, cv::ROTATE_90_CLOCKWISE);
             } else if (angle - angle_mod90 > deg_to_rad(180 - eps)) {
                 angle -= deg_to_rad(180);
+                adjust_angle += 180;
                 cv::rotate(image, image, cv::ROTATE_180);
             } else if (angle - angle_mod90 > deg_to_rad(90 - eps)) {
                 angle -= deg_to_rad(90);
+                adjust_angle += 90;
                 cv::rotate(image, image, cv::ROTATE_90_COUNTERCLOCKWISE);
             }
 
             if (std::abs(angle_mod90) < options.fix_text_rotation_max_angle_diff &&
                 in_window > options.fix_text_rotation_min_text_fraction)
             {
+                adjust_angle += angle;
                 image = rotate_image_centered(image, angle);
             }
             recognized = recognize_internal(image);
-            return;
+            return adjust_angle;
         }
     }
 
@@ -166,9 +175,10 @@ void TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
         {
             image = rotate_image_centered(image, angle);
             recognized = recognize_internal(image);
-            return;
+            return angle;
         }
     }
+    return 0;
 }
 
 std::vector<OcrParagraph> TesseractRecognizer::recognize_internal(const cv::Mat& image)
