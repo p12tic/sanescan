@@ -30,7 +30,8 @@ namespace sanescan {
 /// which is polling-based.
 struct IPoller {
     virtual ~IPoller() {}
-    /// Returns true once poll is successful and poller should be destroyed
+    /// Returns true once poll is successful and poller should be destroyed. May throw. If poller
+    /// returned via thrown exception then the subsequent call to poll() will return true.
     virtual bool poll() = 0;
 };
 
@@ -138,6 +139,9 @@ void ScanEngine::perform_step()
     // Note that pollers may cause signals to be emitted which may cause additional pollers to be
     // added. As a result we can't use iterators because they may be invalidated whenever poll()
     // is called.
+    //
+    // Also note that polling functions may throw exceptions. We will remove such pollers on next
+    // iteration.
     for (std::size_t i = 0; i < d_->pollers.size();) {
         if (d_->pollers[i]->poll()) {
             d_->pollers.erase(d_->pollers.begin() + i);
