@@ -21,6 +21,7 @@
 #include "image_widget.h"
 #include "qimage_utils.h"
 #include "scan_settings_widget.h"
+#include "scan_document.h"
 #include "ui_main_window.h"
 #include "pagelist/page_list_model.h"
 #include "pagelist/page_list_view_delegate.h"
@@ -160,6 +161,9 @@ struct MainWindow::Private {
     std::optional<QRectF> scan_bounds;
     QImage preview_image;
     PreviewConfig preview_config;
+
+    std::vector<ScanDocument> documents;
+    std::size_t curr_scan_document_index = 0;
 };
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -286,13 +290,26 @@ void MainWindow::start_scanning()
 {
     d_->engine.start_scan();
     d_->ui->stack_settings->setCurrentIndex(STACK_SCANNING);
+
+    ScanDocument document;
+    document.scan_id = d_->last_scan_id++;
+    document.scanner_name = d_->engine.device_name();
+    document.scan_option_descriptors = d_->engine.get_option_groups();
+    document.scan_option_values = d_->engine.get_option_values();
+    d_->curr_scan_document_index = d_->documents.size();
+    d_->documents.push_back(document);
 }
 
 void MainWindow::scanning_finished()
 {
     d_->ui->stack_settings->setCurrentIndex(STACK_SETTINGS);
-    d_->page_list_model->add_page(d_->last_scan_id++,
-                                  qimage_from_cv_mat(d_->engine.scan_image()).copy());
+
+    auto& scanned_document = d_->documents[d_->curr_scan_document_index];
+
+    auto scanned_image = d_->engine.scan_image();
+    scanned_document.source_image = scanned_image;
+    d_->page_list_model->add_page(scanned_document.scan_id,
+                                  qimage_from_cv_mat(scanned_image).copy());
 }
 
 void MainWindow::select_device(const std::string& name)
