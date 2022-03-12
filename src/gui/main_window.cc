@@ -26,6 +26,8 @@
 #include "pagelist/page_list_view_delegate.h"
 #include "../util/math.h"
 #include <QtCore/QTimer>
+
+#include <iostream>
 #include <optional>
 #include <stdexcept>
 
@@ -169,7 +171,20 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(d_->ui->action_about, &QAction::triggered, [this](){ present_about_dialog(); });
 
-    connect(&d_->engine_timer, &QTimer::timeout, [this]() { d_->engine.perform_step(); });
+    connect(&d_->engine_timer, &QTimer::timeout, [this]()
+    {
+        try {
+            d_->engine.perform_step();
+        } catch (...) {
+            // FIXME: we should show the error in the UI
+            std::cerr << "SaneScan: Got error\n";
+            if (d_->engine.is_device_opened()) {
+                d_->ui->settings_widget->set_options_enabled(false);
+                d_->open_device_after_close = d_->engine.device_name();
+                d_->engine.close_device();
+            }
+        }
+    });
     connect(&d_->engine, &ScanEngine::devices_refreshed, [this]() { devices_refreshed(); });
     connect(&d_->engine, &ScanEngine::start_polling, [this]() { d_->engine_timer.start(1); });
     connect(&d_->engine, &ScanEngine::stop_polling, [this]() { d_->engine_timer.stop(); });
