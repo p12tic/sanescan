@@ -34,6 +34,7 @@ public:
     QVariant data(const QModelIndex& index, int role) const override;
 
     void add_page(std::uint64_t identifier, const QImage& image);
+    void set_image(std::uint64_t identifier, const QImage& image);
 
     const QPixmap& image_at(std::size_t pos) const;
 

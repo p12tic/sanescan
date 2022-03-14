@@ -81,6 +81,24 @@ void PageListModel::add_page(std::uint64_t identifier, const QImage& image)
     Q_EMIT layoutChanged();
 }
 
+void PageListModel::set_image(std::uint64_t identifier, const QImage& image)
+{
+    auto it = d_->images.find(identifier);
+    if (it == d_->images.end()) {
+        throw std::runtime_error("Image for identifier does not exist");
+    }
+    it->second.image = image;
+    it->second.resize(d_->pixmap_height);
+
+    auto it_pages = std::find(d_->pages.begin(), d_->pages.end(), identifier);
+    if (it_pages == d_->pages.end()) {
+        throw std::runtime_error("Page for identifier does not exist");
+    }
+    auto pos = std::distance(d_->pages.begin(), it_pages);
+
+    Q_EMIT dataChanged(index(pos), index(pos));
+}
+
 const QPixmap& PageListModel::image_at(std::size_t pos) const
 {
     auto identifier = d_->pages.at(pos);
