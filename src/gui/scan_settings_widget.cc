@@ -51,14 +51,6 @@ void ScanSettingsWidget::set_current_devices(const std::vector<SaneDeviceInfo>& 
     }
 }
 
-void ScanSettingsWidget::device_opened()
-{
-    if (waiting_for_device_opened_) {
-        waiting_for_device_opened_ = false;
-        ui_->cb_scanners->setEnabled(true);
-    }
-}
-
 void ScanSettingsWidget::set_options(const std::vector<SaneOptionGroupDestriptor>& descriptors)
 {
     if (curr_group_descriptors_ == descriptors)
@@ -110,10 +102,6 @@ void ScanSettingsWidget::device_selected_impl(int index)
         return;
 
     clear_layout();
-
-    ui_->cb_scanners->setEnabled(false);
-    waiting_for_device_opened_ = true;
-
     Q_EMIT device_selected(devices_[index].name);
 }
 

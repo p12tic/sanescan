@@ -214,7 +214,7 @@ MainWindow::MainWindow(QWidget *parent) :
     });
     connect(&d_->engine, &ScanEngine::device_opened, [this]()
     {
-        d_->ui->settings_widget->device_opened();
+        d_->ui->settings_widget->set_options_enabled(true);
     });
     connect(&d_->engine, &ScanEngine::device_closed, [this]()
     {
@@ -314,6 +314,7 @@ void MainWindow::scanning_finished()
 
 void MainWindow::select_device(const std::string& name)
 {
+    d_->ui->settings_widget->set_options_enabled(false);
     // we are guaranteed by d_->ui->settings_widget that device_selected will not be emitted between
     // a previous emission to select_device and a call to device_opened.
     if (d_->engine.is_device_opened()) {

@@ -40,7 +40,6 @@ public:
     ~ScanSettingsWidget() override;
 
     void set_current_devices(const std::vector<SaneDeviceInfo>& devices);
-    void device_opened();
     void set_options(const std::vector<SaneOptionGroupDestriptor>& descriptors);
 
     /// This must be called at least once for all initial options value. After that
@@ -57,7 +56,6 @@ public:
 Q_SIGNALS:
     void refresh_devices_clicked();
 
-    /// Freezes the device selector until device_opened() is called
     void device_selected(const std::string& name);
 
     void scan_started();
@@ -71,7 +69,6 @@ private:
 
     std::vector<SaneDeviceInfo> devices_;
 
-    bool waiting_for_device_opened_ = false;
     std::vector<SaneOptionGroupDestriptor> curr_group_descriptors_;
 
     // Layout widget is not owned, the owner is `this`. Note that we terminate the relationship
