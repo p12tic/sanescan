@@ -81,7 +81,9 @@ public: Q_SIGNALS:
     void document_locking_changed();
 
 private:
+    void reopen_current_device();
     const SaneDeviceInfo& get_available_device_by_name(const std::string& name);
+
     ScanDocument& curr_scan_document();
     void setup_empty_preview_image(ScanDocument& document,
                                    const std::optional<QRectF>& scan_bounds_mm);

@@ -128,12 +128,7 @@ DocumentManager::DocumentManager() :
         } catch (...) {
             // FIXME: we should show the error in the UI
             std::cerr << "SaneScan: Got error\n";
-            if (d_->engine.is_device_opened()) {
-                d_->all_documents_locked = true;
-                Q_EMIT document_locking_changed();
-                d_->open_device_after_close = d_->engine.device_name();
-                d_->engine.close_device();
-            }
+            reopen_current_device();
         }
     });
     connect(&d_->engine, &ScanEngine::start_polling, [this]() { d_->engine_timer.start(1); });
@@ -215,6 +210,9 @@ DocumentManager::DocumentManager() :
             d_->curr_scan_document_index = new_document_index;
             Q_EMIT new_document_added(new_document_index, true);
         }
+
+        // At least the genesys backend can't perform two scans back to back.
+        reopen_current_device();
     });
 }
 
@@ -299,6 +297,18 @@ void DocumentManager::start_scan(unsigned doc_index)
     Q_EMIT document_scan_progress_changed(d_->curr_scan_document_index);
 
     d_->engine.start_scan();
+}
+
+void DocumentManager::reopen_current_device()
+{
+    if (!d_->engine.is_device_opened()) {
+        return;
+    }
+
+    d_->all_documents_locked = true;
+    Q_EMIT document_locking_changed();
+    d_->open_device_after_close = d_->engine.device_name();
+    d_->engine.close_device();
 }
 
 const SaneDeviceInfo& DocumentManager::get_available_device_by_name(const std::string& name)
