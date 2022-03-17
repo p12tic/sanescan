@@ -20,19 +20,34 @@
 #define SANESCAN_GUI_SCAN_DOCUMENT_H
 
 #include "lib/sane_types.h"
+#include <QtCore/QRectF>
 #include <opencv2/core/mat.hpp>
 #include <optional>
 #include <map>
 
 namespace sanescan {
 
+struct PreviewConfig {
+    double width_mm = 0;
+    double height_mm = 0;
+    unsigned dpi = 0;
+};
+
 struct ScanDocument {
+    ScanDocument(unsigned scan_id) : scan_id{scan_id} {}
+
     // An ID that is unique across all scanned documents in a single application run.
     unsigned scan_id = 0;
 
-    cv::Mat source_image;
+    std::optional<cv::Mat> preview_image;
+    PreviewConfig preview_config;
+    std::optional<QRectF> preview_scan_bounds;
 
-    std::string scanner_name;
+    std::optional<double> scan_progress;
+    std::optional<cv::Mat> scanned_image;
+
+    bool locked = false; // scanner name and options won't changed anymore
+    SaneDeviceInfo device;
     std::vector<SaneOptionGroupDestriptor> scan_option_descriptors;
     std::map<std::string, SaneOptionValue> scan_option_values;
 };

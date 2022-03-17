@@ -19,7 +19,7 @@
 #ifndef SANESCAN_GUI_MAIN_WINDOW_H
 #define SANESCAN_GUI_MAIN_WINDOW_H
 
-#include "scan_engine.h"
+#include "scan_document.h"
 #include "../lib/sane_types.h"
 #include <QtWidgets/QMainWindow>
 #include <memory>
@@ -41,15 +41,15 @@ public:
     void present_about_dialog();
 
 private:
-    void refresh_devices();
-    void devices_refreshed();
-    void select_device(const std::string& name);
     void start_scanning();
-    void scanning_finished();
+
+    QImage get_document_thumbnail(const ScanDocument& document);
+
+    void switch_to_document(unsigned doc_index);
 
     void maybe_update_selection_after_setting_change(const std::string& name,
                                                      const SaneOptionValue& value);
-    void setup_preview_image();
+    void image_area_selection_changed(const std::optional<QRectF>& rect);
 
     struct Private;
     std::unique_ptr<Private> d_;
