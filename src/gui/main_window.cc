@@ -212,6 +212,12 @@ MainWindow::MainWindow(QWidget *parent) :
     d_->ui->page_list->setModel(d_->page_list_model.get());
     d_->ui->page_list->setItemDelegate(new PageListViewDelegate(d_->ui->page_list));
 
+    connect(d_->ui->page_list->selectionModel(), &QItemSelectionModel::selectionChanged,
+            [this](const QItemSelection& selected, const QItemSelection& deselected)
+    {
+        switch_to_document(selected.front().top());
+    });
+
     d_->manager.refresh_devices();
 }
 
