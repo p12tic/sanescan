@@ -117,6 +117,7 @@ struct ScanEngine::Private {
     std::unique_ptr<SaneDeviceWrapper> device_wrapper;
     std::vector<SaneDeviceInfo> current_devices;
     std::vector<SaneOptionGroupDestriptor> option_groups;
+    std::map<std::string, SaneOptionDescriptor> option_descriptors;
     std::map<std::size_t, std::string> option_index_to_name;
     std::map<std::string, std::size_t> option_name_to_index;
     std::map<std::string, SaneOptionValue> option_values;
@@ -208,6 +209,24 @@ void ScanEngine::close_device()
     d_->device_open = false;
     d_->device_name.clear();
     Q_EMIT device_closed();
+}
+
+const std::map<std::string, SaneOptionDescriptor>& ScanEngine::get_option_descriptors() const
+{
+    if (!d_->device_open) {
+        throw std::runtime_error("Can't access options when device is closed");
+    }
+    return d_->option_descriptors;
+}
+
+const SaneOptionDescriptor& ScanEngine::get_option_descriptor(const std::string& name) const
+{
+    const auto& descriptors = get_option_descriptors();
+    auto desc_it = descriptors.find(name);
+    if (desc_it == descriptors.end()) {
+        throw std::runtime_error("Option " + name + "does not exist");
+    }
+    return desc_it->second;
 }
 
 const std::vector<SaneOptionGroupDestriptor>& ScanEngine::get_option_groups() const
@@ -302,10 +321,12 @@ void ScanEngine::request_options()
         d_->option_groups = std::move(option_groups);
         d_->option_index_to_name.clear();
         d_->option_name_to_index.clear();
+        d_->option_descriptors.clear();
         for (const auto& group_desc : d_->option_groups) {
             for (const auto& desc : group_desc.options) {
                 d_->option_index_to_name.emplace(desc.index, desc.name);
                 d_->option_name_to_index.emplace(desc.name, desc.index);
+                d_->option_descriptors.emplace(desc.name, desc);
             }
         }
         Q_EMIT options_changed();

@@ -73,7 +73,13 @@ public:
     */
     const std::string& device_name() const;
 
-    /// Returns option descriptors for current device
+    /// Returns option descriptors for current device.
+    const std::map<std::string, SaneOptionDescriptor>& get_option_descriptors() const;
+
+    /// Returns descriptor for specific option
+    const SaneOptionDescriptor& get_option_descriptor(const std::string& name) const;
+
+    /// Returns option descriptors with preserved grouping information.
     const std::vector<SaneOptionGroupDestriptor>& get_option_groups() const;
 
     /// Returns current option values
