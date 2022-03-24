@@ -19,6 +19,7 @@
 #ifndef SANESCAN_LIB_SANE_TYPES_H
 #define SANESCAN_LIB_SANE_TYPES_H
 
+#include "util/enum_flags.h"
 #include <string>
 #include <string_view>
 #include <optional>
@@ -69,15 +70,7 @@ enum class SaneCap {
     ADVANCED = 1 << 6,
 };
 
-inline SaneCap operator|(SaneCap lhs, SaneCap rhs)
-{
-    return static_cast<SaneCap>(static_cast<int>(lhs) | static_cast<int>(rhs));
-}
-
-inline SaneCap operator&(SaneCap lhs, SaneCap rhs)
-{
-    return static_cast<SaneCap>(static_cast<int>(lhs) & static_cast<int>(rhs));
-}
+SANESCAN_DECLARE_OPERATORS_FOR_SCOPED_ENUM_FLAGS(SaneCap)
 
 struct SaneConstraintNone {
     bool operator==(const SaneConstraintNone& other) const { return true; }
@@ -231,15 +224,7 @@ enum class SaneOptionSetInfo {
     RELOAD_PARAMS = 1 << 2,
 };
 
-inline SaneOptionSetInfo operator|(SaneOptionSetInfo lhs, SaneOptionSetInfo rhs)
-{
-    return static_cast<SaneOptionSetInfo>(static_cast<int>(lhs) | static_cast<int>(rhs));
-}
-
-inline SaneOptionSetInfo operator&(SaneOptionSetInfo lhs, SaneOptionSetInfo rhs)
-{
-    return static_cast<SaneOptionSetInfo>(static_cast<int>(lhs) & static_cast<int>(rhs));
-}
+SANESCAN_DECLARE_OPERATORS_FOR_SCOPED_ENUM_FLAGS(SaneOptionSetInfo)
 
 } // namespace sanescan
 
