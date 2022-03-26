@@ -239,6 +239,10 @@ std::future<std::vector<SaneOptionIndexedValue>>
         std::vector<SaneOptionIndexedValue> result;
         for (const auto& group_desc : d_->task_option_descriptors) {
             for (const auto& desc : group_desc.options) {
+                if (has_flag(desc.cap, SaneCap::INACTIVE)) {
+                    continue;
+                }
+
                 switch (desc.type) {
                     case SaneValueType::BOOL:
                     case SaneValueType::BUTTON: {
