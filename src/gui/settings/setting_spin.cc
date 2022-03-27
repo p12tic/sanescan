@@ -64,7 +64,7 @@ void SettingSpin::set_option_descriptor(const SaneOptionDescriptor& descriptor)
             ui_->spinbox->setSingleStep(1);
         }
     }
-    ui_->spinbox->setEnabled(false);
+    set_enabled(false);
 }
 
 void SettingSpin::set_value(const SaneOptionValue& value)
@@ -78,7 +78,7 @@ void SettingSpin::set_value(const SaneOptionValue& value)
     ui_->spinbox->setValue(int_value.value());
     suppress_value_changed_ = false;
 
-    ui_->spinbox->setEnabled(true);
+    set_enabled(true);
 }
 
 SaneOptionValue SettingSpin::get_value() const
@@ -92,7 +92,7 @@ SaneOptionValue SettingSpin::get_value() const
 
 void SettingSpin::set_enabled(bool enabled)
 {
-    ui_->spinbox->setEnabled(enabled);
+    ui_->spinbox->setEnabled(enabled && has_flag(descriptor_.cap, SaneCap::SOFT_SELECT));
 }
 
 bool SettingSpin::is_descriptor_supported(const SaneOptionDescriptor& descriptor)

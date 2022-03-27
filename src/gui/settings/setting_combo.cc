@@ -112,7 +112,7 @@ void SettingCombo::set_option_descriptor(const SaneOptionDescriptor& descriptor)
         descriptor_changed_ = true;
     }
 
-    ui_->combobox->setEnabled(false);
+    set_enabled(false);
 }
 
 void SettingCombo::set_value(const SaneOptionValue& value)
@@ -126,7 +126,7 @@ void SettingCombo::set_value(const SaneOptionValue& value)
     }
 
     ui_->combobox->setCurrentIndex(find_option_index(value));
-    ui_->combobox->setEnabled(true);
+    set_enabled(true);
 }
 
 SaneOptionValue SettingCombo::get_value() const
@@ -150,7 +150,7 @@ SaneOptionValue SettingCombo::get_value() const
 
 void SettingCombo::set_enabled(bool enabled)
 {
-    ui_->combobox->setEnabled(enabled);
+    ui_->combobox->setEnabled(enabled && has_flag(descriptor_.cap, SaneCap::SOFT_SELECT));
 }
 
 bool SettingCombo::is_descriptor_supported(const SaneOptionDescriptor& descriptor)
