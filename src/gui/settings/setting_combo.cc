@@ -18,6 +18,7 @@
 
 #include "setting_combo.h"
 #include "ui_setting_combo.h"
+#include <stdexcept>
 
 namespace sanescan {
 
