@@ -250,9 +250,16 @@ void ScanEngine::set_option_value(const std::string& name, const SaneOptionValue
     if (!d_->device_open) {
         throw std::runtime_error("Can't access options when device is closed");
     }
+    const auto& desc = get_option_descriptor(name);
+    if (has_flag(desc.cap, SaneCap::INACTIVE)) {
+        throw std::runtime_error("Can't set inactive option " + name);
+    }
+    if (!has_flag(desc.cap, SaneCap::SOFT_SELECT)) {
+        throw std::runtime_error("Can't set readonly option " + name);
+    }
 
     push_poller(std::make_unique<Poller<SaneOptionSetInfo>>(
-                d_->device_wrapper->set_option_value(get_option_index(name), value),
+                d_->device_wrapper->set_option_value(desc.index, value),
                 [this](SaneOptionSetInfo set_info)
     {
         refresh_after_set_if_needed(set_info);
@@ -264,9 +271,16 @@ void ScanEngine::set_option_value_auto(const std::string& name)
     if (!d_->device_open) {
         throw std::runtime_error("Can't access options when device is closed");
     }
+    const auto& desc = get_option_descriptor(name);
+    if (has_flag(desc.cap, SaneCap::INACTIVE)) {
+        throw std::runtime_error("Can't set inactive option " + name);
+    }
+    if (!has_flag(desc.cap, SaneCap::SOFT_SELECT)) {
+        throw std::runtime_error("Can't set readonly option " + name);
+    }
 
     push_poller(std::make_unique<Poller<SaneOptionSetInfo>>(
-                d_->device_wrapper->set_option_value_auto(get_option_index(name)),
+                d_->device_wrapper->set_option_value_auto(desc.index),
                 [this](SaneOptionSetInfo set_info)
     {
         refresh_after_set_if_needed(set_info);
