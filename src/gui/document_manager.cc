@@ -283,7 +283,10 @@ void DocumentManager::start_scan(unsigned doc_index)
             // may be changed by callbacks from the engine in case of re-enabled options. This may
             // overwrite some of the options we want to set.
             for (const auto& [name, value] : document.scan_option_values) {
-                if (!value.is_none()) {
+                auto desc = find_option_descriptor(document.scan_option_descriptors, name);
+                if (!value.is_none() && desc.has_value() &&
+                    has_flag(desc.value().cap, SaneCap::SOFT_SELECT))
+                {
                     d_->engine.set_option_value(name, value);
                 }
             }
