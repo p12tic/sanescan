@@ -244,8 +244,7 @@ std::future<std::vector<SaneOptionIndexedValue>>
                 }
 
                 switch (desc.type) {
-                    case SaneValueType::BOOL:
-                    case SaneValueType::BUTTON: {
+                    case SaneValueType::BOOL:{
                         std::vector<SANE_Bool> temp;
                         temp.resize(desc.size);
                         auto status = sane_control_option(d_->handle, desc.index,
@@ -315,6 +314,10 @@ std::future<std::vector<SaneOptionIndexedValue>>
                         value.resize(std::strlen(value.c_str()));
                         result.emplace_back(desc.index, std::move(value));
                         break;
+                    }
+                    case SaneValueType::BUTTON: {
+                        // Button options don't have values, just like group options.
+                        continue;
                     }
                     case SaneValueType::GROUP: {
                         throw new SaneException("Unexpected option group when retrieving values");
