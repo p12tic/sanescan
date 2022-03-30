@@ -18,6 +18,7 @@
 
 #include "sane_types.h"
 #include <sane/sane.h>
+#include <iostream>
 
 namespace sanescan {
 
@@ -82,6 +83,30 @@ namespace {
     static_assert(static_cast<int>(SaneFrameType::BLUE) == SANE_FRAME_BLUE);
 } // namespace
 
+std::ostream& operator<<(std::ostream& stream, const SaneDeviceInfo& data)
+{
+    stream << "SaneDeviceInfo{"
+           << " name=" << data.name
+           << " vendor=" << data.vendor
+           << " model=" << data.model
+           << " type=" << data.type
+           << " }";
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SaneValueType& data)
+{
+    switch (data) {
+        case SaneValueType::BOOL: stream << "BOOL"; break;
+        case SaneValueType::INT: stream << "INT"; break;
+        case SaneValueType::FLOAT: stream << "FLOAT"; break;
+        case SaneValueType::STRING: stream << "STRING"; break;
+        case SaneValueType::BUTTON: stream << "BUTTON"; break;
+        case SaneValueType::GROUP: stream << "GROUP"; break;
+        default: stream << "(unknown)"; break;
+    }
+    return stream;
+}
 
 std::string_view sane_unit_to_string_lower(SaneUnit unit)
 {
@@ -95,9 +120,59 @@ std::string_view sane_unit_to_string_upper(SaneUnit unit)
     return desc ? desc->uppercase_desc : "Unknown";
 }
 
+std::ostream& operator<<(std::ostream& stream, const SaneUnit& data)
+{
+    stream << sane_unit_to_string_lower(data);
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SaneCap& data)
+{
+    stream << "SaneCap(";
+    if (has_flag(data, SaneCap::SOFT_SELECT)) {
+        stream << " SOFT_SELECT";
+    }
+    if (has_flag(data, SaneCap::HARD_SELECT)) {
+        stream << " HARD_SELECT";
+    }
+    if (has_flag(data, SaneCap::SOFT_DETECT)) {
+        stream << " SOFT_DETECT";
+    }
+    if (has_flag(data, SaneCap::EMULATED)) {
+        stream << " EMULATED";
+    }
+    if (has_flag(data, SaneCap::AUTOMATIC)) {
+        stream << " AUTOMATIC";
+    }
+    if (has_flag(data, SaneCap::INACTIVE)) {
+        stream << " INACTIVE";
+    }
+    if (has_flag(data, SaneCap::ADVANCED)) {
+        stream << " ADVANCED";
+    }
+    stream << " )";
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintNone& data)
+{
+    stream << "(none)";
+    return stream;
+}
+
 bool SaneConstraintStringList::operator==(const SaneConstraintStringList& other) const
 {
     return strings == other.strings;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintStringList& data)
+{
+    stream << "SaneConstraintStringList{";
+    for (const auto& s : data.strings) {
+        stream << " " << s;
+    }
+    stream << " }";
+    return stream;
 }
 
 bool SaneConstraintIntList::operator==(const SaneConstraintIntList& other) const
@@ -105,9 +180,29 @@ bool SaneConstraintIntList::operator==(const SaneConstraintIntList& other) const
     return numbers == other.numbers;
 }
 
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntList& data)
+{
+    stream << "SaneConstraintIntList{";
+    for (const auto& n : data.numbers) {
+        stream << " " << n;
+    }
+    stream << " }";
+    return stream;
+}
+
 bool SaneConstraintFloatList::operator==(const SaneConstraintFloatList& other) const
 {
     return numbers == other.numbers;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatList& data)
+{
+    stream << "SaneConstraintFloatList{";
+    for (const auto& n : data.numbers) {
+        stream << " " << n;
+    }
+    stream << " }";
+    return stream;
 }
 
 bool SaneConstraintIntRange::operator==(const SaneConstraintIntRange& other) const
@@ -115,9 +210,29 @@ bool SaneConstraintIntRange::operator==(const SaneConstraintIntRange& other) con
     return min == other.min && max == other.max && quantization == other.quantization;
 }
 
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntRange& data)
+{
+    stream << "SaneConstraintIntRange{"
+           << " min=" << data.min
+           << " max=" << data.max
+           << " quantization=" << data.quantization
+           << " }";
+    return stream;
+}
+
 bool SaneConstraintFloatRange::operator==(const SaneConstraintFloatRange& other) const
 {
     return min == other.min && max == other.max && quantization == other.quantization;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatRange& data)
+{
+    stream << "SaneConstraintFloatRange{"
+           << " min=" << data.min
+           << " max=" << data.max
+           << " quantization=" << data.quantization
+           << " }";
+    return stream;
 }
 
 bool SaneOptionDescriptor::operator==(const SaneOptionDescriptor& other) const
@@ -133,12 +248,59 @@ bool SaneOptionDescriptor::operator==(const SaneOptionDescriptor& other) const
             constraint == other.constraint;
 }
 
+std::ostream& operator<<(std::ostream& stream, const SaneOptionDescriptor& data)
+{
+    stream << "SaneOptionDescriptor{"
+           << "\n  index=" << data.index
+           << "\n  name=" << data.name
+           << "\n  title=" << data.title
+           << "\n  description=" << data.description
+           << "\n  unit=" << data.unit
+           << "\n  type=" << data.type
+           << "\n  size=" << data.size
+           << "\n  cap=" << data.cap;
+    if (auto* c = std::get_if<SaneConstraintNone>(&data.constraint)) {
+        stream << "\n  constraint=" << *c;
+    }
+    if (auto* c = std::get_if<SaneConstraintStringList>(&data.constraint)) {
+        stream << "\n  constraint=" << *c;
+    }
+    if (auto* c = std::get_if<SaneConstraintIntList>(&data.constraint)) {
+        stream << "\n  constraint=" << *c;
+    }
+    if (auto* c = std::get_if<SaneConstraintFloatList>(&data.constraint)) {
+        stream << "\n  constraint=" << *c;
+    }
+    if (auto* c = std::get_if<SaneConstraintIntRange>(&data.constraint)) {
+        stream << "\n  constraint=" << *c;
+    }
+    if (auto* c = std::get_if<SaneConstraintFloatRange>(&data.constraint)) {
+        stream << "\n  constraint=" << *c;
+    }
+    stream << "\n}";
+    return stream;
+}
+
 bool SaneOptionGroupDestriptor::operator==(const SaneOptionGroupDestriptor& other) const
 {
     return name == other.name &&
             title == other.title &&
             description == other.description &&
             options == other.options;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SaneOptionGroupDestriptor& data)
+{
+    stream << "SaneOptionGroupDestriptor{"
+           << "\n  name=" << data.name
+           << "\n  title=" << data.title
+           << "\n  description=" << data.description
+           << "\n  options=[";
+    for (const auto& desc : data.options) {
+        stream << "\n  " << desc;
+    }
+    stream << "\n}";
+    return stream;
 }
 
 std::optional<SaneOptionDescriptor>
@@ -214,6 +376,72 @@ const std::vector<double>* SaneOptionValue::as_double_vector() const
 const std::string* SaneOptionValue::as_string() const
 {
     return  std::get_if<std::string>(&value);
+}
+
+std::ostream& operator<<(std::ostream& stream, const SaneOptionValue& data)
+{
+    stream << "SaneOptionValue{";
+    if (auto* c = std::get_if<SaneOptionValueNone>(&data.value)) {
+        stream << " (none)";
+    } else if (auto* c = std::get_if<std::vector<bool>>(&data.value)) {
+        for (auto v : *c) {
+            stream << " " << v;
+        }
+    } else if (auto* c = std::get_if<std::vector<int>>(&data.value)) {
+        for (auto v : *c) {
+            stream << " " << v;
+        }
+    } else if (auto* c = std::get_if<std::vector<double>>(&data.value)) {
+        for (auto v : *c) {
+            stream << " " << v;
+        }
+    } else if (auto* c = std::get_if<std::string>(&data.value)) {
+        stream << " " << *c;
+    }
+    stream << " }";
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SaneFrameType& data)
+{
+    switch (data) {
+        case SaneFrameType::GRAY: stream << "GRAY"; break;
+        case SaneFrameType::RGB: stream << "RGB"; break;
+        case SaneFrameType::RED: stream << "RED"; break;
+        case SaneFrameType::GREEN: stream << "GREEN"; break;
+        case SaneFrameType::BLUE: stream << "BLUE"; break;
+        default: stream << "(unknown)"; break;
+    }
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SaneParameters& data)
+{
+    stream << "SaneParameters{"
+           << " frame=" << data.frame
+           << " last_frame=" << data.last_frame
+           << " bytes_per_line=" << data.bytes_per_line
+           << " pixels_per_line=" << data.pixels_per_line
+           << " lines=" << data.lines
+           << " depth=" << data.depth
+           << " }";
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const SaneOptionSetInfo& data)
+{
+    stream << "SaneOptionSetInfo(";
+    if (has_flag(data, SaneOptionSetInfo::INEXACT)) {
+        stream << " INEXACT";
+    }
+    if (has_flag(data, SaneOptionSetInfo::RELOAD_OPTIONS)) {
+        stream << " RELOAD_OPTIONS";
+    }
+    if (has_flag(data, SaneOptionSetInfo::RELOAD_PARAMS)) {
+        stream << " RELOAD_PARAMS";
+    }
+    stream << " )";
+    return stream;
 }
 
 } // namespace sanescan

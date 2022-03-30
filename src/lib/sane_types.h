@@ -20,6 +20,7 @@
 #define SANESCAN_LIB_SANE_TYPES_H
 
 #include "util/enum_flags.h"
+#include <iosfwd>
 #include <string>
 #include <string_view>
 #include <optional>
@@ -36,6 +37,8 @@ struct SaneDeviceInfo {
     std::string type;
 };
 
+std::ostream& operator<<(std::ostream& stream, const SaneDeviceInfo& data);
+
 enum class SaneValueType {
     BOOL = 0,
     INT,
@@ -44,6 +47,8 @@ enum class SaneValueType {
     BUTTON,
     GROUP,
 };
+
+std::ostream& operator<<(std::ostream& stream, const SaneValueType& data);
 
 enum class SaneUnit {
     NONE,
@@ -58,6 +63,7 @@ enum class SaneUnit {
 std::string_view sane_unit_to_string_lower(SaneUnit unit);
 std::string_view sane_unit_to_string_upper(SaneUnit unit);
 
+std::ostream& operator<<(std::ostream& stream, const SaneUnit& data);
 
 enum class SaneCap {
     NONE = 0,
@@ -72,9 +78,13 @@ enum class SaneCap {
 
 SANESCAN_DECLARE_OPERATORS_FOR_SCOPED_ENUM_FLAGS(SaneCap)
 
+std::ostream& operator<<(std::ostream& stream, const SaneCap& data);
+
 struct SaneConstraintNone {
     bool operator==(const SaneConstraintNone& other) const { return true; }
 };
+
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintNone& data);
 
 struct SaneConstraintStringList {
     std::vector<std::string> strings;
@@ -82,17 +92,23 @@ struct SaneConstraintStringList {
     bool operator==(const SaneConstraintStringList& other) const;
 };
 
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintStringList& data);
+
 struct SaneConstraintIntList {
     std::vector<int> numbers;
 
     bool operator==(const SaneConstraintIntList& other) const;
 };
 
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntList& data);
+
 struct SaneConstraintFloatList {
     std::vector<double> numbers;
 
     bool operator==(const SaneConstraintFloatList& other) const;
 };
+
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatList& data);
 
 /// corresponds to SANE_Range type when option is INT
 struct SaneConstraintIntRange {
@@ -103,6 +119,8 @@ struct SaneConstraintIntRange {
     bool operator==(const SaneConstraintIntRange& other) const;
 };
 
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntRange& data);
+
 /// corresponds to SANE_Range type when option is FLOAT
 struct SaneConstraintFloatRange {
     double min = 0;
@@ -111,6 +129,8 @@ struct SaneConstraintFloatRange {
 
     bool operator==(const SaneConstraintFloatRange& other) const;
 };
+
+std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatRange& data);
 
 /// corresponds to SANE_Option_Descriptor
 struct SaneOptionDescriptor {
@@ -138,6 +158,8 @@ struct SaneOptionDescriptor {
     bool operator==(const SaneOptionDescriptor& other) const;
 };
 
+std::ostream& operator<<(std::ostream& stream, const SaneOptionDescriptor& data);
+
 struct SaneOptionGroupDestriptor {
     std::string name;
     std::string title;
@@ -146,6 +168,8 @@ struct SaneOptionGroupDestriptor {
 
     bool operator==(const SaneOptionGroupDestriptor& other) const;
 };
+
+std::ostream& operator<<(std::ostream& stream, const SaneOptionGroupDestriptor& data);
 
 std::optional<SaneOptionDescriptor>
     find_option_descriptor(const std::vector<SaneOptionGroupDestriptor>& descriptors,
@@ -189,6 +213,8 @@ struct SaneOptionValue {
     bool operator==(const SaneOptionValue& other) const { return value == other.value; }
 };
 
+std::ostream& operator<<(std::ostream& stream, const SaneOptionValue& data);
+
 struct SaneOptionIndexedValue {
     SaneOptionIndexedValue(std::size_t index, const SaneOptionValue& value) :
         index{index}, value{value}
@@ -207,6 +233,8 @@ enum class SaneFrameType {
     BLUE
 };
 
+std::ostream& operator<<(std::ostream& stream, const SaneFrameType& data);
+
 struct SaneParameters {
     SaneFrameType frame = SaneFrameType::GRAY;
     bool last_frame = false;
@@ -215,6 +243,8 @@ struct SaneParameters {
     int lines = 0;
     int depth = 0;
 };
+
+std::ostream& operator<<(std::ostream& stream, const SaneParameters& data);
 
 /// Corresponts to SANE_INFO_*
 enum class SaneOptionSetInfo {
@@ -225,6 +255,8 @@ enum class SaneOptionSetInfo {
 };
 
 SANESCAN_DECLARE_OPERATORS_FOR_SCOPED_ENUM_FLAGS(SaneOptionSetInfo)
+
+std::ostream& operator<<(std::ostream& stream, const SaneOptionSetInfo& data);
 
 } // namespace sanescan
 
