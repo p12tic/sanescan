@@ -24,6 +24,12 @@
 #include <deque>
 #include <functional>
 
+#define SANESCAN_ENGINE_DEBUG_CALLS 0
+
+#if SANESCAN_ENGINE_DEBUG_CALLS
+#include <iostream>
+#endif
+
 namespace sanescan {
 
 /// Represents something that can be polled. This is used to interface with SANE wrapper interface
@@ -173,6 +179,10 @@ const std::vector<SaneDeviceInfo>& ScanEngine::current_devices() const
 
 void ScanEngine::open_device(const std::string& name)
 {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+    std::cout << "ScanEngine::open_device: " << name << "\n";
+#endif
+
     if (d_->device_open) {
         throw std::runtime_error("Can't open multiple devices concurrently");
     }
@@ -202,9 +212,14 @@ const std::string& ScanEngine::device_name() const
 
 void ScanEngine::close_device()
 {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+    std::cout << "ScanEngine::close_device: " << d_->device_name << "\n";
+#endif
+
     if (!d_->device_open) {
         throw std::runtime_error("Can't close already closed device");
     }
+
     d_->device_wrapper = nullptr; // this will close device implicitly
     d_->device_open = false;
     d_->device_name.clear();
@@ -247,6 +262,10 @@ const std::map<std::string, SaneOptionValue>& ScanEngine::get_option_values() co
 
 void ScanEngine::set_option_value(const std::string& name, const SaneOptionValue& value)
 {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+    std::cout << "ScanEngine::set_option_value: " << name << "=" << value << "\n";
+#endif
+
     if (!d_->device_open) {
         throw std::runtime_error("Can't access options when device is closed");
     }
@@ -268,6 +287,10 @@ void ScanEngine::set_option_value(const std::string& name, const SaneOptionValue
 
 void ScanEngine::set_option_value_auto(const std::string& name)
 {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+    std::cout << "ScanEngine::set_option_value_auto: " << name << "\n";
+#endif
+
     if (!d_->device_open) {
         throw std::runtime_error("Can't access options when device is closed");
     }
@@ -289,6 +312,10 @@ void ScanEngine::set_option_value_auto(const std::string& name)
 
 void ScanEngine::start_scan()
 {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+    std::cout << "ScanEngine::start_scan\n";
+#endif
+
     if (!d_->device_open) {
         throw std::runtime_error("Can't control scan when device is closed");
     }
@@ -316,6 +343,10 @@ void ScanEngine::start_scan()
 
 void ScanEngine::cancel_scan()
 {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+    std::cout << "ScanEngine::cancel_scan\n";
+#endif
+
     if (!d_->device_open) {
         throw std::runtime_error("Can't control scan when device is closed");
     }
@@ -328,6 +359,10 @@ const cv::Mat& ScanEngine::scan_image() const
 
 void ScanEngine::request_options()
 {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+    std::cout << "ScanEngine::request_options\n";
+#endif
+
     push_poller(std::make_unique<Poller<std::vector<SaneOptionGroupDestriptor>>>(
                 d_->device_wrapper->get_option_groups(),
                 [this](auto option_groups)
@@ -349,6 +384,10 @@ void ScanEngine::request_options()
 
 void ScanEngine::request_option_values()
 {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+    std::cout << "ScanEngine::request_option_values\n";
+#endif
+
     // NOTE: the caller must ensure that request_options is called before this function whenever
     // the parameter list becomes out of date. We don't need to do any additional synchronization
     // here because all requests are processed in order.
