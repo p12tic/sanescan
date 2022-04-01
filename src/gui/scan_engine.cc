@@ -118,6 +118,7 @@ struct ScanDataPoller : IPoller {
 
 struct ScanEngine::Private {
     std::vector<std::unique_ptr<IPoller>> pollers;
+    std::vector<std::function<void()>> f_call_when_idle;
 
     SaneWrapper wrapper;
     std::unique_ptr<SaneDeviceWrapper> device_wrapper;
@@ -151,6 +152,11 @@ void ScanEngine::perform_step()
     // iteration.
     for (std::size_t i = 0; i < d_->pollers.size();) {
         if (d_->pollers[i]->poll()) {
+            // We need to attempt invoking call-on-idle functions before pollers array becomes
+            // empty because these functions themselves may register call-on-idle functions. These
+            // would be invoked immediately which would break the call order.
+            maybe_call_idle_functions();
+
             d_->pollers.erase(d_->pollers.begin() + i);
             if (d_->pollers.empty()) {
                 Q_EMIT stop_polling();
@@ -357,6 +363,16 @@ const cv::Mat& ScanEngine::scan_image() const
     return d_->image_buffer.image();
 }
 
+void ScanEngine::call_when_idle(std::function<void()> f)
+{
+    if (d_->pollers.empty()) {
+        f();
+        return;
+    }
+
+    d_->f_call_when_idle.push_back(std::move(f));
+}
+
 void ScanEngine::request_options()
 {
 #if SANESCAN_ENGINE_DEBUG_CALLS
@@ -432,6 +448,24 @@ void ScanEngine::push_poller(std::unique_ptr<IPoller>&& poller)
     if (empty) {
         Q_EMIT start_polling();
     }
+}
+
+void ScanEngine::maybe_call_idle_functions()
+{
+    if (d_->pollers.size() != 1) {
+        // Most frequent case, handle explicitly.
+        return;
+    }
+
+    std::size_t called = 0;
+    while (d_->pollers.size() == 1 && called < d_->f_call_when_idle.size()) {
+        // Note that calling the function may register a new poller or another call-on-idle
+        // function, thus we need to recheck the conditions after every call.
+        d_->f_call_when_idle[called++]();
+    }
+
+    d_->f_call_when_idle.erase(d_->f_call_when_idle.begin(),
+                               d_->f_call_when_idle.begin() + called);
 }
 
 } // namespace sanescan

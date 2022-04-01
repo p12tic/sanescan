@@ -101,6 +101,9 @@ public:
     /// Returns the current state of the scanned image.
     const cv::Mat& scan_image() const;
 
+    /// Calls the given function when there are no pending results
+    void call_when_idle(std::function<void()> f);
+
 Q_SIGNALS:
     void devices_refreshed();
     void device_opened();
@@ -120,6 +123,7 @@ private:
     void refresh_after_set_if_needed(SaneOptionSetInfo set_info);
     std::size_t get_option_index(const std::string& name) const;
     void push_poller(std::unique_ptr<IPoller>&& poller);
+    void maybe_call_idle_functions();
 
     struct Private;
     std::unique_ptr<Private> d_;
