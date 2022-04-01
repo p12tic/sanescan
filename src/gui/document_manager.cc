@@ -299,7 +299,11 @@ void DocumentManager::start_scan(unsigned doc_index)
     scan_document.scan_progress = 0.0;
     Q_EMIT document_scan_progress_changed(d_->curr_scan_document_index);
 
-    d_->engine.start_scan();
+    // We can't start scanning right away because option setup above may not have been completed
+    // yet. These are done in-order, but any option reloads caused by setting the options will
+    // start after this function completes, so requires additional synthronization to not
+    // be issued when the scanning is active.
+    d_->engine.call_when_idle([this]() { d_->engine.start_scan(); });
 }
 
 void DocumentManager::reopen_current_device()
