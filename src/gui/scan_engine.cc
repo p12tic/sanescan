@@ -422,12 +422,10 @@ void ScanEngine::request_option_values()
 
 void ScanEngine::refresh_after_set_if_needed(SaneOptionSetInfo set_info)
 {
-    if ((set_info & SaneOptionSetInfo::RELOAD_PARAMS) != SaneOptionSetInfo::NONE) {
+    if ((set_info & SaneOptionSetInfo::RELOAD_OPTIONS) != SaneOptionSetInfo::NONE) {
         request_options();
     }
-    if ((set_info & (SaneOptionSetInfo::RELOAD_OPTIONS | SaneOptionSetInfo::INEXACT)) !=
-        SaneOptionSetInfo::NONE)
-    {
+    if (has_flag(set_info, SaneOptionSetInfo::INEXACT)) {
         request_option_values();
     }
 }
