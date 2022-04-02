@@ -71,6 +71,8 @@ private:
     static std::size_t compute_read_lines(std::size_t line_bytes);
 
     std::vector<SaneOptionGroupDestriptor> task_get_option_groups();
+    std::optional<SaneOptionIndexedValue>
+        task_get_option_value(const SaneOptionDescriptor& desc) const;
     SaneOptionSetInfo task_set_option_value(std::size_t index, const SaneOptionValue& value) const;
 
 private:
