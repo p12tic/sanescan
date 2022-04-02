@@ -52,6 +52,8 @@ public:
                                                     const SaneOptionValue& value);
     std::future<SaneOptionSetInfo> set_option_value_auto(std::size_t index);
 
+    std::future<SaneOptionSetInfo> set_option_values(const std::vector<SaneOptionIndexedValue>& values);
+
     std::future<SaneParameters> get_parameters();
 
     std::future<void> start();
@@ -67,6 +69,9 @@ private:
     void task_start_read();
     void task_schedule_read();
     static std::size_t compute_read_lines(std::size_t line_bytes);
+
+    std::vector<SaneOptionGroupDestriptor> task_get_option_groups();
+    SaneOptionSetInfo task_set_option_value(std::size_t index, const SaneOptionValue& value) const;
 
 private:
     struct Private;

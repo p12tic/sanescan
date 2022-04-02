@@ -204,30 +204,7 @@ std::future<std::vector<SaneOptionGroupDestriptor>>
 {
     return d_->executor->schedule_task<std::vector<SaneOptionGroupDestriptor>>([this]()
     {
-        auto count = retrieve_option_count(d_->handle);
-
-        std::vector<SaneOptionGroupDestriptor> result;
-
-        SaneOptionGroupDestriptor curr_group;
-        for (int i = 1; i < count; ++i)
-        {
-            const auto* desc = sane_get_option_descriptor(d_->handle, i);
-            if (desc->type == SANE_TYPE_GROUP) {
-                if (!curr_group.options.empty()) {
-                    result.push_back(std::move(curr_group));
-                }
-
-                curr_group = convert_sane_option_group_descriptor(desc);
-            } else {
-                curr_group.options.push_back(convert_sane_option_descriptor(i, desc));
-            }
-        }
-        if (!curr_group.options.empty()) {
-            result.push_back(std::move(curr_group));
-        }
-
-        d_->task_option_descriptors = result;
-        return result;
+        return task_get_option_groups();
     });
 }
 
@@ -335,58 +312,7 @@ std::future<SaneOptionSetInfo>
 {
     return d_->executor->schedule_task<SaneOptionSetInfo>([&, index, value]()
     {
-        SANE_Int info = 0;
-
-        if (std::get_if<SaneOptionValueNone>(&value.value)) {
-            throw std::invalid_argument("Option None is invalid in set_option_value");
-        }
-
-        // note that we expect the caller to send correct data type for the option
-        const auto* bool_values = value.as_bool_vector();
-        if (bool_values) {
-            std::vector<SANE_Word> temp;
-
-            // implicit conversion from bool to word will do the right thing
-            temp.assign(bool_values->begin(), bool_values->end());
-            throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
-                                                              SANE_ACTION_SET_VALUE,
-                                                              temp.data(), &info));
-            return sane_options_info_to_sanescan(info);
-        }
-
-        const auto* int_values = value.as_int_vector();
-        if (int_values) {
-            static_assert(sizeof(SANE_Word) == sizeof(int));
-            void* ptr = const_cast<void*>(static_cast<const void*>(int_values->data()));
-            throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
-                                                              SANE_ACTION_SET_VALUE,
-                                                              ptr, &info));
-            return sane_options_info_to_sanescan(info);
-        }
-
-        const auto* double_values = value.as_double_vector();
-        if (double_values) {
-            std::vector<SANE_Word> temp;
-            temp.resize(double_values->size());
-            for (std::size_t i = 0; i < temp.size(); ++i) {
-                temp[i] = SANE_FIX((*double_values)[i]);
-            }
-            throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
-                                                              SANE_ACTION_SET_VALUE,
-                                                              temp.data(), &info));
-            return sane_options_info_to_sanescan(info);
-        }
-
-        const auto* string = value.as_string();
-        if (string) {
-            void* ptr = const_cast<void*>(static_cast<const void*>(string->c_str()));
-            throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
-                                                              SANE_ACTION_SET_VALUE,
-                                                              ptr, &info));
-            return sane_options_info_to_sanescan(info);
-        }
-
-        throw SaneException("Option variant is expected to carry option value");
+        return task_set_option_value(index, value);
     });
 }
 
@@ -540,5 +466,91 @@ void SaneDeviceWrapper::cancel()
         sane_cancel(d_->handle);
     });
 }
+
+std::vector<SaneOptionGroupDestriptor> SaneDeviceWrapper::task_get_option_groups()
+{
+    auto count = retrieve_option_count(d_->handle);
+
+    std::vector<SaneOptionGroupDestriptor> result;
+
+    SaneOptionGroupDestriptor curr_group;
+    for (int i = 1; i < count; ++i)
+    {
+        const auto* desc = sane_get_option_descriptor(d_->handle, i);
+        if (desc->type == SANE_TYPE_GROUP) {
+            if (!curr_group.options.empty()) {
+                result.push_back(std::move(curr_group));
+            }
+
+            curr_group = convert_sane_option_group_descriptor(desc);
+        } else {
+            curr_group.options.push_back(convert_sane_option_descriptor(i, desc));
+        }
+    }
+    if (!curr_group.options.empty()) {
+        result.push_back(std::move(curr_group));
+    }
+
+    d_->task_option_descriptors = result;
+    return result;
+}
+
+SaneOptionSetInfo SaneDeviceWrapper::task_set_option_value(std::size_t index,
+                                                           const SaneOptionValue& value) const
+{
+    SANE_Int info = 0;
+
+    if (std::get_if<SaneOptionValueNone>(&value.value)) {
+        throw std::invalid_argument("Option None is invalid in set_option_value");
+    }
+
+    // note that we expect the caller to send correct data type for the option
+    const auto* bool_values = value.as_bool_vector();
+    if (bool_values) {
+        std::vector<SANE_Word> temp;
+
+        // implicit conversion from bool to word will do the right thing
+        temp.assign(bool_values->begin(), bool_values->end());
+        throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
+                                                          SANE_ACTION_SET_VALUE,
+                                                          temp.data(), &info));
+        return sane_options_info_to_sanescan(info);
+    }
+
+    const auto* int_values = value.as_int_vector();
+    if (int_values) {
+        static_assert(sizeof(SANE_Word) == sizeof(int));
+        void* ptr = const_cast<void*>(static_cast<const void*>(int_values->data()));
+        throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
+                                                          SANE_ACTION_SET_VALUE,
+                                                          ptr, &info));
+        return sane_options_info_to_sanescan(info);
+    }
+
+    const auto* double_values = value.as_double_vector();
+    if (double_values) {
+        std::vector<SANE_Word> temp;
+        temp.resize(double_values->size());
+        for (std::size_t i = 0; i < temp.size(); ++i) {
+            temp[i] = SANE_FIX((*double_values)[i]);
+        }
+        throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
+                                                          SANE_ACTION_SET_VALUE,
+                                                          temp.data(), &info));
+        return sane_options_info_to_sanescan(info);
+    }
+
+    const auto* string = value.as_string();
+    if (string) {
+        void* ptr = const_cast<void*>(static_cast<const void*>(string->c_str()));
+        throw_if_sane_status_not_good(sane_control_option(d_->handle, index,
+                                                          SANE_ACTION_SET_VALUE,
+                                                          ptr, &info));
+        return sane_options_info_to_sanescan(info);
+    }
+
+    throw SaneException("Option variant is expected to carry option value");
+}
+
 
 } // namespace sanescan
