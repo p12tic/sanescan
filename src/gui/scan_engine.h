@@ -90,6 +90,14 @@ public:
     void set_option_value(const std::string& name, const SaneOptionValue& value);
     void set_option_value_auto(const std::string& name);
 
+    /** Sets options values. Once the request finishes, `options_changed` or `option_values_changed`
+        signal may be emitted if any values of the options become different then what was set.
+        This function handles the case when certain options depend on other options being enabled.
+        In such case options are set in appropriate order so that first options are enabled and
+        then set to appropriate values.
+    */
+    void set_option_values(const std::map<std::string, SaneOptionValue>& values);
+
     /** Starts a scan. Once a scan is finished, `scan_finished` signal will be emitted. Whenever
         scan image is updated, `image_updated` signal will be emitted.
     */

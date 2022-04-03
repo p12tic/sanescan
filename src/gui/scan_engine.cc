@@ -316,6 +316,33 @@ void ScanEngine::set_option_value_auto(const std::string& name)
     }));
 }
 
+void ScanEngine::set_option_values(const std::map<std::string, SaneOptionValue>& values)
+{
+#if SANESCAN_ENGINE_DEBUG_CALLS
+    std::cout << "ScanEngine::set_option_value:\n";
+    for (const auto& [name, value] : values) {
+        std::cout << "    " << name << "=" << value << "\n";
+    }
+#endif
+
+    if (!d_->device_open) {
+        throw std::runtime_error("Can't access options when device is closed");
+    }
+
+    std::vector<SaneOptionIndexedValue> indexed_values;
+    for (const auto& [name, value] : values) {
+        const auto& desc = get_option_descriptor(name);
+        indexed_values.emplace_back(desc.index, value);
+    }
+
+    push_poller(std::make_unique<Poller<SaneOptionSetInfo>>(
+                d_->device_wrapper->set_option_values(indexed_values),
+                [this](SaneOptionSetInfo set_info)
+    {
+        refresh_after_set_if_needed(set_info);
+    }));
+}
+
 void ScanEngine::start_scan()
 {
 #if SANESCAN_ENGINE_DEBUG_CALLS

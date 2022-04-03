@@ -276,21 +276,7 @@ void DocumentManager::start_scan(unsigned doc_index)
         // Note that the preview is not touched as only the current scan document has it and it's
         // always for the current scanner.
 
-        // Now apply the options to the engine. Do it two times so that any disabled options are
-        // re-enabled and then set on the second try.
-        for (int i = 0; i < 2; ++i) {
-            // Iterating over document.scan_option_values because the options for the scan document
-            // may be changed by callbacks from the engine in case of re-enabled options. This may
-            // overwrite some of the options we want to set.
-            for (const auto& [name, value] : document.scan_option_values) {
-                auto desc = find_option_descriptor(document.scan_option_descriptors, name);
-                if (!value.is_none() && desc.has_value() &&
-                    has_flag(desc.value().cap, SaneCap::SOFT_SELECT))
-                {
-                    d_->engine.set_option_value(name, value);
-                }
-            }
-        }
+        d_->engine.set_option_values(document.scan_option_values);
     }
 
     scan_document.locked = true;
