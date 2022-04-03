@@ -246,6 +246,59 @@ std::future<SaneOptionSetInfo>
     });
 }
 
+std::future<SaneOptionSetInfo>
+    SaneDeviceWrapper::set_option_values(const std::vector<SaneOptionIndexedValue>& values)
+{
+    return d_->executor->schedule_task<SaneOptionSetInfo>([this, values]()
+    {
+        SaneOptionSetInfo combined_status = SaneOptionSetInfo::NONE;
+
+        // Get up to date option group description
+        task_get_option_groups();
+
+        // We need to protect against SANE driver continuously requesting us to reload. Worst case
+        // it would ask to reload options after each option being set.
+        for (int i = 0; i < values.size(); ++i) {
+            bool all_set_correctly = true;
+
+            for (const auto& value_index : values) {
+                const auto& desc = d_->task_option_descriptors.at(value_index.index);
+                if (desc.type == SaneValueType::BUTTON) {
+                    continue;
+                }
+                if (has_flag(desc.cap, SaneCap::INACTIVE) ||
+                    !has_flag(desc.cap, SaneCap::SOFT_SELECT))
+                {
+                    continue;
+                }
+
+                // SANE drivers often don't check if value being set has changed. This may cause
+                // same option being set repeatedly, RELOAD_OPTIONS being returned and no progress
+                // being made.
+                auto curr_value = task_get_option_value(desc);
+                if (curr_value.has_value() && curr_value.value().value == value_index.value) {
+                    continue;
+                }
+
+                auto option_status = task_set_option_value(value_index.index, value_index.value);
+
+                combined_status = combined_status | option_status;
+
+                if (has_flag(option_status, SaneOptionSetInfo::RELOAD_OPTIONS)) {
+                    task_get_option_groups();
+                    all_set_correctly = false;
+                    break;
+                }
+            }
+
+            if (all_set_correctly) {
+                break;
+            }
+        }
+        return combined_status;
+    });
+}
+
 std::future<SaneParameters>
     SaneDeviceWrapper::get_parameters()
 {

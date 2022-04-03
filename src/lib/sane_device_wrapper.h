@@ -52,7 +52,14 @@ public:
                                                     const SaneOptionValue& value);
     std::future<SaneOptionSetInfo> set_option_value_auto(std::size_t index);
 
-    std::future<SaneOptionSetInfo> set_option_values(const std::vector<SaneOptionIndexedValue>& values);
+    /** Sets option values. This function handles the case when certain options depend on other
+        options being enabled. In such case options are set in appropriate order so that first
+        options are enabled and then set to appropriate values.
+
+        Options of button type are ignored.
+    */
+    std::future<SaneOptionSetInfo>
+        set_option_values(const std::vector<SaneOptionIndexedValue>& values);
 
     std::future<SaneParameters> get_parameters();
 
