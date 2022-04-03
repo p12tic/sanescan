@@ -26,6 +26,7 @@ set(SOURCES
     file_loader_pdf.cc
     sane_device_wrapper.cc
     sane_types.cc
+    sane_types_conv.cc
     sane_utils.cc
     sane_wrapper.cc
     scan_image_buffer.cc

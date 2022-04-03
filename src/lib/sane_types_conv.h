@@ -49,6 +49,14 @@ inline SaneOptionSetInfo sane_options_info_to_sanescan(SANE_Int info)
     return static_cast<SaneOptionSetInfo>(info);
 }
 
+SaneOptionDescriptor sane_option_descriptor_to_sanescan(int index,
+                                                        const SANE_Option_Descriptor* desc);
+
+SaneOptionGroupDestriptor
+    sane_option_descriptor_to_sanescan_group(const SANE_Option_Descriptor* desc);
+
+SaneParameters sane_parameters_to_sanescan(const SANE_Parameters& params);
+
 } // namespace sanescan
 
 #endif

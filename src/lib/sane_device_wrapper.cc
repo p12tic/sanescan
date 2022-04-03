@@ -45,103 +45,6 @@ int retrieve_option_count(void* handle)
     return num_options;
 }
 
-int convert_sane_option_size(SANE_Value_Type type, int size)
-{
-    switch (type) {
-        case SANE_TYPE_BOOL:
-        case SANE_TYPE_INT:
-        case SANE_TYPE_FIXED:
-            return size / sizeof(SANE_Word);
-        default:
-            return size;
-    }
-}
-
-SaneOptionDescriptor convert_sane_option_descriptor(int index, const SANE_Option_Descriptor* desc)
-{
-    SaneOptionDescriptor option;
-    option.index = index;
-    option.name = desc->name;
-    option.title = desc->title;
-    option.description = desc->desc;
-    option.unit = sane_unit_to_sanescan(desc->unit);
-    option.type = sane_value_type_to_sanescan(desc->type);
-    option.size = convert_sane_option_size(desc->type, desc->size);
-    option.cap = sane_cap_to_sanescan(desc->cap);
-
-    switch (desc->constraint_type) {
-        default:
-        case SANE_CONSTRAINT_NONE: {
-            option.constraint = SaneConstraintNone{};
-            break;
-        }
-        case SANE_CONSTRAINT_RANGE: {
-            const auto* range = desc->constraint.range;
-            switch (option.type) {
-                case SaneValueType::INT: {
-                    option.constraint = SaneConstraintIntRange{range->min, range->max, range->quant};
-                    break;
-                }
-                case SaneValueType::FLOAT: {
-                    option.constraint = SaneConstraintFloatRange{SANE_UNFIX(range->min),
-                                                                 SANE_UNFIX(range->max),
-                                                                 SANE_UNFIX(range->quant)};
-                    break;
-                }
-                default:
-                    throw SaneException("word list constraint used on wrong option type " +
-                                        std::to_string(desc->type));
-            }
-            break;
-        }
-        case SANE_CONSTRAINT_STRING_LIST: {
-            const SANE_String_Const* ptr = desc->constraint.string_list;
-            SaneConstraintStringList constraint;
-            while (*ptr != nullptr) {
-                constraint.strings.push_back(*ptr++);
-            }
-            option.constraint = std::move(constraint);
-            break;
-        }
-        case SANE_CONSTRAINT_WORD_LIST: {
-            const SANE_Word* ptr = desc->constraint.word_list;
-            switch (option.type) {
-                case SaneValueType::INT: {
-                    SaneConstraintIntList constraint;
-                    int length = *ptr++;
-                    constraint.numbers.assign(ptr, ptr + length);
-                    option.constraint = std::move(constraint);
-                    break;
-                }
-                case SaneValueType::FLOAT: {
-                    SaneConstraintFloatList constraint;
-                    int length = *ptr++;
-                    constraint.numbers.reserve(length);
-                    for (int i = 0; i < length; ++i) {
-                        constraint.numbers.push_back(SANE_UNFIX(*ptr++));
-                    }
-                    option.constraint = std::move(constraint);
-                    break;
-                }
-                default:
-                    throw SaneException("word list constraint used on wrong option type " +
-                                        std::to_string(desc->type));
-            }
-            break;
-        }
-    }
-    return option;
-}
-
-SaneOptionGroupDestriptor convert_sane_option_group_descriptor(const SANE_Option_Descriptor* desc)
-{
-    SaneOptionGroupDestriptor option_group;
-    option_group.name = desc->name;
-    option_group.title = desc->title;
-    option_group.description = desc->desc;
-    return option_group;
-}
-
 bool is_option_status_no_option(SANE_Status status)
 {
     switch (status) {
@@ -306,15 +209,7 @@ std::future<SaneParameters>
     {
         SANE_Parameters params;
         throw_if_sane_status_not_good(sane_get_parameters(d_->handle, &params));
-
-        SaneParameters result;
-        result.frame = sane_frame_type_to_sanescan(params.format);
-        result.last_frame = params.last_frame;
-        result.bytes_per_line = params.bytes_per_line;
-        result.pixels_per_line = params.pixels_per_line;
-        result.lines = params.lines;
-        result.depth = params.depth;
-        return result;
+        return sane_parameters_to_sanescan(params);
     });
 }
 
@@ -454,9 +349,9 @@ std::vector<SaneOptionGroupDestriptor> SaneDeviceWrapper::task_get_option_groups
                 result.push_back(std::move(curr_group));
             }
 
-            curr_group = convert_sane_option_group_descriptor(desc);
+            curr_group = sane_option_descriptor_to_sanescan_group(desc);
         } else {
-            auto converted = convert_sane_option_descriptor(i, desc);
+            auto converted = sane_option_descriptor_to_sanescan(i, desc);
             curr_group.options.push_back(converted);
             descriptors[i] = converted;
         }
