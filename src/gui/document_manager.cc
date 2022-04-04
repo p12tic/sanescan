@@ -121,99 +121,16 @@ struct DocumentManager::Private {
 DocumentManager::DocumentManager() :
     d_{std::make_unique<Private>()}
 {
-    connect(&d_->engine_timer, &QTimer::timeout, [this]()
-    {
-        try {
-            d_->engine.perform_step();
-        } catch (...) {
-            // FIXME: we should show the error in the UI
-            std::cerr << "SaneScan: Got error\n";
-            reopen_current_device();
-        }
-    });
+    connect(&d_->engine_timer, &QTimer::timeout, [this]() { periodic_engine_poll(); });
     connect(&d_->engine, &ScanEngine::start_polling, [this]() { d_->engine_timer.start(1); });
     connect(&d_->engine, &ScanEngine::stop_polling, [this]() { d_->engine_timer.stop(); });
-    connect(&d_->engine, &ScanEngine::devices_refreshed, [this]()
-    {
-        d_->all_documents_locked = false;
-
-        if (d_->documents.empty()) {
-            d_->documents.emplace_back(d_->next_scan_id++);
-            Q_EMIT new_document_added(0, false);
-        }
-
-        Q_EMIT available_devices_changed();
-    });
-
-    connect(&d_->engine, &ScanEngine::options_changed, [this]()
-    {
-        auto& document = curr_scan_document();
-        document.scan_option_descriptors = d_->engine.get_option_groups();
-        Q_EMIT document_option_descriptors_changed(d_->curr_scan_document_index);
-
-        auto scan_bounds = get_scan_size_from_options(document.scan_option_descriptors);
-        if (document.preview_scan_bounds != scan_bounds) {
-            setup_empty_preview_image(document, scan_bounds);
-            Q_EMIT document_preview_image_changed(d_->curr_scan_document_index);
-        }
-    });
-    connect(&d_->engine, &ScanEngine::option_values_changed, [this]()
-    {
-        auto& document = curr_scan_document();
-        document.scan_option_values = d_->engine.get_option_values();
-        Q_EMIT document_option_values_changed(d_->curr_scan_document_index);
-    });
-    connect(&d_->engine, &ScanEngine::device_opened, [this]()
-    {
-        d_->all_documents_locked = false;
-        Q_EMIT document_locking_changed();
-    });
-    connect(&d_->engine, &ScanEngine::device_closed, [this]()
-    {
-        auto& document = curr_scan_document();
-        d_->all_documents_locked = true;
-        Q_EMIT document_locking_changed();
-
-        clear_preview_image(document);
-
-        if (!d_->open_device_after_close.empty()) {
-            std::string name;
-            name.swap(d_->open_device_after_close);
-            d_->engine.open_device(name);
-        }
-    });
-    connect(&d_->engine, &ScanEngine::image_updated, [this]()
-    {
-        auto& document = curr_scan_document();
-        document.scanned_image = d_->engine.scan_image();
-        Q_EMIT document_image_changed(d_->curr_scan_document_index);
-    });
-    connect(&d_->engine, &ScanEngine::scan_finished, [this]()
-    {
-        {
-            auto& document = curr_scan_document();
-            document.scan_progress.reset();
-            Q_EMIT document_scan_progress_changed(d_->curr_scan_document_index);
-        }
-
-        // Setup a new document that would serve as a template to repeat the current scan.
-        {
-            auto new_document_index = d_->documents.size();
-            auto& new_document = d_->documents.emplace_back(d_->next_scan_id++);
-            auto& document = curr_scan_document();
-            new_document.device = document.device;
-            std::swap(new_document.preview_config, document.preview_config);
-            std::swap(new_document.preview_image, document.preview_image);
-            std::swap(new_document.preview_scan_bounds, document.preview_scan_bounds);
-            new_document.scan_option_descriptors = document.scan_option_descriptors;
-            new_document.scan_option_values = document.scan_option_values;
-            d_->curr_scan_document_index = new_document_index;
-            Q_EMIT new_document_added(new_document_index, true);
-        }
-
-        // At least the genesys backend can't perform two scans back to back.
-        reopen_current_device();
-    });
+    connect(&d_->engine, &ScanEngine::devices_refreshed, [this]() { devices_refreshed(); });
+    connect(&d_->engine, &ScanEngine::options_changed, [this]() { options_changed(); });
+    connect(&d_->engine, &ScanEngine::option_values_changed, [this]() { option_values_changed(); });
+    connect(&d_->engine, &ScanEngine::device_opened, [this]() { device_opened(); });
+    connect(&d_->engine, &ScanEngine::device_closed, [this]() { device_closed(); });
+    connect(&d_->engine, &ScanEngine::image_updated, [this]() { image_updated(); });
+    connect(&d_->engine, &ScanEngine::scan_finished, [this]() { scan_finished(); });
 }
 
 DocumentManager::~DocumentManager() = default;
@@ -362,6 +279,104 @@ unsigned DocumentManager::curr_scan_document_index() const
 bool DocumentManager::are_documents_globally_locked() const
 {
     return d_->all_documents_locked;
+}
+
+void DocumentManager::periodic_engine_poll()
+{
+    try {
+        d_->engine.perform_step();
+    } catch (...) {
+        // FIXME: we should show the error in the UI
+        std::cerr << "SaneScan: Got error\n";
+        reopen_current_device();
+    }
+}
+
+void DocumentManager::devices_refreshed()
+{
+    d_->all_documents_locked = false;
+
+    if (d_->documents.empty()) {
+        d_->documents.emplace_back(d_->next_scan_id++);
+        Q_EMIT new_document_added(0, false);
+    }
+
+    Q_EMIT available_devices_changed();
+}
+
+void DocumentManager::options_changed()
+{
+    auto& document = curr_scan_document();
+    document.scan_option_descriptors = d_->engine.get_option_groups();
+    Q_EMIT document_option_descriptors_changed(d_->curr_scan_document_index);
+
+    auto scan_bounds = get_scan_size_from_options(document.scan_option_descriptors);
+    if (document.preview_scan_bounds != scan_bounds) {
+        setup_empty_preview_image(document, scan_bounds);
+        Q_EMIT document_preview_image_changed(d_->curr_scan_document_index);
+    }
+}
+
+void DocumentManager::option_values_changed()
+{
+    auto& document = curr_scan_document();
+    document.scan_option_values = d_->engine.get_option_values();
+    Q_EMIT document_option_values_changed(d_->curr_scan_document_index);
+}
+
+void DocumentManager::device_opened()
+{
+    d_->all_documents_locked = false;
+    Q_EMIT document_locking_changed();
+}
+
+void DocumentManager::device_closed()
+{
+    auto& document = curr_scan_document();
+    d_->all_documents_locked = true;
+    Q_EMIT document_locking_changed();
+
+    clear_preview_image(document);
+
+    if (!d_->open_device_after_close.empty()) {
+        std::string name;
+        name.swap(d_->open_device_after_close);
+        d_->engine.open_device(name);
+    }
+}
+
+void DocumentManager::image_updated()
+{
+    auto& document = curr_scan_document();
+    document.scanned_image = d_->engine.scan_image();
+    Q_EMIT document_image_changed(d_->curr_scan_document_index);
+}
+
+void DocumentManager::scan_finished()
+{
+    {
+        auto& document = curr_scan_document();
+        document.scan_progress.reset();
+        Q_EMIT document_scan_progress_changed(d_->curr_scan_document_index);
+    }
+
+    // Setup a new document that would serve as a template to repeat the current scan.
+    {
+        auto new_document_index = d_->documents.size();
+        auto& new_document = d_->documents.emplace_back(d_->next_scan_id++);
+        auto& document = curr_scan_document();
+        new_document.device = document.device;
+        std::swap(new_document.preview_config, document.preview_config);
+        std::swap(new_document.preview_image, document.preview_image);
+        std::swap(new_document.preview_scan_bounds, document.preview_scan_bounds);
+        new_document.scan_option_descriptors = document.scan_option_descriptors;
+        new_document.scan_option_values = document.scan_option_values;
+        d_->curr_scan_document_index = new_document_index;
+        Q_EMIT new_document_added(new_document_index, true);
+    }
+
+    // At least the genesys backend can't perform two scans back to back.
+    reopen_current_device();
 }
 
 } // namespace sanescan

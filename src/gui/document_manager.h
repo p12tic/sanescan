@@ -89,6 +89,15 @@ private:
                                    const std::optional<QRectF>& scan_bounds_mm);
     void clear_preview_image(ScanDocument& document);
 
+    void periodic_engine_poll();
+    void devices_refreshed();
+    void options_changed();
+    void option_values_changed();
+    void device_opened();
+    void device_closed();
+    void image_updated();
+    void scan_finished();
+
     struct Private;
     std::unique_ptr<Private> d_;
 };
