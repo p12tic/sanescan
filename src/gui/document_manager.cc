@@ -285,6 +285,10 @@ void DocumentManager::periodic_engine_poll()
 {
     try {
         d_->engine.perform_step();
+    } catch (const std::exception& e) {
+        // FIXME: we should show the error in the UI
+        std::cerr << "SaneScan: Got error: " << e.what() << "\n";
+        reopen_current_device();
     } catch (...) {
         // FIXME: we should show the error in the UI
         std::cerr << "SaneScan: Got error\n";
