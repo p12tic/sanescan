@@ -55,4 +55,9 @@ QImage qimage_from_cv_mat(const cv::Mat& mat)
                   qimage_format_from_depth_channels(mat.elemSize1(), mat.channels()));
 }
 
+QRectF qrectf_from_cv_rect2d(const cv::Rect2d& rect)
+{
+    return QRectF{rect.x, rect.y, rect.width, rect.height};
+}
+
 } // namespace sanescan

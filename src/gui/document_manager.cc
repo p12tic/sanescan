@@ -18,6 +18,7 @@
 
 #include "document_manager.h"
 #include "scan_engine.h"
+#include "lib/scan_area_utils.h"
 #include "util/math.h"
 
 #include <QtCore/QTimer>
@@ -31,33 +32,6 @@ namespace sanescan {
 
 namespace {
 
-std::optional<QRectF>
-    get_scan_size_from_options(const std::vector<SaneOptionGroupDestriptor>& options)
-{
-    auto tl_x_desc = find_option_descriptor(options, "tl-x");
-    auto tl_y_desc = find_option_descriptor(options, "tl-y");
-    auto br_x_desc = find_option_descriptor(options, "br-x");
-    auto br_y_desc = find_option_descriptor(options, "br-y");
-
-    if (!tl_x_desc || !tl_y_desc || !br_x_desc || !br_y_desc) {
-        return {};
-    }
-
-    auto* tl_x_constraint = std::get_if<SaneConstraintFloatRange>(&tl_x_desc->constraint);
-    auto* tl_y_constraint = std::get_if<SaneConstraintFloatRange>(&tl_y_desc->constraint);
-    auto* br_x_constraint = std::get_if<SaneConstraintFloatRange>(&br_x_desc->constraint);
-    auto* br_y_constraint = std::get_if<SaneConstraintFloatRange>(&br_y_desc->constraint);
-
-    if (!tl_x_constraint || !tl_y_constraint || !br_x_constraint || !br_y_constraint) {
-        return {};
-    }
-
-    QRectF rect = {tl_x_constraint->min, tl_y_constraint->min,
-                   br_x_constraint->max - tl_x_constraint->min,
-                   br_y_constraint->max - tl_y_constraint->min};
-    return {rect.normalized()};
-}
-
 PreviewConfig get_default_preview_config()
 {
     // Use A4 size by default. At the given dpi the blank image is relatively small at 163x233
@@ -65,14 +39,14 @@ PreviewConfig get_default_preview_config()
     return PreviewConfig{210, 297, 20};
 }
 
-PreviewConfig setup_blank_preview_size(const std::optional<QRectF>& bounds_mm)
+PreviewConfig setup_blank_preview_size(const std::optional<cv::Rect2d>& bounds_mm)
 {
     if (!bounds_mm.has_value()) {
         return get_default_preview_config();
     }
 
-    double width_mm = bounds_mm->width();
-    double height_mm = bounds_mm->height();
+    double width_mm = bounds_mm->width;
+    double height_mm = bounds_mm->height;
 
     // Do some checking against scanners returning useless size (e.g. one dimension much larger
     // than the other). In such case the user would need to do a preview scan anyway because
@@ -106,12 +80,16 @@ PreviewConfig setup_blank_preview_size(const std::optional<QRectF>& bounds_mm)
 } // namespace
 
 struct DocumentManager::Private {
-    std::string open_device_after_close;
-
     ScanEngine engine;
     QTimer engine_timer;
 
     bool all_documents_locked = false;
+
+    std::string open_device_after_close;
+
+    // Set when reopening device after a scan. Otherwise driver defaults will overwrite what's
+    // stored on the document.
+    bool ignore_next_option_values_change = false;
 
     std::vector<ScanDocument> documents;
     std::size_t curr_scan_document_index = 0;
@@ -238,7 +216,7 @@ ScanDocument& DocumentManager::curr_scan_document()
 }
 
 void DocumentManager::setup_empty_preview_image(ScanDocument& document,
-                                                const std::optional<QRectF>& scan_bounds_mm)
+                                                const std::optional<cv::Rect2d>& scan_bounds_mm)
 {
     document.preview_scan_bounds = scan_bounds_mm;
     document.preview_config = setup_blank_preview_size(scan_bounds_mm);
@@ -324,7 +302,12 @@ void DocumentManager::options_changed()
 void DocumentManager::option_values_changed()
 {
     auto& document = curr_scan_document();
-    document.scan_option_values = d_->engine.get_option_values();
+    if (d_->ignore_next_option_values_change) {
+        d_->engine.set_option_values(document.scan_option_values);
+        d_->ignore_next_option_values_change = false;
+    } else {
+        document.scan_option_values = d_->engine.get_option_values();
+    }
     Q_EMIT document_option_values_changed(d_->curr_scan_document_index);
 }
 
@@ -380,6 +363,7 @@ void DocumentManager::scan_finished()
     }
 
     // At least the genesys backend can't perform two scans back to back.
+    d_->ignore_next_option_values_change = true;
     reopen_current_device();
 }
 

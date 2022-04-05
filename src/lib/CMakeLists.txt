@@ -29,6 +29,7 @@ set(SOURCES
     sane_types_conv.cc
     sane_utils.cc
     sane_wrapper.cc
+    scan_area_utils.cc
     scan_image_buffer.cc
     task_executor.cc
 )

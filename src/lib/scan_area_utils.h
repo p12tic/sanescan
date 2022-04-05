@@ -16,17 +16,23 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_GUI_QIMAGE_UTILS_H
-#define SANESCAN_GUI_QIMAGE_UTILS_H
+#ifndef SANESCAN_LIB_SCAN_AREA_UTILS_H
+#define SANESCAN_LIB_SCAN_AREA_UTILS_H
 
-#include <opencv2/core/mat.hpp>
-#include <QtGui/QImage>
+#include "sane_types.h"
+#include <opencv2/core/types.hpp>
+#include <map>
+#include <optional>
+#include <string>
 
 namespace sanescan {
 
-QImage qimage_from_cv_mat(const cv::Mat& mat);
-QRectF qrectf_from_cv_rect2d(const cv::Rect2d& rect);
+std::optional<cv::Rect2d>
+    get_curr_scan_area_from_options(const std::map<std::string, SaneOptionValue>& options);
+
+std::optional<cv::Rect2d>
+    get_scan_size_from_options(const std::vector<SaneOptionGroupDestriptor>& options);
 
 } // namespace sanescan
 
-#endif // SANESCAN_GUI_QIMAGE_UTILS_H
+#endif // SANESCAN_LIB_SCAN_AREA_UTILS_H

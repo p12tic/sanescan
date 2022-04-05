@@ -86,7 +86,7 @@ private:
 
     ScanDocument& curr_scan_document();
     void setup_empty_preview_image(ScanDocument& document,
-                                   const std::optional<QRectF>& scan_bounds_mm);
+                                   const std::optional<cv::Rect2d>& scan_bounds_mm);
     void clear_preview_image(ScanDocument& document);
 
     void periodic_engine_poll();

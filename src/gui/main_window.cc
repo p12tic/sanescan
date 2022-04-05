@@ -27,6 +27,7 @@
 #include "pagelist/page_list_model.h"
 #include "pagelist/page_list_view_delegate.h"
 #include "../util/math.h"
+#include "../lib/scan_area_utils.h"
 
 #include <iostream>
 #include <optional>
@@ -35,32 +36,6 @@
 namespace sanescan {
 
 namespace {
-
-
-std::optional<QRectF>
-    get_curr_scan_area_from_options(const std::map<std::string, SaneOptionValue>& options)
-{
-    auto get_value = [&](const std::string& name) -> std::optional<double>
-    {
-        if (options.count(name) == 0) {
-            return {};
-        }
-        return options.at(name).as_double();
-    };
-
-    auto value_tl_x = get_value("tl-x");
-    auto value_tl_y = get_value("tl-y");
-    auto value_br_x = get_value("br-x");
-    auto value_br_y = get_value("br-y");
-
-    if (!value_tl_x.has_value() || !value_tl_y.has_value() ||
-        !value_br_x.has_value() || !value_br_y.has_value()) {
-        return {};
-    }
-
-    return QRectF{value_tl_x.value(), value_tl_y.value(),
-                  value_br_x.value() - value_tl_x.value(), value_br_y.value() - value_tl_y.value()};
-}
 
 QRectF scan_space_to_scene_space(const QRectF& rect, double dpi)
 {
@@ -291,9 +266,8 @@ void MainWindow::maybe_update_selection_after_setting_change(const std::string& 
         return;
     }
 
-    auto selection_rect = scan_space_to_scene_space(curr_scan_area_opt.value(),
+    auto selection_rect = scan_space_to_scene_space(qrectf_from_cv_rect2d(curr_scan_area_opt.value()),
                                                     document.preview_config.dpi);
-
     auto value_as_double = value.as_double();
     if (!value_as_double.has_value()) {
         return;
@@ -333,10 +307,10 @@ void MainWindow::image_area_selection_changed(const std::optional<QRectF>& rect)
         if (!document.preview_scan_bounds.has_value()) {
             throw std::runtime_error("Scan bounds does not have value unexpectedly");
         }
-        top = document.preview_scan_bounds->left();
-        bottom = document.preview_scan_bounds->top();
-        left = document.preview_scan_bounds->right();
-        right = document.preview_scan_bounds->bottom();
+        top = document.preview_scan_bounds->tl().x;
+        bottom = document.preview_scan_bounds->tl().y;
+        left = document.preview_scan_bounds->br().x;
+        right = document.preview_scan_bounds->br().y;
     }
 
     d_->ui->settings_widget->set_option_value("tl-x", left);

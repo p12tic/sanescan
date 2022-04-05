@@ -20,7 +20,6 @@
 #define SANESCAN_GUI_SCAN_DOCUMENT_H
 
 #include "lib/sane_types.h"
-#include <QtCore/QRectF>
 #include <opencv2/core/mat.hpp>
 #include <optional>
 #include <map>
@@ -41,7 +40,7 @@ struct ScanDocument {
 
     std::optional<cv::Mat> preview_image;
     PreviewConfig preview_config;
-    std::optional<QRectF> preview_scan_bounds;
+    std::optional<cv::Rect2d> preview_scan_bounds;
 
     std::optional<double> scan_progress;
     std::optional<cv::Mat> scanned_image;
