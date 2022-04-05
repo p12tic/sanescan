@@ -19,6 +19,7 @@
 #ifndef SANESCAN_UTIL_MATH_H
 #define SANESCAN_UTIL_MATH_H
 
+#include <opencv2/core/types.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <cmath>
 
@@ -64,6 +65,14 @@ constexpr double inch_to_mm(double inch)
 constexpr double mm_to_inch(double inch)
 {
     return inch / 25.4;
+}
+
+inline bool rect_almost_equal(const cv::Rect2d& a, const cv::Rect2d& b, double diff)
+{
+    return std::abs(a.tl().x - b.tl().x) <= diff
+            && std::abs(a.tl().y - b.tl().y) <= diff
+            && std::abs(a.br().x - b.br().x) <= diff
+            && std::abs(a.br().y - b.br().y) <= diff;
 }
 
 } // namespace sanescan
