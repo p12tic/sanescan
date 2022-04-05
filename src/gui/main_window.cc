@@ -174,8 +174,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(d_->ui->settings_widget, &ScanSettingsWidget::option_value_changed,
             [this](const auto& name, const auto& value)
     {
-        maybe_update_selection_after_setting_change(name, value);
         d_->manager.set_document_option(d_->active_document_index, name, value);
+        if (name == "tl-x" || name == "tl-y" || name == "br-x" || name == "br-y") {
+            update_selection_to_settings();
+        }
     });
     connect(d_->ui->settings_widget, &ScanSettingsWidget::scan_started,
             [this]() { start_scanning(); });
@@ -248,45 +250,24 @@ void MainWindow::switch_to_document(unsigned doc_index)
     }
 }
 
-void MainWindow::maybe_update_selection_after_setting_change(const std::string& name,
-                                                             const SaneOptionValue& value)
+void MainWindow::update_selection_to_settings()
 {
-    if (name != "tl-x" && name != "tl-y" && name != "br-x" && name != "br-y") {
-        return;
-    }
-
-    if (!d_->ui->image_area->get_selection_enabled()) {
-        return;
-    }
-
     auto& document = d_->manager.document(d_->active_document_index);
+    auto max_scan_area = get_scan_size_from_options(document.scan_option_descriptors);
+    auto curr_scan_area = get_curr_scan_area_from_options(document.scan_option_values);
 
-    auto curr_scan_area_opt = get_curr_scan_area_from_options(document.scan_option_values);
-    if (!curr_scan_area_opt.has_value()) {
+    if (!max_scan_area.has_value() || !curr_scan_area.has_value()) {
+        d_->ui->image_area->set_selection({});
         return;
     }
 
-    auto selection_rect = scan_space_to_scene_space(qrectf_from_cv_rect2d(curr_scan_area_opt.value()),
+    if (rect_almost_equal(curr_scan_area.value(), max_scan_area.value(), 0.1)) {
+        d_->ui->image_area->set_selection({});
+        return;
+    }
+
+    auto selection_rect = scan_space_to_scene_space(qrectf_from_cv_rect2d(curr_scan_area.value()),
                                                     document.preview_config.dpi);
-    auto value_as_double = value.as_double();
-    if (!value_as_double.has_value()) {
-        return;
-    }
-
-    auto scene_pos = mm_to_inch(value_as_double.value()) * document.preview_config.dpi;
-
-    if (name == "tl-x") {
-        selection_rect.setLeft(scene_pos);
-    }
-    if (name == "tl-y") {
-        selection_rect.setTop(scene_pos);
-    }
-    if (name == "br-x") {
-        selection_rect.setRight(scene_pos);
-    }
-    if (name == "br-y") {
-        selection_rect.setBottom(scene_pos);
-    }
     d_->ui->image_area->set_selection(selection_rect.normalized());
 }
 

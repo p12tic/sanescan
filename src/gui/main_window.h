@@ -47,8 +47,7 @@ private:
 
     void switch_to_document(unsigned doc_index);
 
-    void maybe_update_selection_after_setting_change(const std::string& name,
-                                                     const SaneOptionValue& value);
+    void update_selection_to_settings();
     void image_area_selection_changed(const std::optional<QRectF>& rect);
 
     struct Private;
