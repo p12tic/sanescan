@@ -315,15 +315,21 @@ void DocumentManager::device_opened()
 {
     d_->all_documents_locked = false;
     Q_EMIT document_locking_changed();
+
+    auto device_name = d_->engine.device_name();
+    for (std::size_t i = 0; i < d_->documents.size(); ++i) {
+        auto& document = d_->documents[i];
+        if (document.device.name != device_name) {
+            clear_preview_image(document);
+            Q_EMIT document_preview_image_changed(i);
+        }
+    }
 }
 
 void DocumentManager::device_closed()
 {
-    auto& document = curr_scan_document();
     d_->all_documents_locked = true;
     Q_EMIT document_locking_changed();
-
-    clear_preview_image(document);
 
     if (!d_->open_device_after_close.empty()) {
         std::string name;
