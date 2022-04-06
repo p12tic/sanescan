@@ -135,6 +135,7 @@ MainWindow::MainWindow(QWidget *parent) :
         }
 
         d_->page_list_model->set_image(document.scan_id, get_document_thumbnail(document));
+        update_selection_to_settings();
     });
 
     connect(&d_->manager, &DocumentManager::document_scan_progress_changed,
@@ -248,6 +249,7 @@ void MainWindow::switch_to_document(unsigned doc_index)
     } else if (document.preview_image.has_value()) {
         d_->ui->image_area->set_image(qimage_from_cv_mat(document.preview_image.value()));
     }
+    update_selection_to_settings();
 }
 
 void MainWindow::update_selection_to_settings()
