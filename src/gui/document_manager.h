@@ -46,7 +46,7 @@ public:
         the scan settings are transferred to curr_scan_document_index document and scanning is
         started.
     */
-    void start_scan(unsigned doc_index);
+    void start_scan(unsigned doc_index, ScanType type);
 
     /** Sets option for a particular document. Currently only document with curr_scan_document_index
         can have its options changed.

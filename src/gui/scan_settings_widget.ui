@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>878</height>
+    <width>398</width>
+    <height>876</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -63,6 +63,13 @@
       <widget class="QPushButton" name="b_refresh_devices">
        <property name="text">
         <string>Refresh devices</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="b_preview">
+       <property name="text">
+        <string>Preview</string>
        </property>
       </widget>
      </item>

@@ -105,6 +105,9 @@ MainWindow::MainWindow(QWidget *parent) :
         bool enabled = !(document.locked || d_->manager.are_documents_globally_locked());
         d_->ui->settings_widget->set_options_enabled(enabled);
         d_->ui->image_area->set_selection_enabled(enabled);
+        if (enabled) {
+            update_selection_to_settings();
+        }
     });
 
     connect(&d_->manager, &DocumentManager::document_image_changed, [this](unsigned doc_index)
@@ -181,7 +184,7 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     });
     connect(d_->ui->settings_widget, &ScanSettingsWidget::scan_started,
-            [this]() { start_scanning(); });
+            [this](ScanType type) { start_scanning(type); });
 
     connect(d_->ui->image_area, &ImageWidget::selection_changed,
             [this](const auto& rect) { image_area_selection_changed(rect); });
@@ -207,9 +210,9 @@ void MainWindow::present_about_dialog()
     dialog.exec();
 }
 
-void MainWindow::start_scanning()
+void MainWindow::start_scanning(ScanType type)
 {
-    d_->manager.start_scan(d_->active_document_index);
+    d_->manager.start_scan(d_->active_document_index, type);
     if (d_->manager.curr_scan_document_index() != d_->active_document_index) {
         switch_to_document(d_->manager.curr_scan_document_index());
     }

@@ -151,10 +151,12 @@ void DocumentManager::select_device(unsigned doc_index, const std::string& name)
     }
 }
 
-void DocumentManager::start_scan(unsigned doc_index)
+void DocumentManager::start_scan(unsigned doc_index, ScanType type)
 {
     auto& document = d_->documents.at(doc_index);
     auto& scan_document = curr_scan_document();
+
+    scan_document.scan_type = type;
 
     if (doc_index != d_->curr_scan_document_index) {
         // We want to repeat scan of an existing document. The caller must ensure that the existing
@@ -168,10 +170,37 @@ void DocumentManager::start_scan(unsigned doc_index)
         scan_document.scan_option_values = document.scan_option_values;
         Q_EMIT document_option_values_changed(d_->curr_scan_document_index);
 
-        // Note that the preview is not touched as only the current scan document has it and it's
-        // always for the current scanner.
+        // Note that the preview image is not touched as only the current scan document has it and
+        // it's always for the current scanner.
 
-        d_->engine.set_option_values(document.scan_option_values);
+        if (type == ScanType::NORMAL) {
+            d_->engine.set_option_values(document.scan_option_values);
+        }
+        // preview scans reset all values below
+    }
+
+    if (type == ScanType::PREVIEW)  {
+        /*  For preview scan we override the bounds with maximum bounds and the resolution
+            with the minimum resolution.
+
+            scan_document.scan_option_descriptors corresponds to the descriptors for the
+            particular option values, so we don't need to wait for updates to the option
+            descriptors (changing e.g. scan source may change scan bounds) as we have that
+            data already.
+        */
+        auto preview_scan_options = scan_document.scan_option_values;
+        auto min_resolution = get_min_resolution(scan_document.scan_option_descriptors);
+        if (min_resolution.has_value()) {
+            preview_scan_options.insert_or_assign("resolution", min_resolution.value());
+        }
+        auto max_scan_size = get_scan_size_from_options(scan_document.scan_option_descriptors);
+        if (max_scan_size.has_value()) {
+            preview_scan_options.insert_or_assign("tl-x", max_scan_size.value().tl().x);
+            preview_scan_options.insert_or_assign("tl-y", max_scan_size.value().tl().y);
+            preview_scan_options.insert_or_assign("br-x", max_scan_size.value().br().x);
+            preview_scan_options.insert_or_assign("br-y", max_scan_size.value().br().y);
+        }
+        d_->engine.set_option_values(preview_scan_options);
     }
 
     scan_document.locked = true;
@@ -289,6 +318,10 @@ void DocumentManager::devices_refreshed()
 void DocumentManager::options_changed()
 {
     auto& document = curr_scan_document();
+    if (document.scan_type == ScanType::PREVIEW) {
+        return;
+    }
+
     document.scan_option_descriptors = d_->engine.get_option_groups();
     Q_EMIT document_option_descriptors_changed(d_->curr_scan_document_index);
 
@@ -302,6 +335,10 @@ void DocumentManager::options_changed()
 void DocumentManager::option_values_changed()
 {
     auto& document = curr_scan_document();
+    if (document.scan_type == ScanType::PREVIEW) {
+        return;
+    }
+
     if (d_->ignore_next_option_values_change) {
         d_->engine.set_option_values(document.scan_option_values);
         d_->ignore_next_option_values_change = false;
@@ -341,8 +378,13 @@ void DocumentManager::device_closed()
 void DocumentManager::image_updated()
 {
     auto& document = curr_scan_document();
-    document.scanned_image = d_->engine.scan_image();
-    Q_EMIT document_image_changed(d_->curr_scan_document_index);
+    if (document.scan_type == ScanType::NORMAL) {
+        document.scanned_image = d_->engine.scan_image();
+        Q_EMIT document_image_changed(d_->curr_scan_document_index);
+    } else { // PREVIEW
+        document.preview_image = d_->engine.scan_image();
+        Q_EMIT document_preview_image_changed(d_->curr_scan_document_index);
+    }
 }
 
 void DocumentManager::scan_finished()
@@ -354,7 +396,7 @@ void DocumentManager::scan_finished()
     }
 
     // Setup a new document that would serve as a template to repeat the current scan.
-    {
+    if (curr_scan_document().scan_type == ScanType::NORMAL) {
         auto new_document_index = d_->documents.size();
         auto& new_document = d_->documents.emplace_back(d_->next_scan_id++);
         auto& document = curr_scan_document();
@@ -366,6 +408,11 @@ void DocumentManager::scan_finished()
         new_document.scan_option_values = document.scan_option_values;
         d_->curr_scan_document_index = new_document_index;
         Q_EMIT new_document_added(new_document_index, true);
+    } else {
+        auto& document = curr_scan_document();
+        document.scan_type = ScanType::NORMAL;
+        document.locked = false;
+        Q_EMIT document_locking_changed();
     }
 
     // At least the genesys backend can't perform two scans back to back.

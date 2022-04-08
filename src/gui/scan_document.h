@@ -20,6 +20,7 @@
 #define SANESCAN_GUI_SCAN_DOCUMENT_H
 
 #include "lib/sane_types.h"
+#include "scan_type.h"
 #include <opencv2/core/mat.hpp>
 #include <optional>
 #include <map>
@@ -47,6 +48,10 @@ struct ScanDocument {
 
     bool locked = false; // scanner name and options won't changed anymore
     SaneDeviceInfo device;
+
+    // set to PREVIEW during a preview scan, reset back to NORMAL afterwards
+    ScanType scan_type = ScanType::NORMAL;
+
     std::vector<SaneOptionGroupDestriptor> scan_option_descriptors;
     std::map<std::string, SaneOptionValue> scan_option_values;
 };

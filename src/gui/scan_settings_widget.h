@@ -19,6 +19,7 @@
 #ifndef SANESCAN_GUI_SCAN_SETTINGS_H
 #define SANESCAN_GUI_SCAN_SETTINGS_H
 
+#include "scan_type.h"
 #include "../lib/sane_types.h"
 #include "settings/setting_widget.h"
 #include <QtWidgets/QGridLayout>
@@ -58,7 +59,7 @@ Q_SIGNALS:
 
     void device_selected(const std::string& name);
 
-    void scan_started();
+    void scan_started(ScanType type);
 
     void option_value_changed(const std::string& name, const SaneOptionValue& value);
 

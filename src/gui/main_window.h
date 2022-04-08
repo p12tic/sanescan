@@ -41,7 +41,7 @@ public:
     void present_about_dialog();
 
 private:
-    void start_scanning();
+    void start_scanning(ScanType type);
 
     QImage get_document_thumbnail(const ScanDocument& document);
 
