@@ -98,4 +98,35 @@ std::optional<cv::Rect2d>
     return normalized(rect);
 }
 
+std::optional<SaneOptionValue>
+    get_min_resolution(const std::vector<SaneOptionGroupDestriptor>& option_groups)
+{
+    auto resolution = find_option_descriptor(option_groups, "resolution");
+    if (!resolution.has_value()) {
+        return {};
+    }
+
+    if (auto* constraint = std::get_if<SaneConstraintFloatList>(&resolution.value().constraint)) {
+        if (constraint->numbers.empty()) {
+            return {};
+        }
+        auto min_value = *std::min_element(constraint->numbers.begin(), constraint->numbers.end());
+        return SaneOptionValue{min_value};
+    }
+    if (auto* constraint = std::get_if<SaneConstraintIntList>(&resolution.value().constraint)) {
+        if (constraint->numbers.empty()) {
+            return {};
+        }
+        auto min_value = *std::min_element(constraint->numbers.begin(), constraint->numbers.end());
+        return SaneOptionValue{min_value};
+    }
+    if (auto* constraint = std::get_if<SaneConstraintFloatRange>(&resolution.value().constraint)) {
+        return SaneOptionValue{constraint->min};
+    }
+    if (auto* constraint = std::get_if<SaneConstraintIntRange>(&resolution.value().constraint)) {
+        return SaneOptionValue{constraint->min};
+    }
+    return {};
+}
+
 } // namespace sanescan

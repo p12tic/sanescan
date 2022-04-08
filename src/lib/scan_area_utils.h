@@ -33,6 +33,9 @@ std::optional<cv::Rect2d>
 std::optional<cv::Rect2d>
     get_scan_size_from_options(const std::vector<SaneOptionGroupDestriptor>& options);
 
+std::optional<SaneOptionValue>
+    get_min_resolution(const std::vector<SaneOptionGroupDestriptor>& option_groups);
+
 } // namespace sanescan
 
 #endif // SANESCAN_LIB_SCAN_AREA_UTILS_H
