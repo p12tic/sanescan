@@ -250,7 +250,7 @@ void SaneDeviceWrapper::task_schedule_read()
     auto read_lines = std::min(max_read_lines, max_last_line - first_line);
     auto last_line = first_line + read_lines;
 
-    d_->executor->schedule_task<void>([=]()
+    d_->executor->schedule_task<void>([this, first_line, last_line]()
     {
         try {
             auto bytes_per_line = d_->task_curr_frame_params.bytes_per_line;
