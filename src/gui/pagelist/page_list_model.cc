@@ -25,10 +25,16 @@ namespace sanescan {
 struct PageImages {
     PageImages(const QImage& image) : image{image} {}
 
-    void resize(unsigned new_height)
+    void resize(const QSize& max_size)
     {
         QPixmap pix = QPixmap::fromImage(image);
-        resized_pixmap = pix.scaledToHeight(new_height);
+        auto pix_aspect_ratio = static_cast<double>(pix.size().width()) / pix.size().height();
+        auto size_aspect_ratio = static_cast<double>(max_size.width()) / max_size.height();
+        if (pix_aspect_ratio > size_aspect_ratio) {
+            resized_pixmap = pix.scaledToWidth(max_size.width());
+        } else {
+            resized_pixmap = pix.scaledToHeight(max_size.height());
+        }
     }
 
     QImage image;
@@ -38,7 +44,7 @@ struct PageImages {
 struct PageListModel::Private {
     std::vector<std::uint64_t> pages;
     std::map<std::uint64_t, PageImages> images;
-    unsigned pixmap_height = 200;
+    QSize max_pixmap_size = QSize{200, 200};
 };
 
 PageListModel::PageListModel(QObject* parent) :
@@ -74,7 +80,7 @@ QVariant PageListModel::data(const QModelIndex& index, int role) const
 void PageListModel::add_page(std::uint64_t identifier, const QImage& image)
 {
     PageImages page_images{image};
-    page_images.resize(d_->pixmap_height);
+    page_images.resize(d_->max_pixmap_size);
 
     d_->pages.push_back(identifier);
     d_->images.emplace(identifier, std::move(page_images));
@@ -88,7 +94,7 @@ void PageListModel::set_image(std::uint64_t identifier, const QImage& image)
         throw std::runtime_error("Image for identifier does not exist");
     }
     it->second.image = image;
-    it->second.resize(d_->pixmap_height);
+    it->second.resize(d_->max_pixmap_size);
 
     auto it_pages = std::find(d_->pages.begin(), d_->pages.end(), identifier);
     if (it_pages == d_->pages.end()) {
@@ -109,14 +115,14 @@ const QPixmap& PageListModel::image_at(std::size_t pos) const
     return it->second.resized_pixmap;
 }
 
-void PageListModel::set_image_sizes(unsigned height)
+void PageListModel::set_max_image_size(const QSize& max_size)
 {
-    if (height == d_->pixmap_height) {
+    if (max_size == d_->max_pixmap_size) {
         return;
     }
-    d_->pixmap_height = height;
+    d_->max_pixmap_size = max_size;
     for (auto& [ident, images] : d_->images) {
-        images.resize(height);
+        images.resize(max_size);
     }
 }
 

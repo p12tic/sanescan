@@ -38,7 +38,7 @@ public:
 
     const QPixmap& image_at(std::size_t pos) const;
 
-    void set_image_sizes(unsigned width);
+    void set_max_image_size(const QSize& max_size);
 
 private:
     struct Private;

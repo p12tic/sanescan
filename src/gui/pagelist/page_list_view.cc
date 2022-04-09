@@ -84,7 +84,12 @@ unsigned PageListView::list_item_padding() const
 
 void PageListView::resizeEvent(QResizeEvent* event)
 {
-    d_->model->set_image_sizes(event->size().height() - 2 * LIST_ITEM_PADDING);
+    auto max_height = event->size().height() - 2 * LIST_ITEM_PADDING;
+    // We want landscape pages to be displayed as large as possible, but any images with larger
+    // aspect ratio will be resized to be smaller so that they don't expand across whole page list.
+    auto max_width = max_height * 1.41421;
+
+    d_->model->set_max_image_size(QSize(max_width, max_height));
     scheduleDelayedItemsLayout();
 }
 
