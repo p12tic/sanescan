@@ -16,27 +16,34 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_OCR_OCR_BOX_H
-#define SANESCAN_OCR_OCR_BOX_H
+#ifndef SANESCAN_GUI_OCR_WIDGET_H
+#define SANESCAN_GUI_OCR_WIDGET_H
 
-#include <ciso646> // needed by moc (work around https://bugreports.qt.io/browse/QTBUG-83160)
-#include <compare>
-#include <cstdint>
-#include <iosfwd>
+#include "ocr/ocr_options.h"
+#include <QtWidgets/QFrame>
+#include <memory>
 
 namespace sanescan {
 
-struct OcrBox {
-    std::int32_t x1 = 0;
-    std::int32_t y1 = 0;
-    std::int32_t x2 = 0;
-    std::int32_t y2 = 0;
+class OcrSettingsWidget : public QFrame
+{
+    Q_OBJECT
+public:
+    explicit OcrSettingsWidget(QWidget* parent);
+    ~OcrSettingsWidget() override;
 
-    auto operator<=>(const OcrBox&) const = default;
+    void set_options(const OcrOptions& options);
+
+public: Q_SIGNALS:
+    void options_changed(const OcrOptions& options);
+
+private:
+    void options_changed_impl();
+
+    struct Private;
+    std::unique_ptr<Private> d_;
 };
-
-std::ostream& operator<<(std::ostream& stream, const OcrBox& box);
 
 } // namespace sanescan
 
-#endif // SANESCAN_OCR_OCR_BOX_H
+#endif // SANESCAN_GUI_OCR_WIDGET_H

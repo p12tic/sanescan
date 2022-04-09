@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1002</width>
-    <height>810</height>
+    <width>1005</width>
+    <height>860</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,8 +20,8 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
+   <layout class="QVBoxLayout" name="verticalLayout_3">
+    <item>
      <widget class="QWidget" name="widget" native="true">
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -135,9 +135,35 @@
                </layout>
               </widget>
               <widget class="QWidget" name="tab_ocr">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <attribute name="title">
                 <string>OCR</string>
                </attribute>
+               <layout class="QVBoxLayout" name="vertical_layout_8">
+               <item>
+               <widget class="sanescan::OcrSettingsWidget" name="ocr_settings" native="true">
+                <property name="geometry">
+                 <rect>
+                  <x>30</x>
+                  <y>140</y>
+                  <width>120</width>
+                  <height>80</height>
+                 </rect>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+               </item>
+               </layout>
               </widget>
              </widget>
              <widget class="sanescan::ImageWidget" name="image_area" native="true">
@@ -172,7 +198,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1002</width>
+     <width>1005</width>
      <height>35</height>
     </rect>
    </property>
@@ -208,6 +234,12 @@
    <class>sanescan::PageListView</class>
    <extends>QWidget</extends>
    <header>pagelist/page_list_view.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>sanescan::OcrSettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>ocr_settings_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

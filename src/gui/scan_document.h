@@ -19,8 +19,10 @@
 #ifndef SANESCAN_GUI_SCAN_DOCUMENT_H
 #define SANESCAN_GUI_SCAN_DOCUMENT_H
 
-#include "lib/sane_types.h"
 #include "scan_type.h"
+#include "lib/sane_types.h"
+#include "ocr/ocr_options.h"
+
 #include <opencv2/core/mat.hpp>
 #include <optional>
 #include <map>
@@ -54,6 +56,8 @@ struct ScanDocument {
 
     std::vector<SaneOptionGroupDestriptor> scan_option_descriptors;
     std::map<std::string, SaneOptionValue> scan_option_values;
+
+    OcrOptions ocr_options;
 };
 
 } // namespace sanescan

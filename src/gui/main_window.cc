@@ -191,6 +191,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(d_->ui->image_area, &ImageWidget::selection_changed,
             [this](const auto& rect) { image_area_selection_changed(rect); });
 
+    connect(d_->ui->ocr_settings, &OcrSettingsWidget::options_changed,
+            [this](const OcrOptions& options)
+    {
+        d_->manager.set_document_ocr_options(d_->active_document_index, options);
+    });
+
     d_->page_list_model = std::make_unique<PageListModel>(this);
     d_->ui->page_list->setModel(d_->page_list_model.get());
     d_->ui->page_list->setItemDelegate(new PageListViewDelegate(d_->ui->page_list));
@@ -323,7 +329,9 @@ void MainWindow::image_area_selection_changed(const std::optional<QRectF>& rect)
 
 void MainWindow::update_ocr_tab_to_settings()
 {
+    auto& document = d_->manager.document(d_->active_document_index);
 
+    d_->ui->ocr_settings->set_options(document.ocr_options);
 }
 
 } // namespace sanescan

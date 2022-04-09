@@ -288,6 +288,13 @@ bool DocumentManager::are_documents_globally_locked() const
     return d_->all_documents_locked;
 }
 
+void DocumentManager::set_document_ocr_options(unsigned doc_index, const OcrOptions& options)
+{
+    // FIXME: OCR is not implemented
+    auto& document = d_->documents.at(doc_index);
+    document.ocr_options = options;
+}
+
 void DocumentManager::periodic_engine_poll()
 {
     try {

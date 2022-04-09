@@ -70,6 +70,9 @@ public:
     */
     bool are_documents_globally_locked() const;
 
+    /// Sets OCR options for specific document and restarts OCR processing if needed
+    void set_document_ocr_options(unsigned doc_index, const OcrOptions& options);
+
 public: Q_SIGNALS:
     void available_devices_changed();
     void new_document_added(unsigned doc_index, bool after_scan);

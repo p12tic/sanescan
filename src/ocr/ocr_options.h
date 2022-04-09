@@ -41,6 +41,7 @@ struct OcrOptions {
     bool fix_text_rotation = true;
     double fix_text_rotation_min_text_fraction = 0.95;
     double fix_text_rotation_max_angle_diff = deg_to_rad(5);
+    bool keep_image_size_after_rotation = false;
 
     /*  True if the source image should be rotated to fix page orientation. This is only done if
         both of the following hold:
