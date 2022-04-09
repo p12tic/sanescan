@@ -35,6 +35,9 @@ public:
     static constexpr int STACK_SETTINGS = 1;
     static constexpr int STACK_SCANNING = 2;
 
+    static constexpr int TAB_SCANNING = 0;
+    static constexpr int TAB_OCR = 1;
+
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
@@ -49,6 +52,7 @@ private:
 
     void update_selection_to_settings();
     void image_area_selection_changed(const std::optional<QRectF>& rect);
+    void update_ocr_tab_to_settings();
 
     struct Private;
     std::unique_ptr<Private> d_;

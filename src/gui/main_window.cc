@@ -64,6 +64,8 @@ MainWindow::MainWindow(QWidget *parent) :
     d_->ui->setupUi(this);
 
     d_->ui->stack_settings->setCurrentIndex(STACK_LOADING);
+    d_->ui->tabs->setCurrentIndex(TAB_SCANNING);
+    d_->ui->tabs->setTabEnabled(TAB_OCR, false);
 
     connect(d_->ui->action_about, &QAction::triggered, [this](){ present_about_dialog(); });
     connect(&d_->manager, &DocumentManager::available_devices_changed, [this]()
@@ -249,8 +251,14 @@ void MainWindow::switch_to_document(unsigned doc_index)
 
     if (document.scanned_image.has_value()) {
         d_->ui->image_area->set_image(qimage_from_cv_mat(document.scanned_image.value()));
+
+        d_->ui->tabs->setTabEnabled(TAB_OCR, true);
+        update_ocr_tab_to_settings();
     } else if (document.preview_image.has_value()) {
         d_->ui->image_area->set_image(qimage_from_cv_mat(document.preview_image.value()));
+
+        d_->ui->tabs->setTabEnabled(TAB_OCR, false);
+        d_->ui->tabs->setCurrentIndex(TAB_SCANNING);
     }
     update_selection_to_settings();
 }
@@ -311,6 +319,11 @@ void MainWindow::image_area_selection_changed(const std::optional<QRectF>& rect)
     d_->manager.set_document_option(d_->active_document_index, "tl-y", top);
     d_->manager.set_document_option(d_->active_document_index, "br-x", right);
     d_->manager.set_document_option(d_->active_document_index, "br-y", bottom);
+}
+
+void MainWindow::update_ocr_tab_to_settings()
+{
+
 }
 
 } // namespace sanescan
