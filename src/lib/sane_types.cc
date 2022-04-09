@@ -160,11 +160,6 @@ std::ostream& operator<<(std::ostream& stream, const SaneConstraintNone& data)
     return stream;
 }
 
-bool SaneConstraintStringList::operator==(const SaneConstraintStringList& other) const
-{
-    return strings == other.strings;
-}
-
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintStringList& data)
 {
     stream << "SaneConstraintStringList{";
@@ -173,11 +168,6 @@ std::ostream& operator<<(std::ostream& stream, const SaneConstraintStringList& d
     }
     stream << " }";
     return stream;
-}
-
-bool SaneConstraintIntList::operator==(const SaneConstraintIntList& other) const
-{
-    return numbers == other.numbers;
 }
 
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntList& data)
@@ -190,11 +180,6 @@ std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntList& data
     return stream;
 }
 
-bool SaneConstraintFloatList::operator==(const SaneConstraintFloatList& other) const
-{
-    return numbers == other.numbers;
-}
-
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatList& data)
 {
     stream << "SaneConstraintFloatList{";
@@ -203,11 +188,6 @@ std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatList& da
     }
     stream << " }";
     return stream;
-}
-
-bool SaneConstraintIntRange::operator==(const SaneConstraintIntRange& other) const
-{
-    return min == other.min && max == other.max && quantization == other.quantization;
 }
 
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntRange& data)
@@ -220,11 +200,6 @@ std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntRange& dat
     return stream;
 }
 
-bool SaneConstraintFloatRange::operator==(const SaneConstraintFloatRange& other) const
-{
-    return min == other.min && max == other.max && quantization == other.quantization;
-}
-
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatRange& data)
 {
     stream << "SaneConstraintFloatRange{"
@@ -233,19 +208,6 @@ std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatRange& d
            << " quantization=" << data.quantization
            << " }";
     return stream;
-}
-
-bool SaneOptionDescriptor::operator==(const SaneOptionDescriptor& other) const
-{
-    return index == other.index &&
-            name == other.name &&
-            title == other.title &&
-            description == other.description &&
-            unit == other.unit &&
-            type == other.type &&
-            size == other.size &&
-            cap == other.cap &&
-            constraint == other.constraint;
 }
 
 std::ostream& operator<<(std::ostream& stream, const SaneOptionDescriptor& data)
@@ -279,14 +241,6 @@ std::ostream& operator<<(std::ostream& stream, const SaneOptionDescriptor& data)
     }
     stream << "\n}";
     return stream;
-}
-
-bool SaneOptionGroupDestriptor::operator==(const SaneOptionGroupDestriptor& other) const
-{
-    return name == other.name &&
-            title == other.title &&
-            description == other.description &&
-            options == other.options;
 }
 
 std::ostream& operator<<(std::ostream& stream, const SaneOptionGroupDestriptor& data)

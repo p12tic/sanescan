@@ -20,6 +20,8 @@
 #define SANESCAN_LIB_SANE_TYPES_H
 
 #include "util/enum_flags.h"
+#include <ciso646> // needed by moc (work around https://bugreports.qt.io/browse/QTBUG-83160)
+#include <compare>
 #include <iosfwd>
 #include <string>
 #include <string_view>
@@ -81,7 +83,7 @@ SANESCAN_DECLARE_OPERATORS_FOR_SCOPED_ENUM_FLAGS(SaneCap)
 std::ostream& operator<<(std::ostream& stream, const SaneCap& data);
 
 struct SaneConstraintNone {
-    bool operator==(const SaneConstraintNone& other) const { return true; }
+    std::strong_ordering operator<=>(const SaneConstraintNone& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintNone& data);
@@ -89,7 +91,7 @@ std::ostream& operator<<(std::ostream& stream, const SaneConstraintNone& data);
 struct SaneConstraintStringList {
     std::vector<std::string> strings;
 
-    bool operator==(const SaneConstraintStringList& other) const;
+    std::strong_ordering operator<=>(const SaneConstraintStringList& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintStringList& data);
@@ -97,7 +99,7 @@ std::ostream& operator<<(std::ostream& stream, const SaneConstraintStringList& d
 struct SaneConstraintIntList {
     std::vector<int> numbers;
 
-    bool operator==(const SaneConstraintIntList& other) const;
+    std::strong_ordering operator<=>(const SaneConstraintIntList& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntList& data);
@@ -105,7 +107,7 @@ std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntList& data
 struct SaneConstraintFloatList {
     std::vector<double> numbers;
 
-    bool operator==(const SaneConstraintFloatList& other) const;
+    std::strong_ordering operator<=>(const SaneConstraintFloatList& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatList& data);
@@ -116,7 +118,7 @@ struct SaneConstraintIntRange {
     int max = 0;
     int quantization = 0;
 
-    bool operator==(const SaneConstraintIntRange& other) const;
+    std::strong_ordering operator<=>(const SaneConstraintIntRange& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntRange& data);
@@ -127,7 +129,7 @@ struct SaneConstraintFloatRange {
     double max = 0;
     double quantization = 0;
 
-    bool operator==(const SaneConstraintFloatRange& other) const;
+    std::strong_ordering operator<=>(const SaneConstraintFloatRange& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatRange& data);
@@ -155,7 +157,7 @@ struct SaneOptionDescriptor {
         SaneConstraintFloatRange // only if type == SaneValueType::FLOAT
     > constraint;
 
-    bool operator==(const SaneOptionDescriptor& other) const;
+    std::strong_ordering operator<=>(const SaneOptionDescriptor& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneOptionDescriptor& data);
@@ -166,7 +168,7 @@ struct SaneOptionGroupDestriptor {
     std::string description;
     std::vector<SaneOptionDescriptor> options;
 
-    bool operator==(const SaneOptionGroupDestriptor& other) const;
+    std::strong_ordering operator<=>(const SaneOptionGroupDestriptor& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneOptionGroupDestriptor& data);
@@ -176,7 +178,7 @@ std::optional<SaneOptionDescriptor>
                            std::string_view name);
 
 struct SaneOptionValueNone {
-    bool operator==(const SaneOptionValueNone& other) const { return true; }
+    std::strong_ordering operator<=>(const SaneOptionValueNone& other) const = default;
 };
 
 using SaneOptionValueVariant = std::variant<
@@ -210,7 +212,7 @@ struct SaneOptionValue {
 
     const std::string* as_string() const;
 
-    bool operator==(const SaneOptionValue& other) const { return value == other.value; }
+    std::strong_ordering operator<=>(const SaneOptionValue& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneOptionValue& data);
@@ -222,6 +224,8 @@ struct SaneOptionIndexedValue {
 
     std::size_t index = 0;
     SaneOptionValue value;
+
+    std::strong_ordering operator<=>(const SaneOptionIndexedValue& other) const = default;
 };
 
 /// Corresponds to SANE_Frame
@@ -242,6 +246,8 @@ struct SaneParameters {
     int pixels_per_line = 0;
     int lines = 0;
     int depth = 0;
+
+    std::strong_ordering operator<=>(const SaneParameters& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneParameters& data);
