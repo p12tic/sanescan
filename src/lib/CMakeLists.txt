@@ -22,6 +22,7 @@ pkg_check_modules(poppler REQUIRED poppler-cpp)
 
 set(SOURCES
     buffer_manager.cc
+    job_queue.cc
     file_loader_image.cc
     file_loader_pdf.cc
     sane_device_wrapper.cc
