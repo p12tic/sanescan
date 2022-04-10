@@ -83,6 +83,12 @@ public: Q_SIGNALS:
     void document_preview_image_changed(unsigned doc_index);
     void document_locking_changed();
 
+    /// emitted when either ocr_results or ocr_progress of a document changes.
+    void document_ocr_results_changed(unsigned doc_index);
+
+private Q_SLOTS:
+    void on_ocr_complete(unsigned doc_index);
+
 private:
     void reopen_current_device();
     const SaneDeviceInfo& get_available_device_by_name(const std::string& name);

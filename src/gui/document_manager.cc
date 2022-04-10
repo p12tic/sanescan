@@ -18,6 +18,7 @@
 
 #include "document_manager.h"
 #include "scan_engine.h"
+#include "lib/job_queue.h"
 #include "lib/scan_area_utils.h"
 #include "util/math.h"
 
@@ -94,6 +95,11 @@ struct DocumentManager::Private {
     std::vector<ScanDocument> documents;
     std::size_t curr_scan_document_index = 0;
     unsigned next_scan_id = 1;
+
+    // Note that descroying DocumentManager will wait until all jobs submitted to the executor
+    // complete.
+    // FIXME: properly set the thread pool size
+    JobQueue job_executor{4};
 };
 
 DocumentManager::DocumentManager() :
@@ -109,6 +115,8 @@ DocumentManager::DocumentManager() :
     connect(&d_->engine, &ScanEngine::device_closed, [this]() { device_closed(); });
     connect(&d_->engine, &ScanEngine::image_updated, [this]() { image_updated(); });
     connect(&d_->engine, &ScanEngine::scan_finished, [this]() { scan_finished(); });
+
+    d_->job_executor.start();
 }
 
 DocumentManager::~DocumentManager() = default;
@@ -216,6 +224,34 @@ void DocumentManager::start_scan(unsigned doc_index, ScanType type)
     d_->engine.call_when_idle([this]() { d_->engine.start_scan(); });
 }
 
+void DocumentManager::on_ocr_complete(unsigned doc_index)
+{
+    auto& document = d_->documents.at(doc_index);
+
+    bool updated_results = false;
+    for (auto& job : document.ocr_jobs) {
+        if (job->finished()) {
+            if (job->job_id() == document.last_ocr_job_id) {
+                document.ocr_results = std::move(job->results());
+                document.ocr_progress.reset();
+                updated_results = true;
+            }
+            job.reset();
+        }
+    }
+
+    // remove all completed jobs
+    auto it = std::remove_if(document.ocr_jobs.begin(), document.ocr_jobs.end(),
+                             [](const auto& job) { return job.get() == nullptr; });
+    document.ocr_jobs.erase(it, document.ocr_jobs.end());
+
+    // We wait until the end of the function before notifying about results change to ensure that
+    // the jobs array isn't changed while we're iterating over it.
+    if (updated_results) {
+        Q_EMIT document_ocr_results_changed(doc_index);
+    }
+}
+
 void DocumentManager::reopen_current_device()
 {
     if (!d_->engine.is_device_opened()) {
@@ -290,9 +326,28 @@ bool DocumentManager::are_documents_globally_locked() const
 
 void DocumentManager::set_document_ocr_options(unsigned doc_index, const OcrOptions& options)
 {
-    // FIXME: OCR is not implemented
     auto& document = d_->documents.at(doc_index);
+    if (document.ocr_options == options) {
+        return;
+    }
+    if (!document.scanned_image.has_value()) {
+        throw std::runtime_error("Document must have scanned image when setting options");
+    }
+
     document.ocr_options = options;
+    document.ocr_results.reset();
+    document.ocr_progress = 0.0;
+    document.ocr_jobs.push_back(std::make_unique<OcrJob>(document.scanned_image.value(),
+                                                         document.ocr_options,
+                                                          ++document.last_ocr_job_id,
+                                                         [this, doc_index]()
+    {
+        QMetaObject::invokeMethod(this, "on_ocr_complete", Qt::QueuedConnection,
+                                  Q_ARG(unsigned, doc_index));
+    }));
+    d_->job_executor.submit(*(document.ocr_jobs.back().get()));
+
+    Q_EMIT document_ocr_results_changed(doc_index);
 }
 
 void DocumentManager::periodic_engine_poll()

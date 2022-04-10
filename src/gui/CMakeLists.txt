@@ -34,6 +34,7 @@ set(SOURCES
     scan_engine.cc
     scan_settings_widget.cc
     scan_settings_widget.ui
+    ocr_job.cc
     ocr_settings_widget.cc
     ocr_settings_widget.ui
     pagelist/page_list_model.cc
@@ -59,4 +60,5 @@ target_link_libraries(sanescan
     Qt5::Widgets
     Threads::Threads
     sanescanlib
+    sanescanocr
 )

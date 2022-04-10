@@ -20,8 +20,11 @@
 #define SANESCAN_GUI_SCAN_DOCUMENT_H
 
 #include "scan_type.h"
+#include "ocr_job.h"
 #include "lib/sane_types.h"
 #include "ocr/ocr_options.h"
+#include "ocr/ocr_results.h"
+#include "ocr/ocr_paragraph.h"
 
 #include <opencv2/core/mat.hpp>
 #include <optional>
@@ -60,6 +63,11 @@ struct ScanDocument {
     std::map<std::string, SaneOptionValue> scan_option_values;
 
     OcrOptions ocr_options;
+    std::optional<double> ocr_progress;
+    std::optional<OcrResults> ocr_results;
+
+    std::vector<std::unique_ptr<OcrJob>> ocr_jobs;
+    std::size_t last_ocr_job_id = 0;
 };
 
 } // namespace sanescan

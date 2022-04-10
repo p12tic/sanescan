@@ -55,6 +55,8 @@ struct OcrOptions {
     bool fix_page_orientation = true;
     double fix_page_orientation_min_text_fraction = 0.95;
     double fix_page_orientation_max_angle_diff = deg_to_rad(5);
+
+    std::strong_ordering operator<=>(const OcrOptions& other) const = default;
 };
 
 } // namespace sanescan
