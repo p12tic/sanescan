@@ -97,6 +97,7 @@ private:
     void setup_empty_preview_image(ScanDocument& document,
                                    const std::optional<cv::Rect2d>& scan_bounds_mm);
     void clear_preview_image(ScanDocument& document);
+    void perform_ocr(unsigned doc_index);
 
     void periodic_engine_poll();
     void devices_refreshed();

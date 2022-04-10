@@ -298,6 +298,24 @@ void DocumentManager::clear_preview_image(ScanDocument& document)
     document.preview_image.reset();
 }
 
+void DocumentManager::perform_ocr(unsigned doc_index)
+{
+    auto& document = d_->documents.at(doc_index);
+    document.ocr_results.reset();
+    document.ocr_progress = 0.0;
+    document.ocr_jobs.push_back(std::make_unique<OcrJob>(document.scanned_image.value(),
+                                                         document.ocr_options,
+                                                          ++document.last_ocr_job_id,
+                                                         [this, doc_index]()
+    {
+        QMetaObject::invokeMethod(this, "on_ocr_complete", Qt::QueuedConnection,
+                                  Q_ARG(unsigned, doc_index));
+    }));
+    d_->job_executor.submit(*(document.ocr_jobs.back().get()));
+
+    Q_EMIT document_ocr_results_changed(doc_index);
+}
+
 void DocumentManager::set_document_option(unsigned doc_index, const std::string& name,
                                           const SaneOptionValue& value)
 {
@@ -335,19 +353,7 @@ void DocumentManager::set_document_ocr_options(unsigned doc_index, const OcrOpti
     }
 
     document.ocr_options = options;
-    document.ocr_results.reset();
-    document.ocr_progress = 0.0;
-    document.ocr_jobs.push_back(std::make_unique<OcrJob>(document.scanned_image.value(),
-                                                         document.ocr_options,
-                                                          ++document.last_ocr_job_id,
-                                                         [this, doc_index]()
-    {
-        QMetaObject::invokeMethod(this, "on_ocr_complete", Qt::QueuedConnection,
-                                  Q_ARG(unsigned, doc_index));
-    }));
-    d_->job_executor.submit(*(document.ocr_jobs.back().get()));
-
-    Q_EMIT document_ocr_results_changed(doc_index);
+    perform_ocr(doc_index);
 }
 
 void DocumentManager::periodic_engine_poll()
@@ -462,6 +468,7 @@ void DocumentManager::scan_finished()
         auto new_document_index = d_->documents.size();
         auto& new_document = d_->documents.emplace_back(d_->next_scan_id++);
         auto& document = curr_scan_document();
+        auto old_document_index = d_->curr_scan_document_index;
         new_document.device = document.device;
         std::swap(new_document.preview_config, document.preview_config);
         std::swap(new_document.preview_image, document.preview_image);
@@ -470,6 +477,7 @@ void DocumentManager::scan_finished()
         new_document.scan_option_values = document.scan_option_values;
         d_->curr_scan_document_index = new_document_index;
         Q_EMIT new_document_added(new_document_index, true);
+        perform_ocr(old_document_index);
     } else {
         auto& document = curr_scan_document();
         document.scan_type = ScanType::NORMAL;
