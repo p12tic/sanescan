@@ -36,18 +36,21 @@ PIX* cv_mat_to_pix(const cv::Mat& image)
     if (image.size.dims() != 2) {
         throw std::invalid_argument("Input image must be 2D");
     }
-    if (image.channels() != 3) {
-        throw std::invalid_argument("Non RGB images are not supported");
-    }
     if (image.elemSize1() != 1) {
         throw std::invalid_argument("Non 8-bit images are not supported");
     }
 
     auto width = image.size.p[1];
     auto height = image.size.p[0];
-    auto channels = 4;
+
+    switch (image.channels()) {
+        case 1: break;
+        case 3: break;
+        default: throw std::invalid_argument("Input image must have 1 or 3 channels");
+    }
+
+    unsigned channels = 4;
     auto depth = image.elemSize1() * 8 * channels;
-    auto row_bytes = image.elemSize1() * channels * width;
 
     auto* pix = pixCreate(width, height, depth);
     if (pix == nullptr) {
@@ -57,17 +60,35 @@ PIX* cv_mat_to_pix(const cv::Mat& image)
     auto* dst_data = pixGetData(pix);
     auto wpl = pixGetWpl(pix);
 
-    for (std::size_t row = 0; row < height; ++row) {
-        const std::uint8_t* src_ptr = image.ptr(row);
-        std::uint32_t* dst_ptr = dst_data + row * wpl;
-        std::uint8_t* dst_byte_ptr = reinterpret_cast<std::uint8_t*>(dst_ptr);
-        for (std::size_t i = 0; i < width; ++i) {
-            *dst_byte_ptr++ = *src_ptr++;
-            *dst_byte_ptr++ = *src_ptr++;
-            *dst_byte_ptr++ = *src_ptr++;
-            *dst_byte_ptr++ = 255;
+    if (image.channels() == 1) {
+        for (std::size_t row = 0; row < height; ++row) {
+            const std::uint8_t* src_ptr = image.ptr(row);
+            std::uint32_t* dst_ptr = dst_data + row * wpl;
+            std::uint8_t* dst_byte_ptr = reinterpret_cast<std::uint8_t*>(dst_ptr);
+            for (std::size_t i = 0; i < width; ++i) {
+                auto value = *src_ptr++;
+                *dst_byte_ptr++ = value;
+                *dst_byte_ptr++ = value;
+                *dst_byte_ptr++ = value;
+                *dst_byte_ptr++ = 255;
+            }
         }
     }
+
+    if (image.channels() == 3) {
+        for (std::size_t row = 0; row < height; ++row) {
+            const std::uint8_t* src_ptr = image.ptr(row);
+            std::uint32_t* dst_ptr = dst_data + row * wpl;
+            std::uint8_t* dst_byte_ptr = reinterpret_cast<std::uint8_t*>(dst_ptr);
+            for (std::size_t i = 0; i < width; ++i) {
+                *dst_byte_ptr++ = *src_ptr++;
+                *dst_byte_ptr++ = *src_ptr++;
+                *dst_byte_ptr++ = *src_ptr++;
+                *dst_byte_ptr++ = 255;
+            }
+        }
+    }
+
     return pix;
 }
 
