@@ -37,6 +37,8 @@ struct PreviewConfig {
 
 struct ScanDocument {
     ScanDocument(unsigned scan_id) : scan_id{scan_id} {}
+    ScanDocument(ScanDocument&&) = default;
+    ScanDocument& operator=(ScanDocument&&) = default;
 
     // An ID that is unique across all scanned documents in a single application run.
     unsigned scan_id = 0;
