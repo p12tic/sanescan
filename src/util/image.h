@@ -23,7 +23,7 @@
 
 namespace sanescan {
 
-cv::Mat rotate_image_centered(cv::Mat& image, double angle_rad);
+cv::Mat rotate_image_centered(const cv::Mat& image, double angle_rad);
 
 } // namespace sanescan
 
