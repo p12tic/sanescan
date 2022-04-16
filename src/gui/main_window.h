@@ -47,6 +47,7 @@ private:
     void start_scanning(ScanType type);
 
     QImage get_document_thumbnail(const ScanDocument& document);
+    QImage get_document_image(const ScanDocument& document);
 
     void switch_to_document(unsigned doc_index);
 

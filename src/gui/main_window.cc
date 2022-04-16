@@ -241,6 +241,21 @@ QImage MainWindow::get_document_thumbnail(const ScanDocument& document)
     return image;
 }
 
+QImage MainWindow::get_document_image(const ScanDocument& document)
+{
+    if (d_->ui->tabs->currentIndex() == TAB_OCR && document.ocr_results.has_value()) {
+        // FIXME: store a reference somewhere so the copy is not needed
+        return qimage_from_cv_mat(document.ocr_results->adjusted_image).copy();
+    }
+    if (document.scanned_image.has_value()) {
+        return qimage_from_cv_mat(document.scanned_image.value()).copy();
+    }
+    if (document.preview_image.has_value()) {
+        return qimage_from_cv_mat(document.preview_image.value()).copy();
+    }
+    throw std::runtime_error("Could not get document image. This should never happen");
+}
+
 void MainWindow::switch_to_document(unsigned doc_index)
 {
     d_->active_document_index = doc_index;
@@ -256,16 +271,13 @@ void MainWindow::switch_to_document(unsigned doc_index)
     d_->ui->image_area->set_selection_enabled(enabled);
 
     if (document.scanned_image.has_value()) {
-        d_->ui->image_area->set_image(qimage_from_cv_mat(document.scanned_image.value()));
-
         d_->ui->tabs->setTabEnabled(TAB_OCR, true);
         update_ocr_tab_to_settings();
-    } else if (document.preview_image.has_value()) {
-        d_->ui->image_area->set_image(qimage_from_cv_mat(document.preview_image.value()));
-
+    } else {
         d_->ui->tabs->setTabEnabled(TAB_OCR, false);
         d_->ui->tabs->setCurrentIndex(TAB_SCANNING);
     }
+    d_->ui->image_area->set_image(get_document_image(document));
     update_selection_to_settings();
 }
 
