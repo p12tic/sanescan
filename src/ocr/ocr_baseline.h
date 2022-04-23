@@ -26,8 +26,8 @@ namespace sanescan {
 
 struct OcrBaseline {
     // Baseline is calculated by taking bottom left corner of the bounding box as origin (X0, Y0)
-    // and drawing a line Y = Y0 + baseline_y + (X - baseline_x - X0) * std::tan(angle). The angle
-    // is in counterclockwise direction.
+    // and drawing a line Y = Y0 + baseline_y + (X - (X0 + baseline_x)) * std::tan(angle).
+    // The angle is in clockwise direction from the horizontal +X axis
     double x = 0;
     double y = 0;
     double angle = 0;
