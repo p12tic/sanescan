@@ -97,7 +97,7 @@ TEST(Hocr, ParseSimpleFile)
                                 OcrBox{22, 6, 40, 24},
                             },
                             OcrBox{22, 6, 40, 24},
-                            OcrBaseline{0.0, -4.0, 0.0}, 0.85, 20.0,
+                            OcrBaseline{0.0, -9.0, 0.0}, 0.85, 20.0,
                             "X"
                         },
                         OcrWord{
@@ -109,7 +109,7 @@ TEST(Hocr, ParseSimpleFile)
                                 OcrBox{96, 9, 107, 23},
                             },
                             OcrBox{51, 9, 141, 23},
-                            OcrBaseline{0.0, -5.0, 0.0}, 0.91, 20.0,
+                            OcrBaseline{0.0, -10.0, 0.0}, 0.91, 20.0,
                             "abcde"
                         },
                         OcrWord{
@@ -120,7 +120,7 @@ TEST(Hocr, ParseSimpleFile)
                                 OcrBox{183, 16, 189, 18},
                             },
                             OcrBox{149, 8, 257, 28},
-                            OcrBaseline{0.0, 0.0, 0.0}, 0.92, 20.0,
+                            OcrBaseline{0.0, -5.0, 0.0}, 0.92, 20.0,
                             "ijkl"
                         }
                     },

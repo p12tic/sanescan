@@ -108,7 +108,7 @@ OcrWord parse_hocr_word(pugi::xml_node e_word, const OcrLine& line, double font_
 
     word.baseline.x = 0;
     word.baseline.y = (word.box.y2 - line.box.y2) +
-            line.baseline.y * std::tan(line.baseline.angle) * (word.box.x1 - line.box.x1);
+            line.baseline.y + std::tan(line.baseline.angle) * (word.box.x1 - line.box.x1);
     word.baseline.angle = line.baseline.angle;
     word.font_size = font_size;
 
