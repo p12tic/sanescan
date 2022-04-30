@@ -24,6 +24,7 @@ set(SOURCES
     about_dialog.cc
     about_dialog.ui
     document_manager.cc
+    font_metrics_cache.cc
     image_widget.cc
     image_widget_highlight_item.cc
     image_widget_selection_item.cc
