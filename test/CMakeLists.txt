@@ -21,6 +21,7 @@ set(SOURCES
     lib/incomplete_line_manager.cc
     ocr/hocr.cc
     ocr/ocr_utils.cc
+    ocr/tesseract_renderer_utils.cc
 )
 
 include(FindPkgConfig)
