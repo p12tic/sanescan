@@ -54,6 +54,7 @@ private:
     void update_selection_to_settings();
     void image_area_selection_changed(const std::optional<QRectF>& rect);
     void update_ocr_tab_to_settings();
+    void update_ocr_results_manager();
 
     struct Private;
     std::unique_ptr<Private> d_;

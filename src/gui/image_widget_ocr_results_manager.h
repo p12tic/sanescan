@@ -16,30 +16,36 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_OCR_OCR_BOX_H
-#define SANESCAN_OCR_OCR_BOX_H
+#ifndef SANESCAN_GUI_IMAGE_WIDGET_OCR_RESULTS_MANAGER_H
+#define SANESCAN_GUI_IMAGE_WIDGET_OCR_RESULTS_MANAGER_H
 
-#include <ciso646> // needed by moc (work around https://bugreports.qt.io/browse/QTBUG-83160)
-#include <compare>
-#include <cstdint>
-#include <iosfwd>
+#include "ocr/ocr_paragraph.h"
+
+#include <QtWidgets/QGraphicsScene>
+#include <memory>
 
 namespace sanescan {
 
-struct OcrBox {
-    std::int32_t x1 = 0;
-    std::int32_t y1 = 0;
-    std::int32_t x2 = 0;
-    std::int32_t y2 = 0;
+class ImageWidgetOcrResultsManager {
+public:
+    explicit ImageWidgetOcrResultsManager(QGraphicsScene* scene);
+    ~ImageWidgetOcrResultsManager();
 
-    std::int32_t width() const { return x2 - x1; }
-    std::int32_t height() const { return y2 - y1; }
+    void clear();
+    void setup(const std::vector<OcrParagraph>& results);
+    void set_show_text(bool show);
+    void set_show_text_white_background(bool show);
+    void set_show_bounding_boxes(bool show);
 
-    auto operator<=>(const OcrBox&) const = default;
+private:
+    void clear_items(std::vector<QGraphicsItem*>& items);
+
+    void setup_word(const OcrWord& word);
+
+    struct Private;
+    std::unique_ptr<Private> d_;
 };
-
-std::ostream& operator<<(std::ostream& stream, const OcrBox& box);
 
 } // namespace sanescan
 
-#endif // SANESCAN_OCR_OCR_BOX_H
+#endif // SANESCAN_GUI_IMAGE_WIDGET_OCR_RESULTS_MANAGER_H

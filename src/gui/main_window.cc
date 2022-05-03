@@ -20,6 +20,7 @@
 #include "about_dialog.h"
 #include "document_manager.h"
 #include "image_widget.h"
+#include "image_widget_ocr_results_manager.h"
 #include "qimage_utils.h"
 #include "scan_settings_widget.h"
 #include "scan_document.h"
@@ -51,6 +52,8 @@ struct MainWindow::Private {
     std::unique_ptr<Ui::MainWindow> ui;
     DocumentManager manager;
 
+    std::unique_ptr<ImageWidgetOcrResultsManager> ocr_results_manager;
+
     std::unique_ptr<PageListModel> page_list_model;
 
     unsigned active_document_index = 0;
@@ -66,6 +69,9 @@ MainWindow::MainWindow(QWidget *parent) :
     d_->ui->stack_settings->setCurrentIndex(STACK_LOADING);
     d_->ui->tabs->setCurrentIndex(TAB_SCANNING);
     d_->ui->tabs->setTabEnabled(TAB_OCR, false);
+
+    d_->ocr_results_manager =
+            std::make_unique<ImageWidgetOcrResultsManager>(d_->ui->image_area->scene());
 
     connect(d_->ui->action_about, &QAction::triggered, [this](){ present_about_dialog(); });
     connect(&d_->manager, &DocumentManager::available_devices_changed, [this]()
@@ -168,6 +174,17 @@ MainWindow::MainWindow(QWidget *parent) :
         if (after_scan) {
             switch_to_document(doc_index);
         }
+    });
+    connect(&d_->manager, &DocumentManager::document_ocr_results_changed,
+            [this](unsigned doc_index)
+    {
+        if (d_->active_document_index != doc_index) {
+            return;
+        }
+
+        auto& document = d_->manager.document(doc_index);
+        d_->ui->image_area->set_image(get_document_image(document));
+        update_ocr_results_manager();
     });
 
     connect(d_->ui->settings_widget, &ScanSettingsWidget::refresh_devices_clicked,
@@ -278,6 +295,8 @@ void MainWindow::switch_to_document(unsigned doc_index)
         d_->ui->tabs->setCurrentIndex(TAB_SCANNING);
     }
     d_->ui->image_area->set_image(get_document_image(document));
+
+    update_ocr_results_manager();
     update_selection_to_settings();
 }
 
@@ -344,6 +363,17 @@ void MainWindow::update_ocr_tab_to_settings()
     auto& document = d_->manager.document(d_->active_document_index);
 
     d_->ui->ocr_settings->set_options(document.ocr_options);
+}
+
+void MainWindow::update_ocr_results_manager()
+{
+    auto& document = d_->manager.document(d_->active_document_index);
+
+    if (document.ocr_results) {
+        d_->ocr_results_manager->setup(document.ocr_results->paragraphs);
+    } else {
+        d_->ocr_results_manager->clear();
+    }
 }
 
 } // namespace sanescan

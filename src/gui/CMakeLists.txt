@@ -27,6 +27,7 @@ set(SOURCES
     font_metrics_cache.cc
     image_widget.cc
     image_widget_highlight_item.cc
+    image_widget_ocr_results_manager.cc
     image_widget_selection_item.cc
     main.cc
     main_window.cc
