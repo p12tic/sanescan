@@ -369,7 +369,7 @@ void MainWindow::update_ocr_results_manager()
 {
     auto& document = d_->manager.document(d_->active_document_index);
 
-    if (document.ocr_results) {
+    if (d_->ui->tabs->currentIndex() == TAB_OCR && document.ocr_results) {
         d_->ocr_results_manager->setup(document.ocr_results->paragraphs);
     } else {
         d_->ocr_results_manager->clear();
