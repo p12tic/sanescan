@@ -208,6 +208,14 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(d_->ui->image_area, &ImageWidget::selection_changed,
             [this](const auto& rect) { image_area_selection_changed(rect); });
 
+    connect(d_->ui->tabs, &QTabWidget::currentChanged,
+            [this](int)
+    {
+        auto& document = d_->manager.document(d_->active_document_index);
+        d_->ui->image_area->set_image(get_document_image(document));
+        update_ocr_results_manager();
+    });
+
     connect(d_->ui->ocr_settings, &OcrSettingsWidget::options_changed,
             [this](const OcrOptions& options)
     {
