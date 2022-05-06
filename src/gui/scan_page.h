@@ -16,8 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_GUI_SCAN_DOCUMENT_H
-#define SANESCAN_GUI_SCAN_DOCUMENT_H
+#ifndef SANESCAN_GUI_SCAN_PAGE_H
+#define SANESCAN_GUI_SCAN_PAGE_H
 
 #include "scan_type.h"
 #include "ocr_job.h"
@@ -38,12 +38,12 @@ struct PreviewConfig {
     unsigned dpi = 0;
 };
 
-struct ScanDocument {
-    ScanDocument(unsigned scan_id) : scan_id{scan_id} {}
-    ScanDocument(ScanDocument&&) = default;
-    ScanDocument& operator=(ScanDocument&&) = default;
+struct ScanPage {
+    ScanPage(unsigned scan_id) : scan_id{scan_id} {}
+    ScanPage(ScanPage&&) = default;
+    ScanPage& operator=(ScanPage&&) = default;
 
-    // An ID that is unique across all scanned documents in a single application run.
+    // An ID that is unique across all scanned pages in a single application run.
     unsigned scan_id = 0;
 
     std::optional<cv::Mat> preview_image;
@@ -72,4 +72,4 @@ struct ScanDocument {
 
 } // namespace sanescan
 
-#endif // SANESCAN_GUI_SCAN_DOCUMENT_H
+#endif // SANESCAN_GUI_SCAN_PAGE_H

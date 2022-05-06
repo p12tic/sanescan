@@ -19,7 +19,7 @@
 #ifndef SANESCAN_GUI_MAIN_WINDOW_H
 #define SANESCAN_GUI_MAIN_WINDOW_H
 
-#include "scan_document.h"
+#include "scan_page.h"
 #include "../lib/sane_types.h"
 #include <QtWidgets/QMainWindow>
 #include <memory>
@@ -46,10 +46,10 @@ public:
 private:
     void start_scanning(ScanType type);
 
-    QImage get_document_thumbnail(const ScanDocument& document);
-    QImage get_document_image(const ScanDocument& document);
+    QImage get_page_thumbnail(const ScanPage& page);
+    QImage get_page_image(const ScanPage& page);
 
-    void switch_to_document(unsigned doc_index);
+    void switch_to_page(unsigned page_index);
 
     void update_selection_to_settings();
     void image_area_selection_changed(const std::optional<QRectF>& rect);

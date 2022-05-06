@@ -23,7 +23,6 @@ find_package(Threads)
 set(SOURCES
     about_dialog.cc
     about_dialog.ui
-    document_manager.cc
     font_metrics_cache.cc
     image_widget.cc
     image_widget_highlight_item.cc
@@ -32,6 +31,7 @@ set(SOURCES
     main.cc
     main_window.cc
     main_window.ui
+    page_manager.cc
     qimage_utils.cc
     scan_engine.cc
     scan_settings_widget.cc
