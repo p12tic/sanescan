@@ -47,6 +47,10 @@ OcrSettingsWidget::OcrSettingsWidget(QWidget *parent) :
             [this](const QString&){ options_changed_impl(); });
     connect(d_->ui->checkbox_rotate_keep_size, &QCheckBox::toggled,
             [this](bool){ options_changed_impl(); });
+    connect(d_->ui->b_should_highlight_text, &QPushButton::clicked, [this]()
+    {
+        Q_EMIT should_highlight_text_changed(d_->ui->b_should_highlight_text->isChecked());
+    });
 }
 
 OcrSettingsWidget::~OcrSettingsWidget() = default;
@@ -67,6 +71,11 @@ void OcrSettingsWidget::set_options(const OcrOptions& options)
                 static_cast<int>(std::round(rad_to_deg(options.fix_text_rotation_max_angle_diff))));
     d_->ui->checkbox_rotate_keep_size->setChecked(options.keep_image_size_after_rotation);
     d_->is_updating_from_code = false;
+}
+
+bool OcrSettingsWidget::should_highlight_text() const
+{
+    return d_->ui->b_should_highlight_text->isChecked();
 }
 
 void OcrSettingsWidget::options_changed_impl()

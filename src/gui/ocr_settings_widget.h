@@ -33,9 +33,11 @@ public:
     ~OcrSettingsWidget() override;
 
     void set_options(const OcrOptions& options);
+    bool should_highlight_text() const;
 
 public: Q_SIGNALS:
     void options_changed(const OcrOptions& options);
+    void should_highlight_text_changed(bool should_highlight);
 
 private:
     void options_changed_impl();

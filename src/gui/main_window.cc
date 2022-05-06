@@ -221,6 +221,13 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         d_->manager.set_document_ocr_options(d_->active_document_index, options);
     });
+    connect(d_->ui->ocr_settings, &OcrSettingsWidget::should_highlight_text_changed,
+            [this](bool should_highlight)
+    {
+        d_->ocr_results_manager->set_show_bounding_boxes(should_highlight);
+        d_->ocr_results_manager->set_show_text(should_highlight);
+        d_->ocr_results_manager->set_show_text_white_background(should_highlight);
+    });
 
     d_->page_list_model = std::make_unique<PageListModel>(this);
     d_->ui->page_list->setModel(d_->page_list_model.get());
@@ -378,6 +385,11 @@ void MainWindow::update_ocr_results_manager()
     auto& document = d_->manager.document(d_->active_document_index);
 
     if (d_->ui->tabs->currentIndex() == TAB_OCR && document.ocr_results) {
+        bool should_highlight = d_->ui->ocr_settings->should_highlight_text();
+        d_->ocr_results_manager->set_show_bounding_boxes(should_highlight);
+        d_->ocr_results_manager->set_show_text(should_highlight);
+        d_->ocr_results_manager->set_show_text_white_background(should_highlight);
+
         d_->ocr_results_manager->setup(document.ocr_results->paragraphs);
     } else {
         d_->ocr_results_manager->clear();
