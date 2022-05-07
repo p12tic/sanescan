@@ -38,7 +38,7 @@ public:
 
     void write_header();
     void write_page(const cv::Mat& image, const std::vector<OcrParagraph>& recognized,
-                    WritePdfFlags flags);
+                    WritePdfFlags flags = WritePdfFlags::NONE);
 
 private:
     void setup_type0_font(PoDoFo::PdfObject* type0_font, PoDoFo::PdfObject* cid_font_type2,
