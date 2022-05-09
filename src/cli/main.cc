@@ -127,10 +127,13 @@ input_path and output_path options can be passed either as positional or named a
              "consider page orientation fix")
     ;
 
+    po::options_description all_options_desc;
+    all_options_desc.add(options_desc).add(ocr_options_desc);
+
     po::variables_map options;
     try {
         po::store(po::command_line_parser(argc, argv)
-                      .options(options_desc)
+                      .options(all_options_desc)
                       .positional(positional_options_desc)
                       .run(),
                   options);
