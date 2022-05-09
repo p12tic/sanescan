@@ -20,11 +20,15 @@
 #include "scan_engine.h"
 #include "lib/job_queue.h"
 #include "lib/scan_area_utils.h"
+#include "ocr/pdf_writer.h"
 #include "util/math.h"
 
 #include <QtCore/QTimer>
 #include <QtGui/QImage>
+#include <opencv2/imgcodecs.hpp>
 
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -76,6 +80,21 @@ PreviewConfig setup_blank_preview_size(const std::optional<cv::Rect2d>& bounds_m
     dpi = dots_per_mm * 25.4;
 
     return PreviewConfig{width_mm, height_mm, static_cast<unsigned>(dpi)};
+}
+
+const cv::Mat& image_to_save(const ScanPage& page, PageManager::SaveMode mode)
+{
+    if (mode == PageManager::SaveMode::RAW_SCAN) {
+        if (!page.scanned_image.has_value()) {
+            throw std::runtime_error("Can't save page without image");
+        }
+        return page.scanned_image.value();
+    } else { // WITH_OCR
+        if (!page.ocr_results.has_value()) {
+            throw std::runtime_error("Can't save page without image");
+        }
+        return page.ocr_results->adjusted_image;
+    }
 }
 
 } // namespace
@@ -354,6 +373,57 @@ void PageManager::set_page_ocr_options(unsigned page_index, const OcrOptions& op
 
     page.ocr_options = options;
     perform_ocr(page_index);
+}
+
+void PageManager::save_page(unsigned page_index, SaveMode mode, const std::string& path)
+{
+    std::filesystem::path p(path);
+    auto is_pdf = p.extension().string() == ".pdf";
+
+    auto& page = d_->pages.at(page_index);
+
+    auto image = image_to_save(page, mode);
+    if (is_pdf) {
+        std::ofstream out_stream{p};
+        PdfWriter writer{out_stream};
+        writer.write_header();
+        writer.write_page(image, {});
+    } else {
+        cv::imwrite(path, image);
+    }
+}
+
+void PageManager::save_all_pages(SaveMode mode, const std::string& path)
+{
+    std::filesystem::path base_path(path);
+    auto is_pdf = base_path.extension().string() == ".pdf";
+
+    // Note that we exclude the last page as it will always contain not yet finished scan.
+    if (is_pdf) {
+        std::ofstream out_stream{path};
+        PdfWriter writer{out_stream};
+        writer.write_header();
+        for (std::size_t i = 0; i < d_->pages.size() - 1; ++i) {
+            const auto& page = d_->pages.at(i);
+            auto image = image_to_save(page, mode);
+
+            if (mode == SaveMode::RAW_SCAN) {
+                writer.write_page(image, {});
+            } else {
+                writer.write_page(image, page.ocr_results->paragraphs);
+            }
+        }
+    } else {
+        auto base_dir = base_path.parent_path();
+        auto base_stem = base_path.stem().string();
+        auto extension = base_path.extension().string();
+
+        for (std::size_t i = 0; i < d_->pages.size() - 1; ++i) {
+            auto image = image_to_save(d_->pages.at(i), mode);
+            auto image_path = base_dir / (base_stem + "-" + std::to_string(i + 1) + extension);
+            cv::imwrite(image_path.string(), image);
+        }
+    }
 }
 
 void PageManager::periodic_engine_poll()

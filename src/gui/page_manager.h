@@ -28,6 +28,11 @@ namespace sanescan {
 class PageManager : public QObject {
     Q_OBJECT
 public:
+    enum SaveMode {
+        RAW_SCAN,
+        WITH_OCR
+    };
+
     PageManager();
     ~PageManager() override;
 
@@ -72,6 +77,12 @@ public:
 
     /// Sets OCR options for specific page and restarts OCR processing if needed
     void set_page_ocr_options(unsigned page_index, const OcrOptions& options);
+
+    /// Saves a specific page using given save mode.
+    void save_page(unsigned page_index, SaveMode mode, const std::string& path);
+
+    /// Saves whole document using given save mode.
+    void save_all_pages(SaveMode mode, const std::string& path);
 
 public: Q_SIGNALS:
     void available_devices_changed();

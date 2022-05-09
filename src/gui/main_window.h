@@ -56,6 +56,10 @@ private:
     void update_ocr_tab_to_settings();
     void update_ocr_results_manager();
 
+    void save_all_pages();
+    void save_all_pages_with_ocr();
+    void save_current_page();
+
     struct Private;
     std::unique_ptr<Private> d_;
 };

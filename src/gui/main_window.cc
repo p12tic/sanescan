@@ -30,6 +30,8 @@
 #include "../util/math.h"
 #include "../lib/scan_area_utils.h"
 
+#include <QtWidgets/QFileDialog>
+
 #include <iostream>
 #include <optional>
 #include <stdexcept>
@@ -74,6 +76,13 @@ MainWindow::MainWindow(QWidget *parent) :
             std::make_unique<ImageWidgetOcrResultsManager>(d_->ui->image_area->scene());
 
     connect(d_->ui->action_about, &QAction::triggered, [this](){ present_about_dialog(); });
+    connect(d_->ui->action_save_current_image, &QAction::triggered,
+            [this](){ save_current_page(); });
+    connect(d_->ui->action_save_all_pages, &QAction::triggered,
+            [this](){ save_all_pages(); });
+    connect(d_->ui->action_save_all_pages_with_ocr, &QAction::triggered,
+            [this](){ save_all_pages_with_ocr(); });
+
     connect(&d_->manager, &PageManager::available_devices_changed, [this]()
     {
         d_->ui->stack_settings->setCurrentIndex(STACK_SETTINGS);
@@ -169,6 +178,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&d_->manager, &PageManager::new_page_added,
             [this](unsigned page_index, bool after_scan)
     {
+        d_->ui->action_save_current_image->setEnabled(true);
+        d_->ui->action_save_all_pages->setEnabled(true);
         auto& page = d_->manager.page(page_index);
         d_->page_list_model->add_page(page.scan_id, get_page_thumbnail(page));
         if (after_scan) {
@@ -178,6 +189,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&d_->manager, &PageManager::page_ocr_results_changed,
             [this](unsigned page_index)
     {
+        d_->ui->action_save_all_pages_with_ocr->setEnabled(true);
+
         if (d_->active_page_index != page_index) {
             return;
         }
@@ -394,6 +407,30 @@ void MainWindow::update_ocr_results_manager()
     } else {
         d_->ocr_results_manager->clear();
     }
+}
+
+void MainWindow::save_all_pages()
+{
+    auto path = QFileDialog::getSaveFileName(this, tr("Save all pages"), "",
+                                             tr("Image Files (*.jpg *.png *.tiff *.pdf)"));
+    d_->manager.save_all_pages(PageManager::SaveMode::RAW_SCAN, path.toStdString());
+}
+
+void MainWindow::save_all_pages_with_ocr()
+{
+    auto path = QFileDialog::getSaveFileName(this, tr("Save all pages with OCR"), "",
+                                             tr("Image Files (*.jpg *.png *.tiff *.pdf)"));
+    d_->manager.save_all_pages(PageManager::SaveMode::WITH_OCR, path.toStdString());
+}
+
+void MainWindow::save_current_page()
+{
+    auto path = QFileDialog::getSaveFileName(this, tr("Save current page"), "",
+                                             tr("Image Files (*.jpg *.png *.tiff *.pdf)"));
+    auto save_mode = d_->ui->tabs->currentIndex() == TAB_OCR
+            ? PageManager::SaveMode::WITH_OCR
+            : PageManager::SaveMode::RAW_SCAN;
+    d_->manager.save_page(d_->active_page_index, save_mode, path.toStdString());
 }
 
 } // namespace sanescan
