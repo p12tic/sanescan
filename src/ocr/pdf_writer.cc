@@ -226,109 +226,114 @@ std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
                                                   WritePdfFlags flags)
 {
     PdfCanvas canvas;
-    std::vector<double> text_adjustments;
 
     for (const auto& par : recognized) {
         for (const auto& line : par.lines) {
-            canvas.begin_text();
-
-            if (has_flag(flags, WritePdfFlags::DEBUG_CHAR_BOXES)) {
-                canvas.set_text_mode_outline();
-            } else {
-                canvas.set_text_mode_invisible();
-            }
-
-            auto matrix = compute_affine_matrix_for_line(line.baseline.angle);
-            auto line_baseline_x = line.box.x1 + line.baseline.x;
-            auto line_baseline_y = height - line.box.y2 - line.baseline.y;
-            canvas.set_text_matrix(matrix.a, matrix.b, matrix.c, matrix.d,
-                                   line_baseline_x, line_baseline_y);
-            double old_x = line_baseline_x;
-            double old_y = line_baseline_y;
-            double old_fontsize = -1;
-
-            for (const auto& word : line.words) {
-                auto text_utf32 = boost::locale::conv::utf_to_utf<char32_t>(word.content);
-                if (text_utf32.empty()) {
-                    continue;
-                }
-
-                double word_x = word.box.x1;
-                double word_y = line_baseline_y - (word_x - line_baseline_x) * std::tan(line.baseline.angle);
-                double dx = word_x - old_x;
-                double dy = word_y - old_y;
-                canvas.translate_text_matrix(dx * matrix.a + dy * matrix.b,
-                                             dx * matrix.c + dy * matrix.d);
-                old_x = word_x;
-                old_y = word_y;
-
-                bool use_char_positioning = text_utf32.size() == word.char_boxes.size();
-
-                auto font_size = word.font_size > 1 ? word.font_size : FALL_BACK_FONT_SIZE;
-                if (font_size != old_fontsize) {
-                    canvas.set_font(font_ident, font_size);
-                    old_fontsize = font_size;
-                }
-
-                if (use_char_positioning) {
-                    // This will be most frequent case as the input data will always have
-                    // the number of char boxes equal to the number of symbols.
-                    auto font_char_width = double(font_size) / CHAR_HEIGHT_DIVIDED_BY_WIDTH;
-                    double old_x = word.box.x1;
-
-                    for (std::size_t i = 1; i < text_utf32.size(); ++i) {
-                        double x = word.char_boxes[i].x1;
-                        double curr_char_width = x - old_x;
-                        old_x = x;
-                        auto stretch_percent = 100 * curr_char_width / font_char_width;
-                        canvas.set_horizontal_stretch(stretch_percent);
-                        canvas.show_text(text_utf32.substr(i - 1, 1));
-                    }
-
-                    {
-                        double curr_char_width = word.box.x2 - old_x;
-                        auto stretch_percent = 100 * curr_char_width / font_char_width;
-                        canvas.set_horizontal_stretch(stretch_percent);
-                        canvas.show_text(text_utf32.substr(text_utf32.size() - 1, 1));
-                    }
-                    canvas.separator();
-
-                    // Add space character.
-                    {
-                        canvas.set_horizontal_stretch(20);
-                        canvas.show_text(std::u32string({' '}));
-                        canvas.separator();
-                        canvas.set_horizontal_stretch(100);
-                    }
-
-                } else {
-                    // Fallback in case the number symbols have been adjusted. We compute
-                    // the amount of space the font would use for the given number of
-                    // characters and then adjust horizontal stretch so that the actual space
-                    // use is exactly equal to how much space we have.
-                    auto word_dx = word.box.x2 - word.box.x1;
-                    auto word_baseline_length = std::hypot(word_dx,
-                                                           word_dx * std::tan(word.baseline.angle));
-                    auto font_char_width = double(font_size) / CHAR_HEIGHT_DIVIDED_BY_WIDTH;
-                    auto curr_char_width = word_baseline_length / text_utf32.size();
-                    auto stretch_percent = 100 * curr_char_width / font_char_width;
-
-                    canvas.set_horizontal_stretch(stretch_percent);
-                    canvas.show_text(text_utf32);
-
-                    // We need to also emit a space after the word, but we don't know how much
-                    // free space we have, so we use very small stretch to make sure the space
-                    // character does not overlap the next word.
-                    canvas.set_horizontal_stretch(stretch_percent * 0.2);
-                    canvas.show_text(std::u32string({' '}));
-                    canvas.separator();
-                }
-                canvas.end_text();
-            }
+            write_line_to_canvas(canvas, font_ident, width, height, line, flags);
         }
     }
 
     return canvas.get_string();
+}
+
+void PdfWriter::write_line_to_canvas(PdfCanvas& canvas, const std::string& font_ident,
+                                     double width, double height,
+                                     const OcrLine& line,  WritePdfFlags flags)
+{
+    canvas.begin_text();
+
+    if (has_flag(flags, WritePdfFlags::DEBUG_CHAR_BOXES)) {
+        canvas.set_text_mode_outline();
+    } else {
+        canvas.set_text_mode_invisible();
+    }
+
+    auto matrix = compute_affine_matrix_for_line(line.baseline.angle);
+    auto line_baseline_x = line.box.x1 + line.baseline.x;
+    auto line_baseline_y = height - line.box.y2 - line.baseline.y;
+    canvas.set_text_matrix(matrix.a, matrix.b, matrix.c, matrix.d,
+                           line_baseline_x, line_baseline_y);
+    double old_x = line_baseline_x;
+    double old_y = line_baseline_y;
+    double old_fontsize = -1;
+
+    for (const auto& word : line.words) {
+        auto text_utf32 = boost::locale::conv::utf_to_utf<char32_t>(word.content);
+        if (text_utf32.empty()) {
+            continue;
+        }
+
+        double word_x = word.box.x1;
+        double word_y = line_baseline_y - (word_x - line_baseline_x) * std::tan(line.baseline.angle);
+        double dx = word_x - old_x;
+        double dy = word_y - old_y;
+        canvas.translate_text_matrix(dx * matrix.a + dy * matrix.b, dx * matrix.c + dy * matrix.d);
+        old_x = word_x;
+        old_y = word_y;
+
+        bool use_char_positioning = text_utf32.size() == word.char_boxes.size();
+
+        auto font_size = word.font_size > 1 ? word.font_size : FALL_BACK_FONT_SIZE;
+        if (font_size != old_fontsize) {
+            canvas.set_font(font_ident, font_size);
+            old_fontsize = font_size;
+        }
+
+        if (use_char_positioning) {
+            // This will be most frequent case as the input data will always have
+            // the number of char boxes equal to the number of symbols.
+            auto font_char_width = double(font_size) / CHAR_HEIGHT_DIVIDED_BY_WIDTH;
+            double old_x = word.box.x1;
+
+            for (std::size_t i = 1; i < text_utf32.size(); ++i) {
+                double x = word.char_boxes[i].x1;
+                double curr_char_width = x - old_x;
+                old_x = x;
+                auto stretch_percent = 100 * curr_char_width / font_char_width;
+                canvas.set_horizontal_stretch(stretch_percent);
+                canvas.show_text(text_utf32.substr(i - 1, 1));
+            }
+
+            {
+                double curr_char_width = word.box.x2 - old_x;
+                auto stretch_percent = 100 * curr_char_width / font_char_width;
+                canvas.set_horizontal_stretch(stretch_percent);
+                canvas.show_text(text_utf32.substr(text_utf32.size() - 1, 1));
+            }
+            canvas.separator();
+
+            // Add space character.
+            {
+                canvas.set_horizontal_stretch(20);
+                canvas.show_text(std::u32string({' '}));
+                canvas.separator();
+                canvas.set_horizontal_stretch(100);
+            }
+
+        } else {
+            // Fallback in case the number symbols have been adjusted. We compute
+            // the amount of space the font would use for the given number of
+            // characters and then adjust horizontal stretch so that the actual space
+            // use is exactly equal to how much space we have.
+            auto word_dx = word.box.x2 - word.box.x1;
+            auto word_baseline_length = std::hypot(word_dx,
+                                                   word_dx * std::tan(word.baseline.angle));
+            auto font_char_width = double(font_size) / CHAR_HEIGHT_DIVIDED_BY_WIDTH;
+            auto curr_char_width = word_baseline_length / text_utf32.size();
+            auto stretch_percent = 100 * curr_char_width / font_char_width;
+
+            canvas.set_horizontal_stretch(stretch_percent);
+            canvas.show_text(text_utf32);
+
+            // We need to also emit a space after the word, but we don't know how much
+            // free space we have, so we use very small stretch to make sure the space
+            // character does not overlap the next word.
+            canvas.set_horizontal_stretch(stretch_percent * 0.2);
+            canvas.show_text(std::u32string({' '}));
+            canvas.separator();
+        }
+        canvas.end_text();
+    }
 }
 
 } // namespace sanescan

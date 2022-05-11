@@ -19,6 +19,7 @@
 #ifndef SANESCAN_OCR_PDF_WRITER_H
 #define SANESCAN_OCR_PDF_WRITER_H
 
+#include "fwd.h"
 #include "ocr_paragraph.h"
 #include "pdf.h"
 #include <opencv2/core/mat.hpp>
@@ -59,6 +60,10 @@ private:
                                            double width, double height,
                                            const std::vector<OcrParagraph>& recognized,
                                            WritePdfFlags flags);
+
+    void write_line_to_canvas(PdfCanvas& canvas, const std::string& font_ident,
+                              double width, double height,
+                              const OcrLine& line, WritePdfFlags flags);
 
     std::pair<double, double> adjust_small_baseline_angle(const OcrLine& line);
 
