@@ -32,7 +32,7 @@
 namespace sanescan {
 
 bool read_ocr_write(const std::string& input_path, const std::string& output_path,
-                    bool debug_ocr, OcrOptions options)
+                    WritePdfFlags write_pdf_flags, OcrOptions options)
 {
     auto image = cv::imread(input_path);
     if (image.data == nullptr) {
@@ -52,8 +52,7 @@ bool read_ocr_write(const std::string& input_path, const std::string& output_pat
 
     std::vector<OcrParagraph> sorted_all = {sort_paragraph_text(combined)};
     std::ofstream stream_pdf(output_path);
-    write_pdf(stream_pdf, results.adjusted_image, sorted_all,
-              debug_ocr ? WritePdfFlags::DEBUG_CHAR_BOXES : WritePdfFlags::NONE);
+    write_pdf(stream_pdf, results.adjusted_image, sorted_all, write_pdf_flags);
     return true;
 }
 
@@ -198,9 +197,14 @@ input_path and output_path options can be passed either as positional or named a
     ocr_options.fix_text_rotation_max_angle_diff =
             sanescan::deg_to_rad(ocr_options.fix_text_rotation_max_angle_diff);
 
+    auto write_pdf_flags = sanescan::WritePdfFlags::NONE;
+    if (options.count(Options::DEBUG)) {
+        write_pdf_flags = write_pdf_flags | sanescan::WritePdfFlags::DEBUG_CHAR_BOXES;
+    }
+
     try {
         if (!sanescan::read_ocr_write(input_path, output_path,
-                                      options.count(Options::DEBUG), ocr_options)) {
+                                      write_pdf_flags, ocr_options)) {
             std::cerr << "Unknown failure";
             return EXIT_FAILURE;
         }
