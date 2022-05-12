@@ -241,11 +241,9 @@ void PdfWriter::write_line_to_canvas(PdfCanvas& canvas, const std::string& font_
 {
     canvas.begin_text();
 
-    if (has_flag(flags, WritePdfFlags::DEBUG_CHAR_BOXES)) {
-        canvas.set_text_mode_outline();
-    } else {
-        canvas.set_text_mode_invisible();
-    }
+    auto text_mode = has_flag(flags_, WritePdfFlags::DEBUG_CHAR_BOXES)
+            ? PdfCanvas::TextMode::STROKE : PdfCanvas::TextMode::INVISIBLE;
+    canvas.set_text_mode(text_mode);
 
     auto matrix = compute_affine_matrix_for_line(line.baseline.angle);
     auto line_baseline_x = line.box.x1 + line.baseline.x;

@@ -50,6 +50,18 @@ inline AffineMatrix compute_affine_matrix_for_line(double line_angle)
 class PdfCanvas
 {
 public:
+    // See section "Text Rendering Mode" of the PDF standard (e.g. section 9.3.6 in PDF32000)
+    enum class TextMode {
+        FILL,
+        STROKE,
+        FILL_STROKE,
+        INVISIBLE,
+        FILL_CLIP,
+        STROKE_CLIP,
+        FILL_STROKE_CLIP,
+        CLIP
+    };
+
     PdfCanvas()
     {
         // force classic locales so that it uses correct dot separator for double values
@@ -110,16 +122,27 @@ public:
         str_ << "ET";
     }
 
-    void set_text_mode_invisible()
+    void set_text_mode(TextMode mode)
     {
         maybe_write_space();
-        str_ << "3 Tr";
-    }
-
-    void set_text_mode_outline()
-    {
-        maybe_write_space();
-        str_ << "1 Tr";
+        switch (mode) {
+            case TextMode::FILL:
+                str_ << "0 Tr"; break;
+            case TextMode::STROKE:
+                str_ << "1 Tr"; break;
+            case TextMode::FILL_STROKE:
+                str_ << "2 Tr"; break;
+            case TextMode::INVISIBLE:
+                str_ << "3 Tr"; break;
+            case TextMode::FILL_CLIP:
+                str_ << "4 Tr"; break;
+            case TextMode::STROKE_CLIP:
+                str_ << "5 Tr"; break;
+            case TextMode::FILL_STROKE_CLIP:
+                str_ << "6 Tr"; break;
+            case TextMode::CLIP:
+                str_ << "7 Tr"; break;
+        }
     }
 
     void set_font(const std::string& name, double size)
