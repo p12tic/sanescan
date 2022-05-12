@@ -37,9 +37,10 @@
 
 namespace sanescan {
 
-PdfWriter::PdfWriter(std::ostream& stream) :
+PdfWriter::PdfWriter(std::ostream& stream, WritePdfFlags flags) :
     output_dev_{&stream},
-    doc_{&output_dev_, PoDoFo::ePdfVersion_1_5}
+    doc_{&output_dev_, PoDoFo::ePdfVersion_1_5},
+    flags_{flags}
 {
 }
 
@@ -66,8 +67,7 @@ void PdfWriter::write_header()
     setup_font_file(font_file);
 }
 
-void PdfWriter::write_page(const cv::Mat& image, const std::vector<OcrParagraph>& recognized,
-                           WritePdfFlags flags)
+void PdfWriter::write_page(const cv::Mat& image, const std::vector<OcrParagraph>& recognized)
 {
     if (type0_font_ == nullptr) {
         throw std::runtime_error("write_header must be called before calling write_page");
@@ -86,7 +86,7 @@ void PdfWriter::write_page(const cv::Mat& image, const std::vector<OcrParagraph>
 
     auto page_contents_data = get_contents_data_for_image(image_data.GetIdentifier().GetName(),
                                                       width, height);
-    page_contents_data += get_contents_data_for_text(font_ident, width, height, recognized, flags);
+    page_contents_data += get_contents_data_for_text(font_ident, width, height, recognized);
 
     PoDoFo::PdfMemoryInputStream page_contents_stream(page_contents_data.c_str(),
                                                        page_contents_data.size());
@@ -222,14 +222,13 @@ std::pair<double, double> PdfWriter::adjust_small_baseline_angle(const OcrLine& 
 
 std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
                                                   double width, double height,
-                                                  const std::vector<OcrParagraph>& recognized,
-                                                  WritePdfFlags flags)
+                                                  const std::vector<OcrParagraph>& recognized)
 {
     PdfCanvas canvas;
 
     for (const auto& par : recognized) {
         for (const auto& line : par.lines) {
-            write_line_to_canvas(canvas, font_ident, width, height, line, flags);
+            write_line_to_canvas(canvas, font_ident, width, height, line);
         }
     }
 

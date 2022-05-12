@@ -34,12 +34,11 @@ public:
     static constexpr int CHAR_HEIGHT_DIVIDED_BY_WIDTH = 2;
     static constexpr double FALL_BACK_FONT_SIZE = 10;
 
-    PdfWriter(std::ostream& stream);
+    PdfWriter(std::ostream& stream, WritePdfFlags flags = WritePdfFlags::NONE);
     ~PdfWriter();
 
     void write_header();
-    void write_page(const cv::Mat& image, const std::vector<OcrParagraph>& recognized,
-                    WritePdfFlags flags = WritePdfFlags::NONE);
+    void write_page(const cv::Mat& image, const std::vector<OcrParagraph>& recognized);
 
 private:
     void setup_type0_font(PoDoFo::PdfObject* type0_font, PoDoFo::PdfObject* cid_font_type2,
@@ -58,18 +57,18 @@ private:
                                             double width, double height);
     std::string get_contents_data_for_text(const std::string& font_ident,
                                            double width, double height,
-                                           const std::vector<OcrParagraph>& recognized,
-                                           WritePdfFlags flags);
+                                           const std::vector<OcrParagraph>& recognized);
 
     void write_line_to_canvas(PdfCanvas& canvas, const std::string& font_ident,
                               double width, double height,
-                              const OcrLine& line, WritePdfFlags flags);
+                              const OcrLine& line);
 
     std::pair<double, double> adjust_small_baseline_angle(const OcrLine& line);
 
     PoDoFo::PdfOutputDevice output_dev_;
     PoDoFo::PdfStreamedDocument doc_;
     PoDoFo::PdfObject* type0_font_ = nullptr;
+    WritePdfFlags flags_;
 };
 
 } // namespace sanescan
