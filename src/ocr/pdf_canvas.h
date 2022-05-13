@@ -157,6 +157,27 @@ public:
         str_ << prec6(stretch) << " Tz";
     }
 
+    /// Caller must ensure that the text is indeed ASCII
+    void show_text_ascii(const std::string& text)
+    {
+        maybe_write_space();
+        str_ << "(";
+        for (auto ch : text) {
+            if (!std::isalnum(ch) && !std::ispunct(ch)) {
+                throw std::invalid_argument("Text must be ASCII without control characters");
+            }
+
+            switch (ch) {
+                case '(': str_ << "\\("; break;
+                case ')': str_ << "\\)"; break;
+                case '\\': str_ << "\\\\"; break;
+                default: str_ << ch; break;
+            }
+        }
+
+        str_ << ") Tj";
+    }
+
     void show_text(const std::u32string& utf32_text)
     {
         maybe_write_space();
