@@ -60,14 +60,15 @@ private:
                                            const std::vector<OcrParagraph>& recognized);
 
     void write_line_to_canvas(PdfCanvas& canvas, const std::string& font_ident,
-                              double width, double height,
-                              const OcrLine& line);
+                              double width, double height, const OcrLine& line,
+                              std::size_t paragraph_index, std::size_t line_index);
 
     std::pair<double, double> adjust_small_baseline_angle(const OcrLine& line);
 
     PoDoFo::PdfOutputDevice output_dev_;
     PoDoFo::PdfStreamedDocument doc_;
     PoDoFo::PdfObject* type0_font_ = nullptr;
+    PoDoFo::PdfFont* debug_font_ = nullptr;
     WritePdfFlags flags_;
 };
 

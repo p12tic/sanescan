@@ -65,6 +65,11 @@ void PdfWriter::write_header()
     setup_cmap_file(cmap_file);
     setup_font_descriptor(font_descriptor, font_file);
     setup_font_file(font_file);
+
+    if (has_flag(flags_, WritePdfFlags::DEBUG_WORD_ORDER)) {
+        debug_font_ = doc_.CreateFont("helvetica");
+        debug_font_->EmbedFont();
+    }
 }
 
 void PdfWriter::write_page(const cv::Mat& image, const std::vector<OcrParagraph>& recognized)
@@ -83,6 +88,10 @@ void PdfWriter::write_page(const cv::Mat& image, const std::vector<OcrParagraph>
     PoDoFo::PdfImage image_data(&doc_, "image-");
     page->AddResource(image_data.GetIdentifier(), image_data.GetObjectReference(), "XObject");
     page->AddResource(PoDoFo::PdfName(font_ident), type0_font_->Reference(), "Font");
+    if (debug_font_ != nullptr) {
+        page->AddResource(debug_font_->GetIdentifier(), debug_font_->GetObject()->Reference(),
+                          "Font");
+    }
 
     auto page_contents_data = get_contents_data_for_image(image_data.GetIdentifier().GetName(),
                                                       width, height);
@@ -226,9 +235,11 @@ std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
 {
     PdfCanvas canvas;
 
-    for (const auto& par : recognized) {
-        for (const auto& line : par.lines) {
-            write_line_to_canvas(canvas, font_ident, width, height, line);
+    for (std::size_t i_par = 0; i_par < recognized.size(); ++i_par) {
+        const auto& par = recognized[i_par];
+        for (std::size_t i_line = 0; i_line < par.lines.size(); ++i_line) {
+            write_line_to_canvas(canvas, font_ident, width, height, par.lines[i_line],
+                                 i_par, i_line);
         }
     }
 
@@ -237,7 +248,8 @@ std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
 
 void PdfWriter::write_line_to_canvas(PdfCanvas& canvas, const std::string& font_ident,
                                      double width, double height,
-                                     const OcrLine& line,  WritePdfFlags flags)
+                                     const OcrLine& line,
+                                     std::size_t paragraph_index, std::size_t line_index)
 {
     canvas.begin_text();
 
@@ -254,7 +266,8 @@ void PdfWriter::write_line_to_canvas(PdfCanvas& canvas, const std::string& font_
     double old_y = line_baseline_y;
     double old_fontsize = -1;
 
-    for (const auto& word : line.words) {
+    for (std::size_t i_word = 0; i_word < line.words.size(); ++i_word) {
+        const auto& word = line.words[i_word];
         auto text_utf32 = boost::locale::conv::utf_to_utf<char32_t>(word.content);
         if (text_utf32.empty()) {
             continue;
@@ -274,6 +287,24 @@ void PdfWriter::write_line_to_canvas(PdfCanvas& canvas, const std::string& font_
         if (font_size != old_fontsize) {
             canvas.set_font(font_ident, font_size);
             old_fontsize = font_size;
+        }
+
+        if (has_flag(flags_, WritePdfFlags::DEBUG_WORD_ORDER)) {
+            auto debug_text = std::to_string(paragraph_index) + "-" + std::to_string(line_index)
+                    + "-" + std::to_string(i_word);
+
+            canvas.set_text_mode(PdfCanvas::TextMode::FILL);
+            canvas.set_font(debug_font_->GetIdentifier().GetEscapedName(), font_size / 2);
+            canvas.set_horizontal_stretch(100);
+            // For some reason show_text() doesn't work here. It seems as if the characters are
+            // intepreted as being encoded not using UTF16-BE, but PdfDocEncoding. This may be
+            // related to how the font is embedded.
+            canvas.show_text_ascii(debug_text); //(boost::locale::conv::utf_to_utf<char32_t>(debug_text));
+            canvas.set_font(font_ident, font_size);
+            canvas.set_text_mode(text_mode);
+
+            // Reset the text position after entering debug text
+            canvas.translate_text_matrix(0, 0);
         }
 
         if (use_char_positioning) {

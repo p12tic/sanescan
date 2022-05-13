@@ -30,6 +30,7 @@ namespace sanescan {
 enum class WritePdfFlags {
     NONE = 0,
     DEBUG_CHAR_BOXES = 1 << 0,
+    DEBUG_WORD_ORDER = 1 << 1,
 };
 
 SANESCAN_DECLARE_OPERATORS_FOR_SCOPED_ENUM_FLAGS(WritePdfFlags)
