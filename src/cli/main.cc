@@ -62,7 +62,7 @@ struct Options {
     static constexpr const char* INPUT_PATH = "input-path";
     static constexpr const char* OUTPUT_PATH = "output-path";
     static constexpr const char* HELP = "help";
-    static constexpr const char* DEBUG = "debug";
+    static constexpr const char* DEBUG_CHAR_BOXES = "debug-char-boxes";
 
     static constexpr const char* FIX_ROTATION_ENABLE = "ocr-enable-fix-text-rotation";
     static constexpr const char* FIX_ROTATION_FRACTION = "ocr-fix-text-rotation-min-text-fraction";
@@ -96,7 +96,7 @@ input_path and output_path options can be passed either as positional or named a
             (Options::INPUT_PATH, po::value(&input_path), "the path to the input image")
             (Options::OUTPUT_PATH, po::value(&output_path), "the path to the output PDF file")
             (Options::HELP, "produce this help message")
-            (Options::DEBUG, "enable debugging output in the output PDF file");
+            (Options::DEBUG_CHAR_BOXES, "enable character box debugging in output PDF file")
 
     sanescan::OcrOptions ocr_options;
 
@@ -198,7 +198,7 @@ input_path and output_path options can be passed either as positional or named a
             sanescan::deg_to_rad(ocr_options.fix_text_rotation_max_angle_diff);
 
     auto write_pdf_flags = sanescan::WritePdfFlags::NONE;
-    if (options.count(Options::DEBUG)) {
+    if (options.count(Options::DEBUG_CHAR_BOXES)) {
         write_pdf_flags = write_pdf_flags | sanescan::WritePdfFlags::DEBUG_CHAR_BOXES;
     }
 
