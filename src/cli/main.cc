@@ -63,6 +63,7 @@ struct Options {
     static constexpr const char* OUTPUT_PATH = "output-path";
     static constexpr const char* HELP = "help";
     static constexpr const char* DEBUG_CHAR_BOXES = "debug-char-boxes";
+    static constexpr const char* DEBUG_WORD_ORDER = "debug-word-order";
 
     static constexpr const char* FIX_ROTATION_ENABLE = "ocr-enable-fix-text-rotation";
     static constexpr const char* FIX_ROTATION_FRACTION = "ocr-fix-text-rotation-min-text-fraction";
@@ -97,6 +98,7 @@ input_path and output_path options can be passed either as positional or named a
             (Options::OUTPUT_PATH, po::value(&output_path), "the path to the output PDF file")
             (Options::HELP, "produce this help message")
             (Options::DEBUG_CHAR_BOXES, "enable character box debugging in output PDF file")
+            (Options::DEBUG_WORD_ORDER, "enable word order debugging in output PDF file");
 
     sanescan::OcrOptions ocr_options;
 
@@ -200,6 +202,9 @@ input_path and output_path options can be passed either as positional or named a
     auto write_pdf_flags = sanescan::WritePdfFlags::NONE;
     if (options.count(Options::DEBUG_CHAR_BOXES)) {
         write_pdf_flags = write_pdf_flags | sanescan::WritePdfFlags::DEBUG_CHAR_BOXES;
+    }
+    if (options.count(Options::DEBUG_WORD_ORDER)) {
+        write_pdf_flags = write_pdf_flags | sanescan::WritePdfFlags::DEBUG_WORD_ORDER;
     }
 
     try {
