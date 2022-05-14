@@ -181,7 +181,7 @@ public:
     void show_text(const std::u32string& utf32_text)
     {
         maybe_write_space();
-        str_ << "[ <";
+        str_ << "<";
 
         constexpr unsigned hex_size = 5;
         char hex_ch[hex_size] = {};
@@ -192,7 +192,7 @@ public:
             str_ << hex_ch;
         }
 
-        str_ << "> ] TJ";
+        str_ << "> Tj";
     }
 
     void show_text_with_positions(const std::u32string& utf32_text,
