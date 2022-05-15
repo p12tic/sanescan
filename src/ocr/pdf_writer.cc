@@ -35,6 +35,8 @@
 #include "pdf_canvas.h"
 #include "pdf_ttf_font.h"
 
+#include <algorithm>
+
 namespace sanescan {
 
 PdfWriter::PdfWriter(std::ostream& stream, WritePdfFlags flags) :
@@ -222,13 +224,6 @@ std::string PdfWriter::get_contents_data_for_image(const std::string& image_name
     return canvas.get_string();
 }
 
-std::pair<double, double> PdfWriter::adjust_small_baseline_angle(const OcrLine& line)
-{
-    // Many PDF viewers just can't properly select text when the baseline_angle is anything but
-    // zero because it causes the character heights to be different in different words and
-    // the viewers then
-}
-
 std::string PdfWriter::get_contents_data_for_text(const std::string& font_ident,
                                                   double width, double height,
                                                   const std::vector<OcrParagraph>& recognized)
@@ -257,9 +252,24 @@ void PdfWriter::write_line_to_canvas(PdfCanvas& canvas, const std::string& font_
             ? PdfCanvas::TextMode::STROKE : PdfCanvas::TextMode::INVISIBLE;
     canvas.set_text_mode(text_mode);
 
-    auto matrix = compute_affine_matrix_for_line(line.baseline.angle);
+
+    double line_baseline_angle = line.baseline.angle;
+
+    // If line is roughly flat then it is flattened completely to make PDF reader text selection
+    // more robust. To compensate the bounds of the line are expanded to fit whole original line:
+    //  - text is made larger
+    //  - the line baseline is moved lower
+    double line_y_offset = 0.0;
+    if (std::abs(line_baseline_angle) < 0.005) {
+        line_y_offset = std::sin(line_baseline_angle) * line.box.width() / 2;
+        line_baseline_angle = 0;
+    }
+    double font_size_offset = std::abs(line_y_offset);
+    line_y_offset = std::max(line_y_offset, 0.0); // We may only need to lower the line
+
+    auto matrix = compute_affine_matrix_for_line(line_baseline_angle);
     auto line_baseline_x = line.box.x1 + line.baseline.x;
-    auto line_baseline_y = height - line.box.y2 - line.baseline.y;
+    auto line_baseline_y = height - (line.box.y2 + line.baseline.y + line_y_offset);
     canvas.set_text_matrix(matrix.a, matrix.b, matrix.c, matrix.d,
                            line_baseline_x, line_baseline_y);
     double old_x = line_baseline_x;
@@ -274,7 +284,7 @@ void PdfWriter::write_line_to_canvas(PdfCanvas& canvas, const std::string& font_
         }
 
         double word_x = word.box.x1;
-        double word_y = line_baseline_y - (word_x - line_baseline_x) * std::tan(line.baseline.angle);
+        double word_y = line_baseline_y - (word_x - line_baseline_x) * std::tan(line_baseline_angle);
         double dx = word_x - old_x;
         double dy = word_y - old_y;
         canvas.translate_text_matrix(dx * matrix.a + dy * matrix.b, dx * matrix.c + dy * matrix.d);
@@ -284,6 +294,8 @@ void PdfWriter::write_line_to_canvas(PdfCanvas& canvas, const std::string& font_
         bool use_char_positioning = text_utf32.size() == word.char_boxes.size();
 
         auto font_size = word.font_size > 1 ? word.font_size : FALL_BACK_FONT_SIZE;
+        font_size += font_size_offset;
+
         if (font_size != old_fontsize) {
             canvas.set_font(font_ident, font_size);
             old_fontsize = font_size;

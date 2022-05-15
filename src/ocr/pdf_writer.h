@@ -63,8 +63,6 @@ private:
                               double width, double height, const OcrLine& line,
                               std::size_t paragraph_index, std::size_t line_index);
 
-    std::pair<double, double> adjust_small_baseline_angle(const OcrLine& line);
-
     PoDoFo::PdfOutputDevice output_dev_;
     PoDoFo::PdfStreamedDocument doc_;
     PoDoFo::PdfObject* type0_font_ = nullptr;
