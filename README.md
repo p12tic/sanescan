@@ -6,6 +6,21 @@ scanner driver project.
 
 The application UI is currently beta quality.
 
+Dependencies
+============
+
+Sanescan depends on the following libraries:
+
+ - Qt
+ - OpenCv
+ - Tesseract 5 (for improved text selection in PDF documents, please take PRs 3599 and 3787
+   from https://github.com/tesseract-ocr/tesseract/pulls)
+ - boost
+ - PoDoFo
+ - poppler-cpp
+ - pugixml
+ - GTest
+
 Building
 ========
 
