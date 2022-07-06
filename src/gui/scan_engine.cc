@@ -449,8 +449,7 @@ void ScanEngine::request_option_values()
     {
         d_->option_values.clear();
         for (const auto& option : option_values) {
-            d_->option_values.emplace(d_->option_index_to_name.at(option.index),
-                                         option.value);
+            d_->option_values.emplace(d_->option_index_to_name.at(option.index), option.value);
         }
         Q_EMIT option_values_changed();
     }));
