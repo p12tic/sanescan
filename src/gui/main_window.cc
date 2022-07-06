@@ -73,6 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
     d_->ui->stack_settings->setCurrentIndex(STACK_LOADING);
     d_->ui->tabs->setCurrentIndex(TAB_SCANNING);
     d_->ui->tabs->setTabEnabled(TAB_OCR, false);
+    d_->ui->label_blurry_warning->setVisible(false);
 
     d_->ocr_results_manager =
             std::make_unique<ImageWidgetOcrResultsManager>(d_->ui->image_area->scene());
@@ -169,6 +170,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
         auto& page = d_->manager.page(page_index);
         d_->ui->label_ocr_progress->setVisible(page.ocr_progress.has_value());
+        d_->ui->label_blurry_warning->setVisible(page.ocr_results.has_value() &&
+                                                 page.ocr_results->blurred_words.size() > 2);
     });
 
     connect(&d_->manager, &PageManager::new_page_added,
@@ -321,6 +324,8 @@ void MainWindow::switch_to_page(unsigned page_index)
     }
     d_->ui->image_area->set_image(get_page_image(page));
     d_->ui->label_ocr_progress->setVisible(page.ocr_progress.has_value());
+    d_->ui->label_blurry_warning->setVisible(page.ocr_results.has_value() &&
+                                             page.ocr_results->blurred_words.size() > 2);
 
     update_ocr_results_manager();
     update_selection_to_settings();
