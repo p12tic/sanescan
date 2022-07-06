@@ -169,10 +169,23 @@ void ScanEngine::perform_step()
 
 void ScanEngine::refresh_devices()
 {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+    std::cout << "ScanEngine::refresh_devices\n";
+    std::cout.flush();
+#endif
+
     push_poller(std::make_unique<Poller<std::vector<SaneDeviceInfo>>>(
                 d_->wrapper.get_device_info(),
                 [this](auto devices)
     {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+        std::cout << "ScanEngine::refresh_devices (callback)\n";
+        for (const auto& device : devices) {
+            std::cout << "  " << device << "\n";
+        }
+        std::cout.flush();
+#endif
+
         d_->current_devices = std::move(devices);
         Q_EMIT devices_refreshed();
     }));
@@ -198,6 +211,11 @@ void ScanEngine::open_device(const std::string& name)
                 d_->wrapper.open_device(name),
                 [this, name](auto device_wrapper)
     {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+        std::cout << "ScanEngine::open_device: " << name << " (callback)\n";
+        std::cout.flush();
+#endif
+
         d_->device_wrapper = std::move(device_wrapper);
         d_->device_open = true;
         d_->device_name = name;
@@ -290,6 +308,12 @@ void ScanEngine::set_option_value(const std::string& name, const SaneOptionValue
                 d_->device_wrapper->set_option_value(desc.index, value),
                 [this](SaneOptionSetInfo set_info)
     {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+        std::cout << "ScanEngine::set_option_value (callback)\n";
+        std::cout << "  " << set_info << "\n";
+        std::cout.flush();
+#endif
+
         refresh_after_set_if_needed(set_info);
     }));
 }
@@ -316,6 +340,12 @@ void ScanEngine::set_option_value_auto(const std::string& name)
                 d_->device_wrapper->set_option_value_auto(desc.index),
                 [this](SaneOptionSetInfo set_info)
     {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+        std::cout << "ScanEngine::set_option_value_auto (callback)\n";
+        std::cout << "  " << set_info << "\n";
+        std::cout.flush();
+#endif
+
         refresh_after_set_if_needed(set_info);
     }));
 }
@@ -323,7 +353,7 @@ void ScanEngine::set_option_value_auto(const std::string& name)
 void ScanEngine::set_option_values(const std::map<std::string, SaneOptionValue>& values)
 {
 #if SANESCAN_ENGINE_DEBUG_CALLS
-    std::cout << "ScanEngine::set_option_value:\n";
+    std::cout << "ScanEngine::set_option_values:\n";
     for (const auto& [name, value] : values) {
         std::cout << "    " << name << "=" << value << "\n";
     }
@@ -344,6 +374,12 @@ void ScanEngine::set_option_values(const std::map<std::string, SaneOptionValue>&
                 d_->device_wrapper->set_option_values(indexed_values),
                 [this](SaneOptionSetInfo set_info)
     {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+        std::cout << "ScanEngine::set_option_value_auto (callback)\n";
+        std::cout << "  " << set_info << "\n";
+        std::cout.flush();
+#endif
+
         refresh_after_set_if_needed(set_info);
     }));
 }
@@ -375,6 +411,11 @@ void ScanEngine::start_scan()
                 d_->device_wrapper->start(),
                 [this]()
     {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+        std::cout << "ScanEngine::start_scan (callback)\n";
+        std::cout.flush();
+#endif
+
         push_poller(std::make_unique<ScanDataPoller>(this, d_->device_wrapper.get(),
                                                      &d_->image_buffer));
     }));
@@ -418,6 +459,16 @@ void ScanEngine::request_options()
                 d_->device_wrapper->get_option_groups(),
                 [this](auto option_groups)
     {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+        std::cout << "ScanEngine::request_options (callback)\n";
+        for (const auto& group_desc : option_groups) {
+            for (const auto& desc : group_desc.options) {
+                std::cout << "  " << desc.index << " -> " << desc.name << "\n";
+            }
+        }
+        std::cout.flush();
+#endif
+
         d_->option_groups = std::move(option_groups);
         d_->option_index_to_name.clear();
         d_->option_name_to_index.clear();
@@ -447,6 +498,14 @@ void ScanEngine::request_option_values()
                 d_->device_wrapper->get_all_option_values(),
                 [this](auto option_values)
     {
+#if SANESCAN_ENGINE_DEBUG_CALLS
+        std::cout << "ScanEngine::request_option_values (callback)\n";
+        for (const auto& option : option_values) {
+            std::cout << "  " << option.index << " -> " << option.value << "\n";
+        }
+        std::cout.flush();
+#endif
+
         d_->option_values.clear();
         for (const auto& option : option_values) {
             d_->option_values.emplace(d_->option_index_to_name.at(option.index), option.value);
