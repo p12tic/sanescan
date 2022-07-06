@@ -26,6 +26,7 @@ set(SOURCES
     ocr_box.cc
     ocr_line.cc
     ocr_paragraph.cc
+    ocr_pipeline_run.cc
     ocr_results_evaluator.cc
     ocr_word.cc
     ocr_utils.cc

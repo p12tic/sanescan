@@ -20,8 +20,7 @@
 #define SANESCAN_GUI_OCR_JOB_H
 
 #include "lib/job_queue.h"
-#include "ocr/ocr_options.h"
-#include "ocr/ocr_results.h"
+#include "ocr/ocr_pipeline_run.h"
 
 #include <opencv2/core/mat.hpp>
 #include <atomic>
@@ -40,36 +39,24 @@ public:
     void execute() override;
     void cancel() override;
 
-    OcrResults& results() { return results_; }
+    OcrResults& results() { return run_.results(); }
     std::size_t job_id() const { return job_id_; }
     bool finished() const { return finished_; }
 
 private:
-    enum class Mode {
-        ONLY_PARAGRAPHS,
-        FULL,
-    };
-
-    Mode get_mode(const OcrOptions& new_options, const OcrOptions& old_options,
-                  const std::optional<OcrResults>& old_results);
-
     cv::Mat source_image_storage_;
 
-    // cv::Mat contains an internal ref-counter. Thus simply doing cv::Mat x = source_image_; in
+    // cv::Mat contains an internal ref-counter. Thus simply doing cv::Mat x = run.source_image_; in
     // worker thread context would introduce data race. We work around this by storing a an
     // instance of the original cv::Mat within IJob as source_image_storage_. This ensures the data
     // stays valid for the duration of the job. Then we assign the data as "external data" to
-    // source_image_. This would force opencv to not do any ref-counting operations on data that
+    // run.source_image_. This would force opencv to not do any ref-counting operations on data that
     // is used outside worker thread context.
-    cv::Mat source_image_;
-    OcrOptions options_;
-    OcrOptions old_options_;
+
+    OcrPipelineRun run_;
     std::size_t job_id_ = 0;
     std::atomic<bool> finished_;
     std::function<void()> on_finish_;
-    Mode mode_ = Mode::FULL;
-
-    OcrResults results_;
 };
 
 } // namespace sanescan
