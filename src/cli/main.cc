@@ -21,6 +21,7 @@
 #include "ocr/ocr_options.h"
 #include "util/math.h"
 #include "ocr/pdf.h"
+#include "ocr/ocr_pipeline_run.h"
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -39,9 +40,9 @@ bool read_ocr_write(const std::string& input_path, const std::string& output_pat
         throw std::runtime_error("Could not load input file");
     }
 
-    TesseractRecognizer recognizer{"/usr/share/tesseract-ocr/4.00/tessdata/"};
-
-    auto results = recognizer.recognize(image, options);
+    OcrPipelineRun run{image, options, options, {}};
+    run.execute();
+    auto results = run.results();
 
     std::ofstream stream_pdf(output_path);
     write_pdf(stream_pdf, results.adjusted_image, results.adjusted_paragraphs, write_pdf_flags);
