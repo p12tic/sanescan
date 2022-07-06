@@ -23,8 +23,14 @@
 
 namespace sanescan {
 
-cv::Mat rotate_image_centered(const cv::Mat& image, double angle_rad);
+cv::Mat image_rotate_centered_noflip(const cv::Mat& image, double angle_rad);
 
+/** Rotates image preferring flips that potentially change image dimensions for part of the rotation
+    thati is a multiple of 90 degrees
+*/
+cv::Mat image_rotate_centered(const cv::Mat& image, double angle_rad);
+
+/// Converts image to gray, if needed
 cv::Mat image_color_to_gray(const cv::Mat& image);
 
 } // namespace sanescan

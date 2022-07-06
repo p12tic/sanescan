@@ -155,35 +155,15 @@ double TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
         if (std::abs(angle_mod90) < options.fix_page_orientation_max_angle_diff &&
             in_window > options.fix_page_orientation_min_text_fraction) {
 
-            double adjust_angle = 0;
-
-            // In this case we want to rotate whole page which changes the dimensions of the image.
-            // First we use cv::rotate to rotate 90, 180 or 270 degrees and then rotate_image
-            // for the final adjustment.
-
-            // Use approximate comparison so that computation accuracy does not affect the
-            // comparison results.
-            double eps = 0.1;
-            if (angle - angle_mod90 > deg_to_rad(270 - eps)) {
-                angle -= deg_to_rad(270);
-                adjust_angle += 270;
-                cv::rotate(image, image, cv::ROTATE_90_CLOCKWISE);
-            } else if (angle - angle_mod90 > deg_to_rad(180 - eps)) {
-                angle -= deg_to_rad(180);
-                adjust_angle += 180;
-                cv::rotate(image, image, cv::ROTATE_180);
-            } else if (angle - angle_mod90 > deg_to_rad(90 - eps)) {
-                angle -= deg_to_rad(90);
-                adjust_angle += 90;
-                cv::rotate(image, image, cv::ROTATE_90_COUNTERCLOCKWISE);
-            }
+            double adjust_angle = angle - angle_mod90;
 
             if (std::abs(angle_mod90) < options.fix_text_rotation_max_angle_diff &&
                 in_window > options.fix_text_rotation_min_text_fraction)
             {
                 adjust_angle += angle;
-                image = rotate_image_centered(image, angle);
             }
+
+            image = image_rotate_centered(image, angle);
             recognized = recognize_internal(image);
             return adjust_angle;
         }
@@ -196,7 +176,7 @@ double TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
         if (std::abs(angle) < options.fix_text_rotation_max_angle_diff &&
             in_window > options.fix_text_rotation_min_text_fraction)
         {
-            image = rotate_image_centered(image, angle);
+            image = image_rotate_centered_noflip(image, angle);
             recognized = recognize_internal(image);
             return angle;
         }
