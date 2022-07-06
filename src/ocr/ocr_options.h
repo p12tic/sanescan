@@ -57,7 +57,7 @@ struct OcrOptions {
     double fix_page_orientation_max_angle_diff = deg_to_rad(5);
 
     //  Minimum confidence of words included into the results
-    double min_word_confidence = 0;
+    double min_word_confidence = 0.3;
 
     //  Coefficient for blur detection
     double blur_detection_coef = 0.1;
