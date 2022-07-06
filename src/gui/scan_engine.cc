@@ -187,6 +187,7 @@ void ScanEngine::open_device(const std::string& name)
 {
 #if SANESCAN_ENGINE_DEBUG_CALLS
     std::cout << "ScanEngine::open_device: " << name << "\n";
+    std::cout.flush();
 #endif
 
     if (d_->device_open) {
@@ -220,6 +221,7 @@ void ScanEngine::close_device()
 {
 #if SANESCAN_ENGINE_DEBUG_CALLS
     std::cout << "ScanEngine::close_device: " << d_->device_name << "\n";
+    std::cout.flush();
 #endif
 
     if (!d_->device_open) {
@@ -270,6 +272,7 @@ void ScanEngine::set_option_value(const std::string& name, const SaneOptionValue
 {
 #if SANESCAN_ENGINE_DEBUG_CALLS
     std::cout << "ScanEngine::set_option_value: " << name << "=" << value << "\n";
+    std::cout.flush();
 #endif
 
     if (!d_->device_open) {
@@ -295,6 +298,7 @@ void ScanEngine::set_option_value_auto(const std::string& name)
 {
 #if SANESCAN_ENGINE_DEBUG_CALLS
     std::cout << "ScanEngine::set_option_value_auto: " << name << "\n";
+    std::cout.flush();
 #endif
 
     if (!d_->device_open) {
@@ -323,6 +327,7 @@ void ScanEngine::set_option_values(const std::map<std::string, SaneOptionValue>&
     for (const auto& [name, value] : values) {
         std::cout << "    " << name << "=" << value << "\n";
     }
+    std::cout.flush();
 #endif
 
     if (!d_->device_open) {
@@ -347,6 +352,7 @@ void ScanEngine::start_scan()
 {
 #if SANESCAN_ENGINE_DEBUG_CALLS
     std::cout << "ScanEngine::start_scan\n";
+    std::cout.flush();
 #endif
 
     if (!d_->device_open) {
@@ -378,6 +384,7 @@ void ScanEngine::cancel_scan()
 {
 #if SANESCAN_ENGINE_DEBUG_CALLS
     std::cout << "ScanEngine::cancel_scan\n";
+    std::cout.flush();
 #endif
 
     if (!d_->device_open) {
@@ -404,6 +411,7 @@ void ScanEngine::request_options()
 {
 #if SANESCAN_ENGINE_DEBUG_CALLS
     std::cout << "ScanEngine::request_options\n";
+    std::cout.flush();
 #endif
 
     push_poller(std::make_unique<Poller<std::vector<SaneOptionGroupDestriptor>>>(
@@ -429,6 +437,7 @@ void ScanEngine::request_option_values()
 {
 #if SANESCAN_ENGINE_DEBUG_CALLS
     std::cout << "ScanEngine::request_option_values\n";
+    std::cout.flush();
 #endif
 
     // NOTE: the caller must ensure that request_options is called before this function whenever
