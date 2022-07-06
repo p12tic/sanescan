@@ -16,31 +16,16 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SANESCAN_OCR_OCR_RESULTS_H
-#define SANESCAN_OCR_OCR_RESULTS_H
+#ifndef SANESCAN_OCR_OCR_RESULTS_EVALUATOR_H
+#define SANESCAN_OCR_OCR_RESULTS_EVALUATOR_H
 
 #include "ocr_paragraph.h"
-#include <opencv2/core/mat.hpp>
-#include <vector>
 
 namespace sanescan {
 
-struct OcrResults {
-    /** The image that was used for the OCR. It may differ from the input image as the OCR
-        algorithm automatically recognizes rotation to make text horizontal and other cases.
-    */
-    cv::Mat adjusted_image;
-
-    // The counter-clockwise rotation angle to get the adjusted_image from the source image.
-    double adjust_angle = 0;
-
-    // Recognized paragraphs
-    std::vector<OcrParagraph> paragraphs;
-
-    // Paragraphs without false positives which have been excluded
-    std::vector<OcrParagraph> adjusted_paragraphs;
-};
+std::vector<OcrParagraph> evaluate_paragraphs(const std::vector<OcrParagraph>& paragraphs,
+                                              double min_word_confidence);
 
 } // namespace sanescan
 
-#endif // SANESCAN_OCR_OCR_RESULTS_H
+#endif // SANESCAN_OCR_OCR_RESULTS_EVALUATOR_H

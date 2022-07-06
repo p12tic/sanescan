@@ -44,7 +44,7 @@ bool read_ocr_write(const std::string& input_path, const std::string& output_pat
     auto results = recognizer.recognize(image, options);
 
     std::ofstream stream_pdf(output_path);
-    write_pdf(stream_pdf, results.adjusted_image, results.paragraphs, write_pdf_flags);
+    write_pdf(stream_pdf, results.adjusted_image, results.adjusted_paragraphs, write_pdf_flags);
     return true;
 }
 

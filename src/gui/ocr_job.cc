@@ -17,6 +17,7 @@
 */
 
 #include "ocr_job.h"
+#include "ocr/ocr_results_evaluator.h"
 #include "ocr/tesseract.h"
 
 namespace sanescan {
@@ -41,6 +42,8 @@ void OcrJob::execute()
 {
     TesseractRecognizer recognizer{"/usr/share/tesseract-ocr/4.00/tessdata/"};
     results_ = recognizer.recognize(source_image_, options_);
+    results_.adjusted_paragraphs = evaluate_paragraphs(results_.paragraphs,
+                                                       options_.min_word_confidence);
     finished_ = true;
     on_finish_();
 }

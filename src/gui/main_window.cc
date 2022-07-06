@@ -403,7 +403,7 @@ void MainWindow::update_ocr_results_manager()
         d_->ocr_results_manager->set_show_text(should_highlight);
         d_->ocr_results_manager->set_show_text_white_background(should_highlight);
 
-        d_->ocr_results_manager->setup(page.ocr_results->paragraphs);
+        d_->ocr_results_manager->setup(page.ocr_results->adjusted_paragraphs);
     } else {
         d_->ocr_results_manager->clear();
     }

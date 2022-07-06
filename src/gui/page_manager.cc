@@ -410,7 +410,7 @@ void PageManager::save_all_pages(SaveMode mode, const std::string& path)
             if (mode == SaveMode::RAW_SCAN) {
                 writer.write_page(image, {});
             } else {
-                writer.write_page(image, page.ocr_results->paragraphs);
+                writer.write_page(image, page.ocr_results->adjusted_paragraphs);
             }
         }
     } else {

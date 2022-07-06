@@ -47,6 +47,8 @@ OcrSettingsWidget::OcrSettingsWidget(QWidget *parent) :
             [this](const QString&){ options_changed_impl(); });
     connect(d_->ui->checkbox_rotate_keep_size, &QCheckBox::toggled,
             [this](bool){ options_changed_impl(); });
+    connect(d_->ui->spinbox_word_confidence, &QSpinBox::textChanged,
+            [this](const QString&){ options_changed_impl(); });
     connect(d_->ui->b_should_highlight_text, &QPushButton::clicked, [this]()
     {
         Q_EMIT should_highlight_text_changed(d_->ui->b_should_highlight_text->isChecked());
@@ -70,6 +72,8 @@ void OcrSettingsWidget::set_options(const OcrOptions& options)
     d_->ui->spinbox_rotate_diff->setValue(
                 static_cast<int>(std::round(rad_to_deg(options.fix_text_rotation_max_angle_diff))));
     d_->ui->checkbox_rotate_keep_size->setChecked(options.keep_image_size_after_rotation);
+    d_->ui->spinbox_word_confidence->setValue(
+                static_cast<int>(std::round(options.min_word_confidence * 100)));
     d_->is_updating_from_code = false;
 }
 
@@ -95,6 +99,7 @@ void OcrSettingsWidget::options_changed_impl()
     options.fix_text_rotation_min_text_fraction = d_->ui->spinbox_rotate_fraction->value() / 100.0;
     options.fix_text_rotation_max_angle_diff = deg_to_rad(d_->ui->spinbox_rotate_diff->value());
     options.keep_image_size_after_rotation = d_->ui->checkbox_rotate_keep_size->isChecked();
+    options.min_word_confidence = d_->ui->spinbox_word_confidence->value() / 100.0;
     Q_EMIT options_changed(options);
 }
 
