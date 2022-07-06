@@ -107,7 +107,12 @@ void PdfWriter::write_page(const cv::Mat& image, const std::vector<OcrParagraph>
                                                    image.elemSize1() *
                                                    image.total() * image.channels());
 
-    image_data.SetImageColorSpace(PoDoFo::ePdfColorSpace_DeviceRGB);
+    if (image.channels() == 3) {
+        image_data.SetImageColorSpace(PoDoFo::ePdfColorSpace_DeviceRGB);
+    } else {
+        image_data.SetImageColorSpace(PoDoFo::ePdfColorSpace_DeviceGray);
+    }
+
     image_data.SetImageData(width, height, image.elemSize1() * 8, &image_data_stream);
 }
 
