@@ -22,6 +22,7 @@
 #include <opencv2/core/types.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <cmath>
+#include <stdexcept>
 
 namespace sanescan {
 
@@ -73,6 +74,30 @@ inline bool rect_almost_equal(const cv::Rect2d& a, const cv::Rect2d& b, double d
             && std::abs(a.tl().y - b.tl().y) <= diff
             && std::abs(a.br().x - b.br().x) <= diff
             && std::abs(a.br().y - b.br().y) <= diff;
+}
+
+template<class T, class It>
+inline std::size_t index_at_quantile(It begin, It end, double quantile)
+{
+    if (quantile < 0 || quantile > 1) {
+        throw std::invalid_argument("Invalid quantile");
+    }
+
+    T sum = 0;
+    for (auto it = begin; it != end; ++it) {
+        sum += *it;
+    }
+    double quantile_value = sum * quantile;
+
+    sum = 0;
+    std::size_t index = 0;
+    for (auto it = begin; it != end; ++it, ++index) {
+        sum += *it;
+        if (sum >= quantile_value) {
+            break;
+        }
+    }
+    return index;
 }
 
 } // namespace sanescan

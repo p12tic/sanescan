@@ -32,15 +32,18 @@ public:
     ~ImageWidgetOcrResultsManager();
 
     void clear();
-    void setup(const std::vector<OcrParagraph>& results);
+    void setup(const std::vector<OcrParagraph>& results,
+               const std::vector<OcrBox>& blurry_areas);
     void set_show_text(bool show);
     void set_show_text_white_background(bool show);
     void set_show_bounding_boxes(bool show);
+    void set_show_blur_warning_boxes(bool show);
 
 private:
     void clear_items(std::vector<QGraphicsItem*>& items);
 
     void setup_word(const OcrWord& word);
+    void setup_blur_warning_area(const OcrBox& area);
     void set_tooltip(QGraphicsItem* item, const OcrWord& word);
 
     struct Private;

@@ -240,6 +240,7 @@ MainWindow::MainWindow(QWidget *parent) :
         d_->ocr_results_manager->set_show_bounding_boxes(should_highlight);
         d_->ocr_results_manager->set_show_text(should_highlight);
         d_->ocr_results_manager->set_show_text_white_background(should_highlight);
+        d_->ocr_results_manager->set_show_blur_warning_boxes(should_highlight);
     });
 
     d_->page_list_model = std::make_unique<PageListModel>(this);
@@ -402,8 +403,10 @@ void MainWindow::update_ocr_results_manager()
         d_->ocr_results_manager->set_show_bounding_boxes(should_highlight);
         d_->ocr_results_manager->set_show_text(should_highlight);
         d_->ocr_results_manager->set_show_text_white_background(should_highlight);
+        d_->ocr_results_manager->set_show_blur_warning_boxes(should_highlight);
 
-        d_->ocr_results_manager->setup(page.ocr_results->adjusted_paragraphs);
+        d_->ocr_results_manager->setup(page.ocr_results->adjusted_paragraphs,
+                                       page.ocr_results->blurred_words);
     } else {
         d_->ocr_results_manager->clear();
     }

@@ -96,15 +96,19 @@ struct ImageWidgetOcrResultsManager::Private {
 
     QGraphicsItemGroup* text_items_group = nullptr;
     QGraphicsItemGroup* text_background_items_group = nullptr;
+    QGraphicsItemGroup* blur_warning_boxes_group = nullptr;
     QGraphicsItemGroup* char_bounding_boxes_group = nullptr;
     std::vector<QGraphicsItem*> text_items;
     std::vector<QGraphicsItem*> text_background_items;
     std::vector<QGraphicsItem*> char_bounding_boxes;
+    std::vector<QGraphicsItem*> blur_warning_boxes;
 
     QPen text_background_pen;
     QBrush text_background_brush;
     QPen char_bounding_boxes_pen;
     QBrush char_bounding_boxes_brush;
+    QPen blur_warning_pen;
+    QBrush blur_warning_brush;
 };
 
 ImageWidgetOcrResultsManager::ImageWidgetOcrResultsManager(QGraphicsScene* scene) :
@@ -117,14 +121,22 @@ ImageWidgetOcrResultsManager::ImageWidgetOcrResultsManager(QGraphicsScene* scene
     d_->text_background_items_group->setZValue(1);
     d_->char_bounding_boxes_group = d_->scene->createItemGroup({});
     d_->char_bounding_boxes_group->setZValue(3);
+    d_->blur_warning_boxes_group = d_->scene->createItemGroup({});
+    d_->blur_warning_boxes_group->setZValue(4);
 
     d_->text_background_pen.setStyle(Qt::NoPen);
     d_->text_background_brush.setColor(Qt::white);
     d_->text_background_brush.setStyle(Qt::SolidPattern);
+
     d_->char_bounding_boxes_pen.setWidth(1);
     d_->char_bounding_boxes_pen.setColor(Qt::black);
     d_->char_bounding_boxes_pen.setStyle(Qt::SolidLine);
     d_->char_bounding_boxes_brush.setStyle(Qt::NoBrush);
+
+    d_->blur_warning_pen.setWidth(4);
+    d_->blur_warning_pen.setColor(Qt::red);
+    d_->blur_warning_pen.setStyle(Qt::SolidLine);
+    d_->blur_warning_brush.setStyle(Qt::NoBrush);
 }
 
 ImageWidgetOcrResultsManager::~ImageWidgetOcrResultsManager() = default;
@@ -134,9 +146,11 @@ void ImageWidgetOcrResultsManager::clear()
     clear_items(d_->text_items);
     clear_items(d_->text_background_items);
     clear_items(d_->char_bounding_boxes);
+    clear_items(d_->blur_warning_boxes);
 }
 
-void ImageWidgetOcrResultsManager::setup(const std::vector<OcrParagraph>& results)
+void ImageWidgetOcrResultsManager::setup(const std::vector<OcrParagraph>& results,
+                                         const std::vector<OcrBox>& blurry_areas)
 {
     clear();
 
@@ -146,6 +160,10 @@ void ImageWidgetOcrResultsManager::setup(const std::vector<OcrParagraph>& result
                 setup_word(word);
             }
         }
+    }
+
+    for (const auto& area : blurry_areas) {
+        setup_blur_warning_area(area);
     }
 }
 
@@ -173,6 +191,15 @@ void ImageWidgetOcrResultsManager::set_show_bounding_boxes(bool show)
         d_->char_bounding_boxes_group->show();
     } else {
         d_->char_bounding_boxes_group->hide();
+    }
+}
+
+void ImageWidgetOcrResultsManager::set_show_blur_warning_boxes(bool show)
+{
+    if (show) {
+        d_->blur_warning_boxes_group->show();
+    } else {
+        d_->blur_warning_boxes_group->hide();
     }
 }
 
@@ -279,6 +306,14 @@ void ImageWidgetOcrResultsManager::setup_word(const OcrWord& word)
         d_->text_items.push_back(item);
         d_->text_items_group->addToGroup(item);
     }
+}
+
+void ImageWidgetOcrResultsManager::setup_blur_warning_area(const OcrBox& area)
+{
+    auto* item = d_->scene->addRect(area.x1, area.y1, area.width(), area.height(),
+                                    d_->blur_warning_pen, d_->blur_warning_brush);
+    d_->blur_warning_boxes.push_back(item);
+    d_->blur_warning_boxes_group->addToGroup(item);
 }
 
 void ImageWidgetOcrResultsManager::set_tooltip(QGraphicsItem* item, const OcrWord& word)

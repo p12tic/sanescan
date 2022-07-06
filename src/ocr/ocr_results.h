@@ -19,6 +19,7 @@
 #ifndef SANESCAN_OCR_OCR_RESULTS_H
 #define SANESCAN_OCR_OCR_RESULTS_H
 
+#include "blur_detection.h"
 #include "ocr_paragraph.h"
 #include <opencv2/core/mat.hpp>
 #include <vector>
@@ -39,6 +40,12 @@ struct OcrResults {
 
     // Paragraphs without false positives which have been excluded
     std::vector<OcrParagraph> adjusted_paragraphs;
+
+    // Internal data for blur detection computed from adjusted_image.
+    BlurDetectData blur_data;
+
+    // Words that are blurred.
+    std::vector<OcrBox> blurred_words;
 };
 
 } // namespace sanescan

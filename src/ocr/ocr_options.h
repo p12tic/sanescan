@@ -59,6 +59,9 @@ struct OcrOptions {
     //  Minimum confidence of words included into the results
     double min_word_confidence = 0;
 
+    //  Coefficient for blur detection
+    double blur_detection_coef = 0.2;
+
     std::strong_ordering operator<=>(const OcrOptions& other) const = default;
 };
 

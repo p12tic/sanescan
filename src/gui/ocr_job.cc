@@ -50,9 +50,12 @@ void OcrJob::execute()
     if (mode_ == Mode::FULL) {
         TesseractRecognizer recognizer{"/usr/share/tesseract-ocr/4.00/tessdata/"};
         results_ = recognizer.recognize(source_image_, options_);
+        results_.blur_data = compute_blur_data(results_.adjusted_image);
     }
     results_.adjusted_paragraphs = evaluate_paragraphs(results_.paragraphs,
                                                        options_.min_word_confidence);
+    results_.blurred_words = detect_blur_areas(results_.blur_data, results_.adjusted_paragraphs,
+                                               options_.blur_detection_coef);
     finished_ = true;
     on_finish_();
 }
@@ -68,16 +71,17 @@ OcrJob::Mode OcrJob::get_mode(const OcrOptions& new_options, const OcrOptions& o
         return Mode::FULL;
     }
 
-    auto new_options_without_confidence = new_options;
-    new_options_without_confidence.min_word_confidence = 0;
-    auto old_options_without_confidence = old_options;
-    old_options_without_confidence.min_word_confidence = 0;
+    auto new_options_for_full = new_options;
+    new_options_for_full.min_word_confidence = 0;
+    new_options_for_full.blur_detection_coef = 0;
+    auto old_options_for_full = old_options;
+    old_options_for_full.min_word_confidence = 0;
+    old_options_for_full.blur_detection_coef = 0;
 
-    if (new_options_without_confidence != old_options_without_confidence) {
+    if (new_options_for_full != old_options_for_full) {
         return Mode::FULL;
     }
     return Mode::ONLY_PARAGRAPHS;
 }
-
 
 } // namespace sanescan
