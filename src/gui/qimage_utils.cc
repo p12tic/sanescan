@@ -51,7 +51,8 @@ QImage qimage_from_cv_mat(const cv::Mat& mat)
         throw std::invalid_argument("Unsupported number of dimensions");
     }
 
-    return QImage(mat.data, mat.size.p[1], mat.size.p[0],
+    int bytes_per_line = mat.size.p[1] * mat.elemSize1() * mat.channels();
+    return QImage(mat.data, mat.size.p[1], mat.size.p[0], bytes_per_line,
                   qimage_format_from_depth_channels(mat.elemSize1(), mat.channels()));
 }
 
