@@ -397,7 +397,8 @@ void PageManager::save_page(unsigned page_index, SaveMode mode, const std::strin
 void PageManager::save_all_pages(SaveMode mode, const std::string& path)
 {
     std::filesystem::path base_path(path);
-    auto is_pdf = base_path.extension().string() == ".pdf";
+    auto extension = base_path.extension().string();
+    auto is_pdf = extension == ".pdf";
 
     // Note that we exclude the last page as it will always contain not yet finished scan.
     if (is_pdf) {
@@ -417,7 +418,6 @@ void PageManager::save_all_pages(SaveMode mode, const std::string& path)
     } else {
         auto base_dir = base_path.parent_path();
         auto base_stem = base_path.stem().string();
-        auto extension = base_path.extension().string();
 
         for (std::size_t i = 0; i < d_->pages.size() - 1; ++i) {
             auto image = image_to_save(d_->pages.at(i), mode);
