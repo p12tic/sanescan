@@ -64,6 +64,8 @@ struct Options {
     static constexpr const char* FIX_ORIENTATION_ENABLE = "ocr-enable-fix-page-orientation";
     static constexpr const char* FIX_ORIENTATION_FRACTION = "ocr-fix-page-orientation-min-text-fraction";
     static constexpr const char* FIX_ORIENTATION_ANGLE = "ocr-fix-page-orientation-max-angle-diff";
+
+    static constexpr const char* MIN_WORD_CONFIDENCE = "ocr-min-word-confidence";
 };
 
 int main(int argc, char* argv[])
@@ -118,6 +120,9 @@ input_path and output_path options can be passed either as positional or named a
              po::value(&ocr_options.fix_page_orientation_max_angle_diff)->default_value(5),
              "maximum difference between the text direction and any level direction in degrees to "
              "consider page orientation fix")
+            (Options::MIN_WORD_CONFIDENCE,
+             po::value(&ocr_options.min_word_confidence)->default_value(0),
+             "minimum confidence value for a OCR'ed word in order for inclusion to the results")
     ;
 
     po::options_description all_options_desc;
