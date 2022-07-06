@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "line_erasure.h"
 #include "ocr_pipeline_run.h"
 #include "ocr_results_evaluator.h"
 #include "ocr_utils.h"
@@ -62,9 +63,15 @@ void OcrPipelineRun::execute()
         if (results_.adjust_angle != 0) {
             results_.adjusted_image = image_rotate_centered(results_.adjusted_image,
                                                             results_.adjust_angle);
-            results_.paragraphs = recognizer.recognize(results_.adjusted_image);
         }
         results_.adjusted_image_gray = image_color_to_gray(results_.adjusted_image);
+        auto adjusted_image_no_lines = results_.adjusted_image.clone();
+        erase_straight_vh_lines(adjusted_image_no_lines, results_.adjusted_image_gray,
+                                4, 4, 100);
+
+        // FIXME: removal of horizontal and vertical lines requires OCR to be redone. This could
+        // potentially be avoided.
+        results_.paragraphs = recognizer.recognize(adjusted_image_no_lines);
         results_.blur_data = compute_blur_data(results_.adjusted_image_gray);
     }
     results_.adjusted_paragraphs = evaluate_paragraphs(results_.paragraphs,

@@ -22,6 +22,7 @@ pkg_check_modules(tesseract REQUIRED tesseract)
 set(SOURCES
     blur_detection.cc
     hocr.cc
+    line_erasure.cc
     ocr_baseline.cc
     ocr_box.cc
     ocr_line.cc
