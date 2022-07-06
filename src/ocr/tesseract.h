@@ -33,11 +33,9 @@ public:
     TesseractRecognizer(const std::string& tesseract_datapath);
     ~TesseractRecognizer();
 
-    OcrResults recognize(cv::Mat image, const OcrOptions& options);
+    std::vector<OcrParagraph> recognize(const cv::Mat& image);
 
 private:
-    std::vector<OcrParagraph> recognize_internal(const cv::Mat& image);
-
     struct Private;
     std::unique_ptr<Private> data_;
 };

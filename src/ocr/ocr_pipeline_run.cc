@@ -18,6 +18,8 @@
 
 #include "ocr_pipeline_run.h"
 #include "ocr_results_evaluator.h"
+#include "ocr_utils.h"
+#include "util/image.h"
 #include "tesseract.h"
 
 namespace sanescan {
@@ -40,7 +42,28 @@ void OcrPipelineRun::execute()
 {
     if (mode_ == Mode::FULL) {
         TesseractRecognizer recognizer{"/usr/share/tesseract-ocr/4.00/tessdata/"};
-        results_ = recognizer.recognize(source_image_, options_);
+        results_.paragraphs = recognizer.recognize(source_image_);
+
+        // Handle the case when all text within the image is rotated slightly due to the input data
+        // scan just being rotated. In such case whole image will be rotated to address the following
+        // issues:
+        //
+        // - Most PDF readers can't select rotated text properly
+        // - The OCR accuracy is compromised for rotated text.
+        //
+        // TODO: Ideally we should detect cases when the text in the source image is legitimately
+        // rotated and the rotation is not just the artifact of rotation. In such case the accuracy of
+        // OCR will still be improved if rotate the source image just for OCR and then rotate the
+        // results back.
+        results_.adjust_angle = text_rotation_adjustment(source_image_, results_.paragraphs,
+                                                         options_);
+        results_.adjusted_image = source_image_;
+
+        if (results_.adjust_angle != 0) {
+            results_.adjusted_image = image_rotate_centered(results_.adjusted_image,
+                                                            results_.adjust_angle);
+            results_.paragraphs = recognizer.recognize(results_.adjusted_image);
+        }
         results_.blur_data = compute_blur_data(results_.adjusted_image);
     }
     results_.adjusted_paragraphs = evaluate_paragraphs(results_.paragraphs,

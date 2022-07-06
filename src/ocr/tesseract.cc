@@ -111,35 +111,7 @@ TesseractRecognizer::TesseractRecognizer(const std::string& tesseract_datapath) 
 
 TesseractRecognizer::~TesseractRecognizer() = default;
 
-OcrResults TesseractRecognizer::recognize(cv::Mat image, const OcrOptions& options)
-{
-    auto recognized = recognize_internal(image);
-
-    OcrResults results;
-
-    // Handle the case when all text within the image is rotated slightly due to the input data
-    // scan just being rotated. In such case whole image will be rotated to address the following
-    // issues:
-    //
-    // - Most PDF readers can't select rotated text properly
-    // - The OCR accuracy is compromised for rotated text.
-    //
-    // TODO: Ideally we should detect cases when the text in the source image is legitimately
-    // rotated and the rotation is not just the artifact of rotation. In such case the accuracy of
-    // OCR will still be improved if rotate the source image just for OCR and then rotate the
-    // results back.
-    results.adjust_angle = text_rotation_adjustment(image, recognized, options);
-
-    if (results.adjust_angle != 0) {
-        image = image_rotate_centered(image, results.adjust_angle);
-        recognized = recognize_internal(image);
-    }
-    results.adjusted_image = image;
-    results.paragraphs = recognized;
-    return results;
-}
-
-std::vector<OcrParagraph> TesseractRecognizer::recognize_internal(const cv::Mat& image)
+std::vector<OcrParagraph> TesseractRecognizer::recognize(const cv::Mat& image)
 {
     auto* pix = cv_mat_to_pix(image);
 
