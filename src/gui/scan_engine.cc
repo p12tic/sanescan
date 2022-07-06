@@ -458,7 +458,7 @@ void ScanEngine::request_option_values()
 
 void ScanEngine::refresh_after_set_if_needed(SaneOptionSetInfo set_info)
 {
-    if ((set_info & SaneOptionSetInfo::RELOAD_OPTIONS) != SaneOptionSetInfo::NONE) {
+    if (has_flag(set_info, SaneOptionSetInfo::RELOAD_OPTIONS)) {
         request_options();
     }
     if (has_flag(set_info, SaneOptionSetInfo::INEXACT)) {
