@@ -89,7 +89,7 @@ public: Q_SIGNALS:
     void new_page_added(unsigned page_index, bool after_scan);
     void page_option_descriptors_changed(unsigned page_index);
     void page_option_values_changed(unsigned page_index);
-    void page_scan_progress_changed(unsigned page_index);
+    void page_progress_changed(unsigned page_index);
     void page_image_changed(unsigned page_index);
     void page_preview_image_changed(unsigned page_index);
     void page_locking_changed();

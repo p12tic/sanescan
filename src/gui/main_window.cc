@@ -160,7 +160,7 @@ MainWindow::MainWindow(QWidget *parent) :
         update_selection_to_settings();
     });
 
-    connect(&d_->manager, &PageManager::page_scan_progress_changed,
+    connect(&d_->manager, &PageManager::page_progress_changed,
             [this](unsigned page_index)
     {
         if (d_->active_page_index != page_index) {
@@ -168,13 +168,7 @@ MainWindow::MainWindow(QWidget *parent) :
         }
 
         auto& page = d_->manager.page(page_index);
-        if (page.scan_progress.has_value()) {
-            d_->ui->stack_settings->setCurrentIndex(STACK_SCANNING);
-            int value_percent = static_cast<int>(page.scan_progress.value() / 100);
-            d_->ui->progress_scanning->setValue(value_percent);
-        } else {
-            d_->ui->stack_settings->setCurrentIndex(STACK_SETTINGS);
-        }
+        d_->ui->label_ocr_progress->setVisible(page.ocr_progress.has_value());
     });
 
     connect(&d_->manager, &PageManager::new_page_added,
@@ -326,6 +320,7 @@ void MainWindow::switch_to_page(unsigned page_index)
         d_->ui->tabs->setCurrentIndex(TAB_SCANNING);
     }
     d_->ui->image_area->set_image(get_page_image(page));
+    d_->ui->label_ocr_progress->setVisible(page.ocr_progress.has_value());
 
     update_ocr_results_manager();
     update_selection_to_settings();

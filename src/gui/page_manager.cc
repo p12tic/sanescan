@@ -234,7 +234,7 @@ void PageManager::start_scan(unsigned page_index, ScanType type)
     Q_EMIT page_locking_changed();
 
     scan_page.scan_progress = 0.0;
-    Q_EMIT page_scan_progress_changed(d_->curr_scan_page_index);
+    Q_EMIT page_progress_changed(d_->curr_scan_page_index);
 
     // We can't start scanning right away because option setup above may not have been completed
     // yet. These are done in-order, but any option reloads caused by setting the options will
@@ -267,6 +267,7 @@ void PageManager::on_ocr_complete(unsigned page_index)
     // We wait until the end of the function before notifying about results change to ensure that
     // the jobs array isn't changed while we're iterating over it.
     if (updated_results) {
+        Q_EMIT page_progress_changed(page_index);
         Q_EMIT page_ocr_results_changed(page_index);
     }
 }
@@ -336,6 +337,7 @@ void PageManager::perform_ocr(unsigned page_index, const OcrOptions& new_options
     d_->job_executor.submit(*(page.ocr_jobs.back().get()));
 
     Q_EMIT page_ocr_results_changed(page_index);
+    Q_EMIT page_progress_changed(page_index);
 }
 
 void PageManager::set_page_option(unsigned page_index, const std::string& name,
@@ -531,7 +533,7 @@ void PageManager::scan_finished()
     {
         auto& page = curr_scan_page();
         page.scan_progress.reset();
-        Q_EMIT page_scan_progress_changed(d_->curr_scan_page_index);
+        Q_EMIT page_progress_changed(d_->curr_scan_page_index);
     }
 
     // Setup a new page that would serve as a template to repeat the current scan.

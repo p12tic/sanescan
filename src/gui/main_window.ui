@@ -99,37 +99,6 @@
                     </item>
                    </layout>
                   </widget>
-                  <widget class="QWidget" name="page_scanning">
-                   <layout class="QVBoxLayout" name="verticalLayout_9">
-                    <item>
-                     <widget class="QLabel" name="label_scanning">
-                      <property name="text">
-                       <string>Scanning...</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QProgressBar" name="progress_scanning">
-                      <property name="value">
-                       <number>0</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <spacer name="v_spacer2">
-                      <property name="orientation">
-                       <enum>Qt::Vertical</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>20</width>
-                        <height>40</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                   </layout>
-                  </widget>
                  </widget>
                 </item>
                </layout>
@@ -152,6 +121,26 @@
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="verticalSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_ocr_progress">
+                  <property name="text">
+                   <string>OCR is in progress ...</string>
                   </property>
                  </widget>
                 </item>

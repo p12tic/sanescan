@@ -33,7 +33,6 @@ class MainWindow : public QMainWindow
 public:
     static constexpr int STACK_LOADING = 0;
     static constexpr int STACK_SETTINGS = 1;
-    static constexpr int STACK_SCANNING = 2;
 
     static constexpr int TAB_SCANNING = 0;
     static constexpr int TAB_OCR = 1;
