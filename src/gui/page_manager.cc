@@ -339,7 +339,7 @@ void PageManager::perform_ocr(unsigned page_index, const OcrOptions& new_options
 }
 
 void PageManager::set_page_option(unsigned page_index, const std::string& name,
-                                          const SaneOptionValue& value)
+                                  const SaneOptionValue& value)
 {
     auto& page = d_->pages.at(page_index);
     if (page.locked || d_->all_pages_locked) {
