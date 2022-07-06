@@ -17,6 +17,7 @@
 */
 
 #include "blur_detection.h"
+#include "util/image.h"
 #include "util/math.h"
 #include <opencv2/imgproc.hpp>
 
@@ -82,9 +83,7 @@ bool is_word_blurry(const OcrWord& word, const BlurDetectData& data, double blur
 BlurDetectData compute_blur_data(cv::Mat image)
 {
     BlurDetectData result;
-    if (image.channels() > 1) {
-        cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
-    }
+    image = image_color_to_gray(image);
     cv::Mat sobel_x, sobel_y;
     cv::Sobel(image, sobel_x, CV_32F, 1, 0);
     cv::Sobel(image, sobel_y, CV_32F, 0, 1);

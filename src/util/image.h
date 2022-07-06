@@ -25,6 +25,8 @@ namespace sanescan {
 
 cv::Mat rotate_image_centered(const cv::Mat& image, double angle_rad);
 
+cv::Mat image_color_to_gray(const cv::Mat& image);
+
 } // namespace sanescan
 
 #endif // SANESCAN_UTIL_MATH_H

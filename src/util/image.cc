@@ -36,4 +36,15 @@ cv::Mat rotate_image_centered(const cv::Mat& image, double angle_rad)
     return rotated_image;
 }
 
+cv::Mat image_color_to_gray(const cv::Mat& image)
+{
+    cv::Mat result;
+    if (image.channels() > 1) {
+        cv::cvtColor(image, result, cv::COLOR_BGR2GRAY);
+    } else {
+        result = image;
+    }
+    return result;
+}
+
 } // namespace sanescan
