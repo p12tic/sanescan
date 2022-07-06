@@ -41,6 +41,7 @@ private:
     void clear_items(std::vector<QGraphicsItem*>& items);
 
     void setup_word(const OcrWord& word);
+    void set_tooltip(QGraphicsItem* item, const OcrWord& word);
 
     struct Private;
     std::unique_ptr<Private> d_;

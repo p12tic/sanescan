@@ -240,6 +240,7 @@ void ImageWidgetOcrResultsManager::setup_word(const OcrWord& word)
             item->setPos(char_x, char_y);
             item->setTransformOriginPoint(char_x, char_y);
             item->setRotation(rad_to_deg(word.baseline.angle));
+            set_tooltip(item, word);
             d_->text_items.push_back(item);
             d_->text_items_group->addToGroup(item);
 
@@ -249,6 +250,7 @@ void ImageWidgetOcrResultsManager::setup_word(const OcrWord& word)
                                                          char_box.y2 - char_box.y1,
                                                          d_->char_bounding_boxes_pen,
                                                          d_->char_bounding_boxes_brush);
+            set_tooltip(bounding_box_item, word);
             d_->char_bounding_boxes.push_back(bounding_box_item);
             d_->char_bounding_boxes_group->addToGroup(bounding_box_item);
 
@@ -273,9 +275,15 @@ void ImageWidgetOcrResultsManager::setup_word(const OcrWord& word)
         transform.scale(pos_params.h_scale, 1.0);
         transform.rotateRadians(word.baseline.angle);
         item->setTransform(transform);
+        set_tooltip(item, word);
         d_->text_items.push_back(item);
         d_->text_items_group->addToGroup(item);
     }
+}
+
+void ImageWidgetOcrResultsManager::set_tooltip(QGraphicsItem* item, const OcrWord& word)
+{
+    item->setToolTip(QString("Confidence: %1").arg(static_cast<unsigned>(word.confidence * 100)));
 }
 
 } // namespace sanescan
