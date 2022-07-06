@@ -116,15 +116,19 @@ OcrResults TesseractRecognizer::recognize(cv::Mat image, const OcrOptions& optio
     auto recognized = recognize_internal(image);
 
     OcrResults results;
-    results.adjust_angle = adjust_image_rotation(image, recognized, options);
+    results.adjust_angle = get_rotation_adjustment(image, recognized, options);
+    if (results.adjust_angle != 0) {
+        image = image_rotate_centered(image, results.adjust_angle);
+        recognized = recognize_internal(image);
+    }
     results.adjusted_image = image;
     results.paragraphs = recognized;
     return results;
 }
 
-double TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
-                                                  std::vector<OcrParagraph>& recognized,
-                                                  const OcrOptions& options)
+double TesseractRecognizer::get_rotation_adjustment(const cv::Mat& image,
+                                                    const std::vector<OcrParagraph>& recognized,
+                                                    const OcrOptions& options)
 {
     // Handle the case when all text within the image is rotated slightly due to the input data
     // scan just being rotated. In such case whole image will be rotated to address the following
@@ -162,9 +166,6 @@ double TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
             {
                 adjust_angle += angle;
             }
-
-            image = image_rotate_centered(image, angle);
-            recognized = recognize_internal(image);
             return adjust_angle;
         }
     }
@@ -176,8 +177,6 @@ double TesseractRecognizer::adjust_image_rotation(cv::Mat& image,
         if (std::abs(angle) < options.fix_text_rotation_max_angle_diff &&
             in_window > options.fix_text_rotation_min_text_fraction)
         {
-            image = image_rotate_centered_noflip(image, angle);
-            recognized = recognize_internal(image);
             return angle;
         }
     }

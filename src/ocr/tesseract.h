@@ -36,8 +36,9 @@ public:
     OcrResults recognize(cv::Mat image, const OcrOptions& options);
 
 private:
-    double adjust_image_rotation(cv::Mat& image, std::vector<OcrParagraph>& recognized,
-                                 const OcrOptions& options);
+    double get_rotation_adjustment(const cv::Mat& image,
+                                   const std::vector<OcrParagraph>& recognized,
+                                   const OcrOptions& options);
 
     std::vector<OcrParagraph> recognize_internal(const cv::Mat& image);
 
