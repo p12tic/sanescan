@@ -25,6 +25,8 @@
 #include <boost/locale/encoding.hpp>
 #include <cmath>
 
+#define SANESCAN_GUI_OCR_RESULTS_DEBUG 0
+
 namespace sanescan {
 
 namespace {
@@ -318,7 +320,18 @@ void ImageWidgetOcrResultsManager::setup_blur_warning_area(const OcrBox& area)
 
 void ImageWidgetOcrResultsManager::set_tooltip(QGraphicsItem* item, const OcrWord& word)
 {
+#if SANESCAN_GUI_OCR_RESULTS_DEBUG
+    item->setToolTip(QString("%1 %2 %3 %4\n\"%5\"\nFont size: %6\nConfidence: %7")
+            .arg(word.box.x1)
+            .arg(word.box.y1)
+            .arg(word.box.width())
+            .arg(word.box.height())
+            .arg(word.content.c_str())
+            .arg(word.font_size)
+            .arg(static_cast<unsigned>(word.confidence * 100)));
+#else
     item->setToolTip(QString("Confidence: %1").arg(static_cast<unsigned>(word.confidence * 100)));
+#endif
 }
 
 } // namespace sanescan
