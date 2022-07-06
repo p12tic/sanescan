@@ -19,13 +19,16 @@
 #include "ocr_job.h"
 #include "ocr/ocr_results_evaluator.h"
 #include "ocr/tesseract.h"
+#include "ocr/ocr_results_evaluator.h"
 
 namespace sanescan {
 
-OcrJob::OcrJob(const cv::Mat& source_image, const OcrOptions& options, std::size_t job_id,
-               std::function<void()> on_finish) :
+OcrJob::OcrJob(const cv::Mat& source_image, const OcrOptions& options,
+               const OcrOptions& old_options, const std::optional<OcrResults>& old_results,
+               std::size_t job_id, std::function<void()> on_finish) :
     source_image_storage_{source_image},
     options_{options},
+    old_options_{old_options},
     job_id_{job_id},
     on_finish_{on_finish}
 {
@@ -34,14 +37,20 @@ OcrJob::OcrJob(const cv::Mat& source_image, const OcrOptions& options, std::size
                             source_image_storage_.type(),
                             source_image_storage_.data,
                             source_image_storage_.step.p);
+    mode_ = get_mode(options, old_options, old_results);
+    if (mode_ == Mode::ONLY_PARAGRAPHS) {
+        results_ = old_results.value();
+    }
 }
 
 OcrJob::~OcrJob() = default;
 
 void OcrJob::execute()
 {
-    TesseractRecognizer recognizer{"/usr/share/tesseract-ocr/4.00/tessdata/"};
-    results_ = recognizer.recognize(source_image_, options_);
+    if (mode_ == Mode::FULL) {
+        TesseractRecognizer recognizer{"/usr/share/tesseract-ocr/4.00/tessdata/"};
+        results_ = recognizer.recognize(source_image_, options_);
+    }
     results_.adjusted_paragraphs = evaluate_paragraphs(results_.paragraphs,
                                                        options_.min_word_confidence);
     finished_ = true;
@@ -51,5 +60,24 @@ void OcrJob::execute()
 void OcrJob::cancel()
 {
 }
+
+OcrJob::Mode OcrJob::get_mode(const OcrOptions& new_options, const OcrOptions& old_options,
+                              const std::optional<OcrResults>& old_results)
+{
+    if (!old_results.has_value()) {
+        return Mode::FULL;
+    }
+
+    auto new_options_without_confidence = new_options;
+    new_options_without_confidence.min_word_confidence = 0;
+    auto old_options_without_confidence = old_options;
+    old_options_without_confidence.min_word_confidence = 0;
+
+    if (new_options_without_confidence != old_options_without_confidence) {
+        return Mode::FULL;
+    }
+    return Mode::ONLY_PARAGRAPHS;
+}
+
 
 } // namespace sanescan

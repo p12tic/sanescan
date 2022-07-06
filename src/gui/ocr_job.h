@@ -25,6 +25,7 @@
 
 #include <opencv2/core/mat.hpp>
 #include <atomic>
+#include <optional>
 
 namespace sanescan {
 
@@ -32,6 +33,7 @@ namespace sanescan {
 struct OcrJob : IJob {
 public:
     OcrJob(const cv::Mat& source_image, const OcrOptions& options,
+           const OcrOptions& old_options, const std::optional<OcrResults>& old_results,
            std::size_t job_id, std::function<void()> on_finish);
 
     ~OcrJob() override;
@@ -43,6 +45,14 @@ public:
     bool finished() const { return finished_; }
 
 private:
+    enum class Mode {
+        ONLY_PARAGRAPHS,
+        FULL,
+    };
+
+    Mode get_mode(const OcrOptions& new_options, const OcrOptions& old_options,
+                  const std::optional<OcrResults>& old_results);
+
     cv::Mat source_image_storage_;
 
     // cv::Mat contains an internal ref-counter. Thus simply doing cv::Mat x = source_image_; in
@@ -53,9 +63,11 @@ private:
     // is used outside worker thread context.
     cv::Mat source_image_;
     OcrOptions options_;
-    std::size_t job_id_;
+    OcrOptions old_options_;
+    std::size_t job_id_ = 0;
     std::atomic<bool> finished_;
     std::function<void()> on_finish_;
+    Mode mode_ = Mode::FULL;
 
     OcrResults results_;
 };

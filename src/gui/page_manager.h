@@ -108,7 +108,7 @@ private:
     void setup_empty_preview_image(ScanPage& page,
                                    const std::optional<cv::Rect2d>& scan_bounds_mm);
     void clear_preview_image(ScanPage& page);
-    void perform_ocr(unsigned page_index);
+    void perform_ocr(unsigned page_index, const OcrOptions& new_options);
 
     void periodic_engine_poll();
     void devices_refreshed();

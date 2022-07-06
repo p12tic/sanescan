@@ -317,19 +317,22 @@ void PageManager::clear_preview_image(ScanPage& page)
     page.preview_image.reset();
 }
 
-void PageManager::perform_ocr(unsigned page_index)
+void PageManager::perform_ocr(unsigned page_index, const OcrOptions& new_options)
 {
     auto& page = d_->pages.at(page_index);
-    page.ocr_results.reset();
-    page.ocr_progress = 0.0;
     page.ocr_jobs.push_back(std::make_unique<OcrJob>(page.scanned_image.value(),
+                                                     new_options,
                                                      page.ocr_options,
+                                                     page.ocr_results,
                                                       ++page.last_ocr_job_id,
                                                      [this, page_index]()
     {
         QMetaObject::invokeMethod(this, "on_ocr_complete", Qt::QueuedConnection,
                                   Q_ARG(unsigned, page_index));
     }));
+    page.ocr_options = new_options;
+    page.ocr_results.reset();
+    page.ocr_progress = 0.0;
     d_->job_executor.submit(*(page.ocr_jobs.back().get()));
 
     Q_EMIT page_ocr_results_changed(page_index);
@@ -370,9 +373,7 @@ void PageManager::set_page_ocr_options(unsigned page_index, const OcrOptions& op
     if (!page.scanned_image.has_value()) {
         throw std::runtime_error("Document must have scanned image when setting options");
     }
-
-    page.ocr_options = options;
-    perform_ocr(page_index);
+    perform_ocr(page_index, options);
 }
 
 void PageManager::save_page(unsigned page_index, SaveMode mode, const std::string& path)
@@ -547,7 +548,7 @@ void PageManager::scan_finished()
         new_page.scan_option_values = page.scan_option_values;
         d_->curr_scan_page_index = new_page_index;
         Q_EMIT new_page_added(new_page_index, true);
-        perform_ocr(old_page_index);
+        perform_ocr(old_page_index, d_->pages.at(old_page_index).ocr_options);
     } else {
         auto& page = curr_scan_page();
         page.scan_type = ScanType::NORMAL;
