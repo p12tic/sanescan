@@ -64,7 +64,8 @@ void OcrPipelineRun::execute()
                                                             results_.adjust_angle);
             results_.paragraphs = recognizer.recognize(results_.adjusted_image);
         }
-        results_.blur_data = compute_blur_data(results_.adjusted_image);
+        results_.adjusted_image_gray = image_color_to_gray(results_.adjusted_image);
+        results_.blur_data = compute_blur_data(results_.adjusted_image_gray);
     }
     results_.adjusted_paragraphs = evaluate_paragraphs(results_.paragraphs,
                                                        options_.min_word_confidence);

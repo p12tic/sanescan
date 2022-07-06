@@ -29,7 +29,8 @@ struct BlurDetectData {
     cv::Mat sobel_transform;
 };
 
-BlurDetectData compute_blur_data(cv::Mat image);
+/// The input image must be converted to single channel
+BlurDetectData compute_blur_data(const cv::Mat& image);
 
 /** Detects areas that are under excessive blur for OCR to be effective.
 

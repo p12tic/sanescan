@@ -80,10 +80,13 @@ bool is_word_blurry(const OcrWord& word, const BlurDetectData& data, double blur
 
 } // namespace
 
-BlurDetectData compute_blur_data(cv::Mat image)
+BlurDetectData compute_blur_data(const cv::Mat& image)
 {
+    if (image.channels() != 1) {
+        throw std::invalid_argument("Only single-channel images are supported");
+    }
+
     BlurDetectData result;
-    image = image_color_to_gray(image);
     cv::Mat sobel_x, sobel_y;
     cv::Sobel(image, sobel_x, CV_32F, 1, 0);
     cv::Sobel(image, sobel_y, CV_32F, 0, 1);

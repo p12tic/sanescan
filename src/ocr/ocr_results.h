@@ -32,6 +32,9 @@ struct OcrResults {
     */
     cv::Mat adjusted_image;
 
+    // Same as adjusted_image except that it's converted to gray.
+    cv::Mat adjusted_image_gray;
+
     // The counter-clockwise rotation angle to get the adjusted_image from the source image.
     double adjust_angle = 0;
 
