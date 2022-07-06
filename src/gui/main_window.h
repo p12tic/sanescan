@@ -60,6 +60,9 @@ private:
     void save_all_pages_with_ocr();
     void save_current_page();
 
+    bool warn_if_is_unsupported_save_path(const std::string& path);
+    bool is_supported_save_path(const std::string& path);
+
     struct Private;
     std::unique_ptr<Private> d_;
 };

@@ -31,7 +31,9 @@
 #include "../lib/scan_area_utils.h"
 
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMessageBox>
 
+#include <filesystem>
 #include <iostream>
 #include <optional>
 #include <stdexcept>
@@ -416,6 +418,11 @@ void MainWindow::save_all_pages()
 {
     auto path = QFileDialog::getSaveFileName(this, tr("Save all pages"), "",
                                              tr("Image Files (*.jpg *.png *.tiff *.pdf)"));
+
+    if (!warn_if_is_unsupported_save_path(path.toStdString())) {
+        return;
+    }
+
     d_->manager.save_all_pages(PageManager::SaveMode::RAW_SCAN, path.toStdString());
 }
 
@@ -423,6 +430,11 @@ void MainWindow::save_all_pages_with_ocr()
 {
     auto path = QFileDialog::getSaveFileName(this, tr("Save all pages with OCR"), "",
                                              tr("Image Files (*.jpg *.png *.tiff *.pdf)"));
+
+    if (!warn_if_is_unsupported_save_path(path.toStdString())) {
+        return;
+    }
+
     d_->manager.save_all_pages(PageManager::SaveMode::WITH_OCR, path.toStdString());
 }
 
@@ -433,7 +445,39 @@ void MainWindow::save_current_page()
     auto save_mode = d_->ui->tabs->currentIndex() == TAB_OCR
             ? PageManager::SaveMode::WITH_OCR
             : PageManager::SaveMode::RAW_SCAN;
+
+    if (!warn_if_is_unsupported_save_path(path.toStdString())) {
+        return;
+    }
+
     d_->manager.save_page(d_->active_page_index, save_mode, path.toStdString());
+}
+
+bool MainWindow::warn_if_is_unsupported_save_path(const std::string& path)
+{
+    if (!is_supported_save_path(path)) {
+        QMessageBox msg_box;
+        msg_box.setText("The path extension is for unsupported image format\n"
+                        "Supported formats: *.jpg *.png *.tiff *.pdf");
+        msg_box.exec();
+        return false;
+    }
+    return true;
+}
+
+bool MainWindow::is_supported_save_path(const std::string& path)
+{
+    std::filesystem::path base_path(path);
+    auto extension = base_path.extension().string();
+
+    std::vector<std::string> supported = {
+        ".jpg",
+        ".png",
+        ".tiff",
+        ".pdf",
+    };
+
+    return std::find(supported.begin(), supported.end(), extension) != supported.end();
 }
 
 } // namespace sanescan
