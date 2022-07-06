@@ -19,6 +19,7 @@
 #ifndef SANESCAN_OCR_OCR_UTILS_H
 #define SANESCAN_OCR_OCR_UTILS_H
 
+#include "ocr_options.h"
 #include "ocr_paragraph.h"
 
 namespace sanescan {
@@ -50,6 +51,13 @@ std::vector<std::pair<double, double>> get_all_text_angles(const std::vector<Ocr
 */
 std::pair<double, double> get_dominant_angle(const std::vector<std::pair<double, double>>& angles,
                                              double wrap_around_angle, double window_width);
+
+/*  This function retuns the optimal rotation that needs to be applied to image in order for the
+    text to become horizontal.
+*/
+double text_rotation_adjustment(const cv::Mat& image,
+                                const std::vector<OcrParagraph>& recognized,
+                                const OcrOptions& options);
 
 } // namespace sanescan
 
