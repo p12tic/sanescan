@@ -107,7 +107,7 @@ std::ostream& operator<<(std::ostream& stream, const SaneConstraintIntList& data
 struct SaneConstraintFloatList {
     std::vector<double> numbers;
 
-    std::strong_ordering operator<=>(const SaneConstraintFloatList& other) const = default;
+    std::partial_ordering operator<=>(const SaneConstraintFloatList& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatList& data);
@@ -129,7 +129,7 @@ struct SaneConstraintFloatRange {
     double max = 0;
     double quantization = 0;
 
-    std::strong_ordering operator<=>(const SaneConstraintFloatRange& other) const = default;
+    std::partial_ordering operator<=>(const SaneConstraintFloatRange& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneConstraintFloatRange& data);
@@ -157,7 +157,7 @@ struct SaneOptionDescriptor {
         SaneConstraintFloatRange // only if type == SaneValueType::FLOAT
     > constraint;
 
-    std::strong_ordering operator<=>(const SaneOptionDescriptor& other) const = default;
+    std::partial_ordering operator<=>(const SaneOptionDescriptor& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneOptionDescriptor& data);
@@ -168,7 +168,7 @@ struct SaneOptionGroupDestriptor {
     std::string description;
     std::vector<SaneOptionDescriptor> options;
 
-    std::strong_ordering operator<=>(const SaneOptionGroupDestriptor& other) const = default;
+    std::partial_ordering operator<=>(const SaneOptionGroupDestriptor& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneOptionGroupDestriptor& data);
@@ -212,7 +212,7 @@ struct SaneOptionValue {
 
     const std::string* as_string() const;
 
-    std::strong_ordering operator<=>(const SaneOptionValue& other) const = default;
+    std::partial_ordering operator<=>(const SaneOptionValue& other) const = default;
 };
 
 std::ostream& operator<<(std::ostream& stream, const SaneOptionValue& data);
