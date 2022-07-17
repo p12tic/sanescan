@@ -33,6 +33,11 @@ sanescan uses CMake and ninja. To build, use the following instructions:
     
 Ninja is not mandatory, but other build systems such as make are not tested.
 
+Acknowledgements
+================
+
+This project has received funding from NLnet foundation NGI0 Discovery Fund.
+
 License
 =======
 
