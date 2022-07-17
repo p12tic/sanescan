@@ -4,6 +4,10 @@ Overview
 **sanescan** is a scanning and OCR application that supports a variety of scanners via the SANE
 scanner driver project.
 
+The objective of sanescan is to produce pdf files with the best possible underlying text layer.
+Text selection in document viewers should work as if the document was not scanned. The characters
+in the text layer must correspond exactly to the underlying scanned image.
+
 The application UI is currently beta quality.
 
 Dependencies
