@@ -1,3 +1,6 @@
+Project moved to https://gitlab.com/sane-project/frontend/sanescan
+------------------------------------------------------------------
+
 Overview
 ========
 
